@@ -1,0 +1,45 @@
+social-network/
+├── go.sum
+├── go.mod
+├── main.go
+├── cmd/
+│   ├── flags.go
+│   ├── help.go
+│   └── root.go
+├── internal/
+│   ├── database/
+│   │   ├── database.go
+│   │   └── schema/
+│   │       └── 001_init.sqlite
+│   ├── store/
+│   │   ├── tokenstore.go
+│   │   └── users.go
+│   └── http/
+│       ├── handlers/
+│       │   ├── auth.go
+│       │   ├── home.go
+│       │   └── posts.go
+│       └── server/
+│           ├── routes.go
+│           └── server.go
+└── web/
+    ├── index.html
+    ├── css/
+    │   └── style.css
+    └── js/
+        ├── app.js
+        ├── router.js
+        ├── ws.js
+        ├── pages/
+        │   ├── Home.js
+        │   ├── Login.js
+        │   ├── Register.js
+        │   └── Post.js
+        └── components/
+            ├── Navbar.js
+            ├── PostItem.js
+            └── PostList.js
+
+
+
+
