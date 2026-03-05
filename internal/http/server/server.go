@@ -3,12 +3,11 @@ package server
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
-	"time"
-
-	"socialnet/internal/database"
 	"socialnet/internal/database/store"
+	"time"
 
 	"github.com/Des1red/goauthlib/goauth"
 )
@@ -46,10 +45,7 @@ func (s *Server) shutdown(ctx context.Context) error {
 }
 
 func InitServer() {
-	// initialize db
-	if err := database.Init("socialnet.db"); err != nil {
-		panic(err)
-	}
+
 	// Required auth setup
 	goauth.JWTSecret([]byte(os.Getenv("JWT_SECRET")))
 	// use db
@@ -84,7 +80,8 @@ func InitServer() {
 	})
 
 	s := new(":8080")
-
+	log.Printf("Handler type: %T", s.server.Handler)
+	log.Println("Starting server on :8080")
 	if err := s.start(); err != nil {
 		panic(err)
 	}

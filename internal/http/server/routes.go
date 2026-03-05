@@ -2,12 +2,14 @@
 package server
 
 import (
+	"log"
 	"socialnet/internal/http/handlers"
 
 	"github.com/Des1red/goauthlib/goauth"
 )
 
 func (s *Server) registerRoutes() {
+	log.Println("Registering routes...")
 
 	// Public routes
 	s.mux.HandleFunc("POST /login",
@@ -35,4 +37,5 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /home",
 		goauth.Protected(handlers.Home),
 	)
+	log.Println("Routes registered")
 }

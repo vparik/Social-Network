@@ -1,7 +1,11 @@
 package cmd
 
-import "socialnet/internal/http/server"
+import (
+	"socialnet/internal/database"
+	"socialnet/internal/http/server"
+)
 
 func Execute() {
+	database.InitializeDB()
 	server.InitServer()
 }
