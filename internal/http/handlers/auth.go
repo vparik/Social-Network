@@ -11,37 +11,59 @@ import (
 )
 
 type authRequest struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func Register(w http.ResponseWriter, r *http.Request) {
+type registerRequest struct {
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	DateOfBirth string `json:"date_of_birth"`
+	AvatarPath  string `json:"avatar_path"` // optional
+	Nickname    string `json:"nickname"`    // optional
+	AboutMe     string `json:"about_me"`    // optional
+}
 
-	var req authRequest
+func Register(w http.ResponseWriter, r *http.Request) {
+	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
 
-	if req.Username == "" || req.Password == "" {
-		http.Error(w, "missing fields", http.StatusBadRequest)
+	// required fields only
+	if req.Email == "" || req.Password == "" || req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
+		http.Error(w, "missing required fields", http.StatusBadRequest)
 		return
 	}
 
+	// hash the PASSWORD
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "server error", http.StatusInternalServerError)
 		return
 	}
 
-	err = store.CreateUser(req.Username, string(hash), "member")
+	err = store.CreateUser(
+		req.Email,
+		string(hash),
+		req.FirstName,
+		req.LastName,
+		req.DateOfBirth,
+		req.AvatarPath,
+		req.Nickname,
+		req.AboutMe,
+	)
 	if err != nil {
-		http.Error(w, "user exists", http.StatusConflict)
+		http.Error(w, "user already exists", http.StatusConflict)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(`{"status":"registered"}`))
+	json.NewEncoder(w).Encode(map[string]string{"status": "registered"})
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +74,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := store.GetUserByUsername(req.Username)
+	user, err := store.GetUserByEmail(req.Email)
 	if err != nil {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
