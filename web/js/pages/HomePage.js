@@ -1,14 +1,40 @@
 window.HomePage = {
   name: "HomePage",
 
+  data() {
+    return {
+      loading: true,
+      error: ""
+    };
+  },
+
+  async mounted() {
+    try {
+      const res = await fetch("/api/home");
+
+      if (!res.ok) {
+        Router.replace("/login");
+        return;
+      }
+
+      this.loading = false;
+
+    } catch {
+      this.error = "Failed to load session";
+    }
+  },
+
   methods: {
-    logout() {
-      Router.push("/");
+    async logout() {
+      await fetch("/api/logout", { method: "POST" });
+      Router.replace("/login");
     }
   },
 
   template: `
-    <div>
+    <div v-if="loading">Loading...</div>
+
+    <div v-else>
       <header class="topbar">
         <h2>Home</h2>
         <button @click="logout">Logout</button>

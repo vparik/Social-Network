@@ -4,10 +4,12 @@ const routes = {
   "/": HomePage
 };
 
+const publicRoutes = ["/login", "/register"]
+
 const App = {
   computed: {
     CurrentComponent() {
-      return routes[Router.state.path] || HomePage;
+      return routes[Router.state.path];
     }
   },
 

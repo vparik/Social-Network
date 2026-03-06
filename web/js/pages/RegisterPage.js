@@ -68,10 +68,10 @@ window.RegisterPage = {
 
             <div class="actions">
                 <button :disabled="loading" type="submit">
-                    {{ loading ? "Registering..." : "Register" }}
-                </button>
-                <button :disabled="loading" type="Register">
                     {{ loading ? "Login..." : "Login" }}
+                </button>
+                <button :disabled="loading" type="submit">
+                    {{ loading ? "Registering..." : "Register" }}
                 </button>
             </div>
                 

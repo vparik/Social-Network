@@ -16,13 +16,23 @@ window.LoginPage = {
       this.loading = true;
 
       try {
-        // Replace with real API call later
         if (!this.email || !this.password) {
           throw new Error("Email and password required");
         }
 
-        // Simulate success
-        Router.push("/login");
+        const response = await fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email: this.email, password: this.password }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error || "Login Failed")
+        }
+
+        Router.push("/");
 
       } catch (err) {
         this.error = err.message || "Login failed";
@@ -49,11 +59,11 @@ window.LoginPage = {
             </div>
             
             <div class="actions">
+                <button :disabled="loading" type="button" @click="Router.push('/register')">
+                    {{ loading ? "Registering..." : "Register" }}
+                </button>
                 <button :disabled="loading" type="submit">
                     {{ loading ? "Signing in..." : "Login" }}
-                </button>
-                <button :disabled="loading" type="Register">
-                    {{ loading ? "Registering..." : "Register" }}
                 </button>
             </div>
                 
