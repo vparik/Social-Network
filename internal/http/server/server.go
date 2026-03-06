@@ -49,9 +49,6 @@ func (s *Server) shutdown(ctx context.Context) error {
 func InitServer() {
 	// Required auth setup
 	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		log.Fatal("JWT_SECRET not set")
-	}
 
 	goauth.JWTSecret([]byte(secret))
 	// use db
