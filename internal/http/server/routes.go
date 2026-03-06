@@ -12,25 +12,36 @@ import (
 func (s *Server) registerRoutes() {
 	log.Println("Registering routes...")
 
-	// API
-	s.mux.HandleFunc("POST /login", goauth.Auth(handlers.Login))
-	s.mux.HandleFunc("POST /register", goauth.Auth(handlers.Register))
+	// ---------------- API ----------------
 
-	s.mux.HandleFunc("POST /logout", goauth.ProtectedCsrfActive(handlers.Logout))
-	s.mux.HandleFunc("POST /posts", goauth.ProtectedCsrfActive(handlers.CreatePost))
-	s.mux.HandleFunc("DELETE /posts/{id}", goauth.ProtectedCsrfActive(handlers.DeletePost))
+	s.mux.HandleFunc("POST /api/login", goauth.Auth(handlers.Login))
+	s.mux.HandleFunc("POST /api/register", goauth.Auth(handlers.Register))
 
-	s.mux.HandleFunc("GET /", goauth.Protected(handlers.Home))
+	s.mux.HandleFunc("POST /api/logout", goauth.ProtectedCsrfActive(handlers.Logout))
+	s.mux.HandleFunc("POST /api/posts", goauth.ProtectedCsrfActive(handlers.CreatePost))
+	s.mux.HandleFunc("DELETE /api/posts/{id}", goauth.ProtectedCsrfActive(handlers.DeletePost))
 
-	// STATIC
+	s.mux.HandleFunc("GET /api/home", goauth.Protected(handlers.Home))
+
+	// ---------------- STATIC ----------------
+
 	fs := http.FileServer(http.Dir("./web"))
 	s.mux.Handle("GET /css/", fs)
 	s.mux.Handle("GET /js/", fs)
 
-	// SPA fallback
-	s.mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	// ---------------- PUBLIC PAGES ----------------
+
+	s.mux.HandleFunc("GET /login", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./web/index.html")
 	})
-	log.Println("Routes registered")
 
+	s.mux.HandleFunc("GET /register", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/index.html")
+	})
+
+	s.mux.HandleFunc("GET /", (func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./web/index.html")
+	}))
+
+	log.Println("Routes registered")
 }

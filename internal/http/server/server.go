@@ -6,7 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"socialnet/internal/database/store"
+	"syscall"
 	"time"
 
 	"github.com/Des1red/goauthlib/goauth"
@@ -46,7 +48,12 @@ func (s *Server) shutdown(ctx context.Context) error {
 
 func InitServer() {
 	// Required auth setup
-	goauth.JWTSecret([]byte(os.Getenv("JWT_SECRET")))
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Fatal("JWT_SECRET not set")
+	}
+
+	goauth.JWTSecret([]byte(secret))
 	// use db
 	goauth.UseStore(store.NewAuthTokenStore())
 
@@ -79,9 +86,29 @@ func InitServer() {
 	})
 
 	s := new(":8080")
+	// --- graceful shutdown signals ---
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-quit
+
+		log.Println("Shutdown signal received")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := s.shutdown(ctx); err != nil {
+			log.Printf("Shutdown error: %v", err)
+		}
+
+		log.Println("Server stopped")
+	}()
+
 	log.Printf("Handler type: %T", s.server.Handler)
 	log.Println("Starting server on :8080")
-	if err := s.start(); err != nil {
+
+	if err := s.start(); err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}
 }
