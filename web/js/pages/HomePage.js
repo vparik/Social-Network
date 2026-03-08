@@ -3,8 +3,11 @@ window.HomePage = {
 
   data() {
     return {
+      isChatSidebarOpen: false,
+      activeChatUser: null,
       loading: true,
-      error: ""
+      error: null
+      
     };
   },
 
@@ -13,14 +16,19 @@ window.HomePage = {
       const res = await fetch("/api/home");
 
       if (!res.ok) {
-        Router.replace("/login");
+        // Router.replace("/login"); (1)
+        console.warn("Session check failed (dev mode)");
+        this.loading = false;
+    
         return;
       }
 
       this.loading = false;
 
     } catch {
-      this.error = "Failed to load session";
+      //this.error = "Failed to load session";
+      console.warn("API unavailable (dev mode)");
+      this.loading = false;
     }
   },
 
@@ -28,22 +36,47 @@ window.HomePage = {
     async logout() {
       await fetch("/api/logout", { method: "POST" });
       Router.replace("/login");
+    },
+
+    toggleChatSidebar() {
+      console.log("chat toggle");
+      this.isChatSidebarOpen = !this.isChatSidebarOpen;
+    },
+
+    openChatWithUser(user) {
+      this.activeChatUser = user;
+    },
+
+    closeChatBox() {
+      this.activeChatUser = null;
     }
   },
 
   template: `
-    <div v-if="loading">Loading...</div>
+    <div>
+      <Navbar @toggle-chat="toggleChatSidebar" />
+      <div v-if="loading" class="container">Loading...</div>
+      <div v-else class="page-content">
+        <main class=container>
+          <h1>Welcome to the Social Network!</h1>
+          <p>This is your SPA homepage.</p>
+        </main>
+        <ChatSidebar
+          :isOpen="isChatSidebarOpen"
+          @close="isChatSidebarOpen = false"
+          @select-user="openChatWithUser"
+        />
 
-    <div v-else>
-      <header class="topbar">
-        <h2>Home</h2>
-        <button @click="logout">Logout</button>
-      </header>
+        <ChatBox
+          v-if="activeChatUser"
+          :user="activeChatUser"
+          @close="closeChatBox"
+        />
+        </div>
 
-      <main class="container">
-        <h1>Welcome to the Social Network</h1>
-        <p>This is your SPA home page.</p>
-      </main>
+        <div v-if="error" class="container error">
+          {{ error }}
+        </div>
     </div>
-  `
+    `
 };

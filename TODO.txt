@@ -42,8 +42,6 @@ social-network/
 
 
 
-5/3/2026
-Andreas : Fix navbar, chat sidebar(with open/close button)
 
 
 

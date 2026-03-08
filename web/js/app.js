@@ -1,7 +1,8 @@
 const routes = {
   "/register": RegisterPage,
   "/login": LoginPage,
-  "/": HomePage
+  "/": HomePage,
+  "/profile": HomePage // change it later to a real profile page
 };
 
 const publicRoutes = ["/login", "/register"]
@@ -9,7 +10,7 @@ const publicRoutes = ["/login", "/register"]
 const App = {
   computed: {
     CurrentComponent() {
-      return routes[Router.state.path];
+      return routes[Router.state.path]; // || Homepage;
     }
   },
 
@@ -18,4 +19,10 @@ const App = {
   `
 };
 
-Vue.createApp(App).mount("#app");
+const app = Vue.createApp(App);
+
+app.component("Navbar", Navbar);
+app.component("ChatSidebar", ChatSidebar);
+app.component("ChatBox", ChatBox);
+
+app.mount("#app");
