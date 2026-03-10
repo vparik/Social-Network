@@ -13,20 +13,22 @@ window.HomePage = {
 
   async mounted() {
     try {
-      const res = await fetch("/api/home");
+      const res = await fetch("/", {
+          method: "GET",
+          credentials: "include",
+      });
 
       if (!res.ok) {
-        // Router.replace("/login"); (1)
-        console.warn("Session check failed (dev mode)");
+        Router.replace("/login");
         this.loading = false;
     
-        return;
+        return
       }
 
       this.loading = false;
 
     } catch {
-      //this.error = "Failed to load session";
+      this.error = "Failed to load session";
       console.warn("API unavailable (dev mode)");
       this.loading = false;
     }
@@ -35,7 +37,7 @@ window.HomePage = {
   methods: {
     async logout() {
       await fetch("/api/logout", { method: "POST" });
-      Router.replace("/login");
+      Router.push("/login");
     },
 
     toggleChatSidebar() {

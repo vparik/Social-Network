@@ -68,12 +68,14 @@ window.Navbar = {
       this.$emit("toggle-chat");
     },
 
-    logout() {
-      // Later:
-      // call logout endpoint / remove session / redirect to login
-      console.log("Logout clicked");
-      Router.push("/login");
+    
+    async logout() {
+      await fetch("/api/logout", { 
+        method: "POST" 
+      })
+      Router.push("/login")
     },
+   
 
     handleClickOutside(event) {
       const navbar = this.$refs.navbar;

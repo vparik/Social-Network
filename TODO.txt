@@ -45,3 +45,9 @@ social-network/
 
 
 
+chatsidebar typo OK
+CHECK top navbar logout logic responds forbiden
+new register frontend logic OK
+login wired OK
+navigate through register and login buttons OK
+after successful login redirect to homepage OK

@@ -10,7 +10,7 @@ const publicRoutes = ["/login", "/register"]
 const App = {
   computed: {
     CurrentComponent() {
-      return routes[Router.state.path]; // || Homepage;
+      return routes[window.Router.state.path]; // || Homepage;
     }
   },
 

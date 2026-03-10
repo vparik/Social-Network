@@ -20,11 +20,13 @@ window.LoginPage = {
           throw new Error("Email and password required");
         }
 
-        const response = await fetch("/login", {
+        const response = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ email: this.email, password: this.password }),
+          body: JSON.stringify({ 
+            email: this.email, 
+            password: this.password }),
         })
 
         if (!response.ok) {
@@ -39,6 +41,10 @@ window.LoginPage = {
       } finally {
         this.loading = false;
       }
+    },
+
+    registerNavigate() {
+      Router.push("/register")
     }
   },
 
@@ -59,12 +65,12 @@ window.LoginPage = {
             </div>
             
             <div class="actions">
-                <button :disabled="loading" type="button" @click="Router.push('/register')">
+                <button :disabled="loading" type="button" @click="registerNavigate">
                     {{ loading ? "Registering..." : "Register" }}
                 </button>
-                <button :disabled="loading" type="submit">
+                <button :disabled="loading" type="submit" @click=submit>
                     {{ loading ? "Signing in..." : "Login" }}
-                </button>
+                </button> 
             </div>
                 
             

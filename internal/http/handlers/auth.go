@@ -4,6 +4,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+
 	"socialnet/internal/database/store"
 
 	"github.com/Des1red/goauthlib/goauth"
@@ -67,7 +68,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-
 	var req authRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -84,7 +84,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		[]byte(user.PasswordHash),
 		[]byte(req.Password),
 	)
-
 	if err != nil {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
@@ -97,7 +96,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
-
 	// revoke tokens + expire cookies
 	goauth.Logout(w, r)
 
