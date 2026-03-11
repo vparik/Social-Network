@@ -13,3 +13,15 @@ func CreatePost(user_id int, title, content, privacy string) error {
 	)
 	return err
 }
+
+func GetPrivacy(userID int) string {
+	var isPublic int
+	err := database.DB.QueryRow("SELECT is_public FROM users WHERE id=$1", userID).Scan(&isPublic)
+	if err != nil {
+		return ""
+	}
+	if isPublic == 1 {
+		return "public"
+	}
+	return "private"
+}

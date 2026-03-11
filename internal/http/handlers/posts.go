@@ -42,13 +42,8 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "content is required", http.StatusBadRequest)
 		return
 	}
-	if body.Privacy == "" {
-		body.Privacy = "public"
-	}
-	if body.Privacy != "public" && body.Privacy != "friends" {
-		http.Error(w, "privacy must be 'public' or 'friends'", http.StatusBadRequest)
-		return
-	}
+
+	body.Privacy = store.GetPrivacy(userID)
 
 	store.CreatePost(userID, body.Title, body.Content, body.Privacy)
 
