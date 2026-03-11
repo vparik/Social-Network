@@ -13,10 +13,7 @@ window.HomePage = {
 
   async mounted() {
     try {
-      const res = await fetch("/", {
-          method: "GET",
-          credentials: "include",
-      });
+      const res = await fetch("/api/home", { method: "GET" });
 
       if (!res.ok) {
         Router.replace("/login");

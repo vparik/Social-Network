@@ -31,13 +31,14 @@ window.LoginPage = {
 
         if (!response.ok) {
           const data = await response.json()
-          throw new Error(data.error || "Login Failed")
+          throw new Error(data.error)
         }
 
         Router.push("/");
 
       } catch (err) {
-        this.error = err.message || "Login failed";
+        this.error = err.message
+        console.error(this.error)
       } finally {
         this.loading = false;
       }
@@ -74,7 +75,7 @@ window.LoginPage = {
             </div>
                 
             
-          <p v-if="error" class="error">{{ error }}</p>
+          <p v-if="error" class="error">{{ "Login failed" }}</p>
         </form>
       </div>
     </div>
