@@ -8,7 +8,11 @@ window.Navbar = {
       isSearchOpen: false,
       isNotificationsOpen: false,
       isSettingsOpen: false,
-      searchQuery: ""
+      isCreatePostOpen: false,
+      searchQuery: "",
+      postVisibility: "public",
+      postTitle: "",
+      postDescription: ""
     };
   },
 
@@ -28,6 +32,7 @@ window.Navbar = {
       if (this.isSearchOpen) {
         this.isNotificationsOpen = false;
         this.isSettingsOpen = false;
+        this.isCreatePostOpen = false;
 
         this.$nextTick(() => {
           if (this.$refs.searchInput) {
@@ -56,18 +61,51 @@ window.Navbar = {
       this.isNotificationsOpen = !this.isNotificationsOpen;
       this.isSettingsOpen = false;
       this.isSearchOpen = false;
+      this.isCreatePostOpen = false;
     },
 
     toggleSettings() {
       this.isSettingsOpen = !this.isSettingsOpen;
       this.isNotificationsOpen = false;
       this.isSearchOpen = false;
+      this.isCreatePostOpen = false;
     },
 
     openChat() {
       this.$emit("toggle-chat");
     },
 
+    openCreatePost() {
+      this.isCreatePostOpen = true;
+      this.isNotificationsOpen = false;
+      this.isSettingsOpen = false;
+      this.isSearchOpen = false;
+    },
+
+    closeCreatePost() {
+      this.isCreatePostOpen = false;
+      this.postTitle = "";
+      this.postDescription = "";
+      this.postVisibility = "public";
+    },
+
+    selectVisibility(value) {
+      this.postVisibility = value;
+    },
+
+    handleCreatePost() {
+      const payload = {
+        visibility: this.postVisibility,
+        title: this.postTitle.trim(),
+        description: this.postDescription.trim()
+      };
+
+      console.log("Create post payload:", payload);
+
+      // later here you can call your backend create post endpoint
+
+      this.closeCreatePost();
+    },
     
     async logout() {
       await fetch("/api/logout", { 
@@ -86,92 +124,105 @@ window.Navbar = {
         this.isNotificationsOpen = false;
         this.isSettingsOpen = false;
       }
+    },
+
+    handleEscape(event) {
+      if (event.key === "Escape" && this.isCreatePostOpen) {
+        this.closeCreatePost();
+      }
     }
   },
 
   mounted() {
     document.addEventListener("click", this.handleClickOutside);
+    document.addEventListener("keyup", this.handleEscape);
   },
 
   beforeUnmount() {
     document.removeEventListener("click", this.handleClickOutside);
+    document.removeEventListener("keyup", this.handleEscape);
   },
 
-  template: `
-    <header class="navbar" ref="navbar">
-      <div class="navbar-left">
-        <button class="nav-brand" @click="goHome">
-          Social Network
-        </button>
-      </div>
-
-      <div class="navbar-center">
-        <button class="nav-icon-btn" @click="goHome" title="Home">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 10.5L12 3l9 7.5"></path>
-            <path d="M4.5 9.75V21h6v-6h3v6h6V9.75"></path>
-          </svg>
-        </button>
-
-        <button class="nav-icon-btn" @click="goProfile" title="Profile">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="7" r="4"></circle>
-            <path d="M5.5 21a6.5 6.5 0 0113 0"></path>
-          </svg>
-        </button>
-
-        <div class="nav-search-wrapper">
-          <button class="nav-icon-btn" @click="toggleSearch" title="Search">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="M21 21l-4.3-4.3"></path>
-            </svg>
+template: `
+      <header class="navbar" ref="navbar">
+        <div class="navbar-left">
+          <button class="nav-brand" @click="goHome">
+            Social Network
           </button>
-
-          <div v-if="isSearchOpen" class="nav-search-box">
-            <input
-              ref="searchInput"
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search users..."
-              class="nav-search-input"
-              @keyup.enter="submitSearch"
-            />
-            <button class="nav-search-go" @click="submitSearch">Go</button>
-          </div>
         </div>
-      </div>
 
-      <div class="navbar-right">
-        <div class="nav-dropdown-wrapper">
-          <button class="nav-icon-btn" @click.stop="toggleNotifications" title="Notifications">
+        <div class="navbar-center">
+          <button class="nav-icon-btn" @click="goHome" title="Home">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
-              <path d="M13.73 21a2 2 0 01-3.46 0"></path>
+              <path d="M3 10.5L12 3l9 7.5"></path>
+              <path d="M4.5 9.75V21h6v-6h3v6h6V9.75"></path>
             </svg>
           </button>
 
-          <div v-if="isNotificationsOpen" class="nav-dropdown">
-            <div class="nav-dropdown-title">Notifications</div>
+          <button class="nav-icon-btn" @click="openCreatePost" title="Create post">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+          </button>
 
-            <!-- Later:
-                 render notifications dynamically from backend -->
-            <div class="nav-dropdown-empty">
-              No notifications yet
+          <button class="nav-icon-btn" @click="goProfile" title="Profile">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M5.5 21a6.5 6.5 0 0113 0"></path>
+            </svg>
+          </button>
+
+          <div class="nav-search-wrapper">
+            <button class="nav-icon-btn" @click="toggleSearch" title="Search">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="M21 21l-4.3-4.3"></path>
+              </svg>
+            </button>
+
+            <div v-if="isSearchOpen" class="nav-search-box">
+              <input
+                ref="searchInput"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search users..."
+                class="nav-search-input"
+                @keyup.enter="submitSearch"
+              />
+              <button class="nav-search-go" @click="submitSearch">Go</button>
             </div>
           </div>
         </div>
 
-        <button class="nav-icon-btn" @click="openChat" title="Chat">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z"></path>
-          </svg>
-        </button>
+        <div class="navbar-right">
+          <div class="nav-dropdown-wrapper">
+            <button class="nav-icon-btn" @click.stop="toggleNotifications" title="Notifications">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
+                <path d="M13.73 21a2 2 0 01-3.46 0"></path>
+              </svg>
+            </button>
 
-        <div class="nav-dropdown-wrapper">
-          <button class="nav-icon-btn" @click.stop="toggleSettings" title="Settings">
+            <div v-if="isNotificationsOpen" class="nav-dropdown">
+              <div class="nav-dropdown-title">Notifications</div>
+
+              <div class="nav-dropdown-empty">
+                No notifications yet
+              </div>
+            </div>
+          </div>
+
+          <button class="nav-icon-btn" @click="openChat" title="Chat">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z"></path>
+            </svg>
+          </button>
+
+          <div class="nav-dropdown-wrapper">
+            <button class="nav-icon-btn" @click.stop="toggleSettings" title="Settings">
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
                 <path d="M12 2v2"></path>
                 <path d="M12 20v2"></path>
                 <path d="M4.93 4.93l1.41 1.41"></path>
@@ -180,19 +231,123 @@ window.Navbar = {
                 <path d="M20 12h2"></path>
                 <path d="M4.93 19.07l1.41-1.41"></path>
                 <path d="M17.66 6.34l1.41-1.41"></path>
-            </svg>
-          </button>
-
-          <div v-if="isSettingsOpen" class="nav-dropdown settings-dropdown">
-            <button class="nav-dropdown-item" @click="logout">
-              Logout
+              </svg>
             </button>
 
-            <!-- Later:
-                 add more settings items here -->
+            <div v-if="isSettingsOpen" class="nav-dropdown settings-dropdown">
+              <button class="nav-dropdown-item" @click="logout">
+                Logout
+              </button>
+            </div>
           </div>
         </div>
+      </header>
+
+      <div
+        v-if="isCreatePostOpen"
+        class="create-post-overlay"
+        @click.self="closeCreatePost"
+      >
+        <div
+          class="create-post-modal"
+          :class="{ 'create-post-modal--with-sidebar': postVisibility === 'private' }"
+        >
+          <div class="create-post-main">
+            <div class="create-post-header">
+              <h2 class="create-post-title">Create post</h2>
+            </div>
+
+            <div class="create-post-visibility">
+              <span class="create-post-visibility-label">
+                Select visibility:
+              </span>
+
+              <div class="create-post-visibility-actions">
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  :class="{ 'is-active': postVisibility === 'public' }"
+                  @click="selectVisibility('public')"
+                >
+                  Public
+                </button>
+
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  :class="{ 'is-active': postVisibility === 'private' }"
+                  @click="selectVisibility('private')"
+                >
+                  Private
+                </button>
+              </div>
+            </div>
+
+            <div class="create-post-form">
+              <label class="create-post-label" for="post-title">Title</label>
+              <input
+                id="post-title"
+                v-model="postTitle"
+                type="text"
+                class="create-post-input"
+              />
+
+              <label class="create-post-label" for="post-description">Description</label>
+              <div class="create-post-textarea-wrap">
+                <textarea
+                  id="post-description"
+                  v-model="postDescription"
+                  class="create-post-textarea"
+                ></textarea>
+
+                <button
+                  type="button"
+                  class="create-post-image-btn"
+                >
+                  Img
+                </button>
+              </div>
+            </div>
+
+            <div class="create-post-footer">
+              <button
+                type="button"
+                class="create-post-action-btn create-post-cancel-btn"
+                @click="closeCreatePost"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                class="create-post-action-btn create-post-submit-btn"
+                @click="handleCreatePost"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+
+          <aside
+            v-if="postVisibility === 'private'"
+            class="create-post-sidebar"
+          >
+            <div class="create-post-sidebar-section">
+              <div class="create-post-sidebar-title">Groups</div>
+              <div class="create-post-sidebar-empty">
+                Groups will appear here when that feature is ready.
+              </div>
+            </div>
+
+            <div class="create-post-sidebar-section">
+              <div class="create-post-sidebar-title">Users</div>
+              <div class="create-post-sidebar-empty">
+                User selection will appear here later.
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
-    </header>
+    </>
   `
 };

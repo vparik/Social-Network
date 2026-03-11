@@ -179,3 +179,257 @@
 .demo-space {
   height: 1500px;
 }
+
+
+/* ===== Create Post Modal ===== */
+
+.create-post-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.create-post-modal {
+  width: 100%;
+  max-width: 760px;
+  min-height: 520px;
+
+  display: flex;
+  gap: 24px;
+
+  background: #e5e7eb;
+  color: #111827;
+  border: 2px solid #111827;
+  border-radius: 24px;
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.create-post-modal--with-sidebar {
+  max-width: 1080px;
+  align-items: flex-start;
+}
+
+.create-post-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.create-post-header {
+  margin-bottom: 20px;
+}
+
+.create-post-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.create-post-visibility {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.create-post-visibility-label {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: lowercase;
+  text-align: center;
+}
+
+.create-post-visibility-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+}
+
+.create-post-visibility-btn {
+  width: 160px;
+  height: 54px;
+  padding: 12px 20px;
+  border: 2px solid #111827;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.create-post-visibility-btn:hover {
+  transform: translateY(-1px);
+}
+
+.create-post-visibility-btn.is-active {
+  background: #cbd5e1;
+}
+
+.create-post-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create-post-label {
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.create-post-input {
+  height: 56px;
+  padding: 0 16px;
+  border: 2px solid #111827;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 16px;
+  outline: none;
+}
+
+.create-post-textarea-wrap {
+  position: relative;
+}
+
+.create-post-textarea {
+  width: 100%;
+  min-height: 260px;
+  resize: none;
+  padding: 16px;
+  padding-right: 88px;
+  border: 2px solid #111827;
+  border-radius: 28px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 16px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.create-post-image-btn {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+
+  width: 58px;
+  height: 58px;
+  border: 2px solid #111827;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.create-post-footer {
+  margin-top: auto;
+  padding-top: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.create-post-action-btn {
+  min-width: 150px;
+  height: 60px;
+  padding: 0 24px;
+  border: 2px solid #111827;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.create-post-cancel-btn {
+  background: #ffffff;
+  color: #111827;
+}
+
+.create-post-submit-btn {
+  background: #ffffff;
+  color: #111827;
+}
+
+.create-post-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+
+  background: #f3f4f6;
+  border: 2px solid #111827;
+  border-radius: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.create-post-sidebar-section + .create-post-sidebar-section {
+  margin-top: 28px;
+}
+
+.create-post-sidebar-title {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.create-post-sidebar-empty {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 980px) {
+  .create-post-modal,
+  .create-post-modal--with-sidebar {
+    max-width: 760px;
+    flex-direction: column;
+  }
+
+  .create-post-sidebar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .create-post-overlay {
+    padding: 12px;
+  }
+
+  .create-post-modal {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .create-post-visibility {
+    flex-direction: column;
+  }
+
+  .create-post-visibility-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .create-post-footer {
+    flex-direction: column;
+  }
+
+  .create-post-action-btn {
+    width: 100%;
+  }
+}
