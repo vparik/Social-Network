@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"socialnet/internal/database/store"
@@ -50,6 +51,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	err = store.CreateUser(
 		req.Email,
 		string(hash),
+		goauth.RoleUser(),
 		req.FirstName,
 		req.LastName,
 		req.DateOfBirth,
@@ -91,7 +93,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	// issue tokens
 	goauth.Login(w, user.Role, user.ID)
-
+	log.Println("ROLE FROM DB:", user.Role)
 	w.Write([]byte(`{"status":"logged_in"}`))
 }
 

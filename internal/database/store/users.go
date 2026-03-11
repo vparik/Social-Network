@@ -7,12 +7,13 @@ import (
 	"socialnet/internal/models"
 )
 
-func CreateUser(email, passwordHash, firstName, lastName, dateOfBirth, avatarPath, nickname, aboutMe string) error {
+func CreateUser(email, passwordHash, role, firstName, lastName, dateOfBirth, avatarPath, nickname, aboutMe string) error {
 	_, err := database.DB.Exec(
-		`INSERT INTO users (email, password_hash, first_name, last_name, date_of_birth, avatar_path, nickname, about_me)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO users (email, password_hash, role, first_name, last_name, date_of_birth, avatar_path, nickname, about_me)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		email,
 		passwordHash,
+		role,
 		firstName,
 		lastName,
 		dateOfBirth,
@@ -25,7 +26,7 @@ func CreateUser(email, passwordHash, firstName, lastName, dateOfBirth, avatarPat
 
 func GetUserByEmail(email string) (*models.User, error) {
 	row := database.DB.QueryRow(
-		`SELECT id, email, password_hash, first_name, last_name, date_of_birth, avatar_path, nickname, about_me, is_public, created_at
+		`SELECT id, email, password_hash, role, first_name, last_name, date_of_birth, avatar_path, nickname, about_me, is_public, created_at
 		 FROM users
 		 WHERE email = ?`,
 		email,
@@ -38,6 +39,7 @@ func GetUserByEmail(email string) (*models.User, error) {
 		&u.ID,
 		&u.Email,
 		&u.PasswordHash,
+		&u.Role,
 		&u.FirstName,
 		&u.LastName,
 		&u.DateOfBirth,
