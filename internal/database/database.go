@@ -47,6 +47,9 @@ func applySchema() error {
 	if err := execSQLFile(schemaDir + "002_users.sql"); err != nil {
 		log.Fatalf("Failed to execute 002_users.sql: %v", err)
 	}
+	if err := execSQLFile(schemaDir + "003_posts.sql"); err != nil {
+		log.Fatalf("Failed to execute 003_posts.sql: %v", err)
+	}
 
 	return nil
 }
