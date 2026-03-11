@@ -32,11 +32,6 @@ window.HomePage = {
   },
 
   methods: {
-    async logout() {
-      await fetch("/api/logout", { method: "POST" });
-      Router.push("/login");
-    },
-
     toggleChatSidebar() {
       console.log("chat toggle");
       this.isChatSidebarOpen = !this.isChatSidebarOpen;
