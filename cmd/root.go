@@ -6,6 +6,6 @@ import (
 )
 
 func Execute() {
-	database.InitializeDB()
+	database.InitDb()
 	server.InitServer()
 }

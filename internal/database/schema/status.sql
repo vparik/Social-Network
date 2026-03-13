@@ -1,6 +1,7 @@
-CREATE  status {
-    id  INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER  REFERENCES users(id)   ON DELETE CASCADE,
-    event_id   INTEGER REFERENCES events (id) ON DELETE CASCADE,
-    status      TEXT  CHECK (status IN ('GOING', 'NOT-GOING'))
-}
+CREATE TABLE status (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id  INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    status    TEXT NOT NULL CHECK (status IN ('GOING','NOT-GOING')),
+    UNIQUE(user_id, event_id)
+);
