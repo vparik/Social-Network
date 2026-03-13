@@ -108,9 +108,18 @@ window.Navbar = {
     },
     
     async logout() {
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrf_token='))
+        ?.split('=')[1]
+
       await fetch("/api/logout", { 
-        method: "POST" 
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": csrfToken
+        }
       })
+      
       Router.push("/login")
     },
    

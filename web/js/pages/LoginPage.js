@@ -23,7 +23,6 @@ window.LoginPage = {
         const response = await fetch("/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ 
             email: this.email, 
             password: this.password }),
@@ -57,12 +56,12 @@ window.LoginPage = {
         <form @submit.prevent="submit">
             <div class="form-row">
                 <label>Email</label>
-                <input v-model="email" type="email">
+                <input v-model="email" type="email" required>
             </div>
 
             <div class="form-row">
                 <label>Password</label>
-                <input v-model="password" type="password">
+                <input v-model="password" type="password" required>
             </div>
             
             <div class="actions">

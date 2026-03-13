@@ -2,7 +2,7 @@ const routes = {
   "/register": RegisterPage,
   "/login": LoginPage,
   "/": HomePage,
-  "/profile": HomePage // change it later to a real profile page
+  "/profile": ProfilePage
 };
 
 const publicRoutes = ["/login", "/register"]
@@ -10,7 +10,7 @@ const publicRoutes = ["/login", "/register"]
 const App = {
   computed: {
     CurrentComponent() {
-      return routes[window.Router.state.path]; // || Homepage;
+      return routes[window.Router.state.path]
     }
   },
 

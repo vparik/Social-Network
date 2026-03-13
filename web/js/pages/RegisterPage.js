@@ -26,28 +26,29 @@ window.RegisterPage = {
         const response= await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({
             email: this.email,
             password: this.password,
-            first_name: this.first_name,
-            last_name: this.last_name,
-            date_of_birth: this.date_of_birth }),
+            first_name: this.firstName,
+            last_name: this.lastName,
+            date_of_birth: this.dateOfBirth }),
         })
 
         if (!response.ok) {
           const data = await response.json()
-          throw new Error(data.error || "Register Failed")
+          console.error("Registration error:", data.error);
+          throw new Error("Something went wrong. Please try again.");
         }
 
         Router.push("/login");
 
       } catch (err) {
-        this.error = err.message || "Registration failed";
+        this.error = err.message;
       } finally {
         this.loading = false;
       }
     },
+
     loginNavigate() {
       Router.push("/login")
     }
@@ -61,17 +62,17 @@ window.RegisterPage = {
         <form @submit.prevent="submit">
             <div class="form-row">
                 <label>First Name</label>
-                <input v-model="first_name" type="text">
+                <input v-model="firstName" type="text">
             </div>
 
             <div class="form-row">
                 <label>Last Name</label>
-                <input v-model="last_name" type="text">
+                <input v-model="lastName" type="text">
             </div>
 
             <div class="form-row">
                 <label>Date of Birth</label>
-                <input v-model="date_of_birth" type="date">
+                <input v-model="dateOfBirth" type="date">
             </div>
 
             <div class="form-row">

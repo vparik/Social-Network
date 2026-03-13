@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"socialnet/internal/database/store"
@@ -93,8 +92,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	// issue tokens
 	goauth.Login(w, user.Role, user.ID)
-	log.Println("ROLE FROM DB:", user.Role)
 	w.Write([]byte(`{"status":"logged_in"}`))
+	
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {

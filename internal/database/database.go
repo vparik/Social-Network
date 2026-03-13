@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/Des1red/sqlitekit/sqlitekit"
+	"github.com/Des1red/gosqlitekit/sqlitekit"
 )
 
 var DB *sql.DB
