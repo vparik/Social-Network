@@ -2,7 +2,7 @@ const routes = {
   "/register": RegisterPage,
   "/login": LoginPage,
   "/": HomePage,
-  "/profile": ProfilePage
+  // "/profile": ProfilePage
 };
 
 const publicRoutes = ["/login", "/register"]

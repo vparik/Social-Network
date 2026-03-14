@@ -22,8 +22,8 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("DELETE /api/posts/{id}", goauth.ProtectedCsrfActive(handlers.DeletePost))
 
 	s.mux.HandleFunc("GET /api/home", goauth.Protected(handlers.Home))
-	s.mux.HandleFunc("GET /api/profile", goauth.Protected(handlers.GetProfile))
-	s.mux.HandleFunc("GET /api/profile/{id}", goauth.Protected(handlers.GetProfile))
+	// s.mux.HandleFunc("GET /api/profile", goauth.Protected(handlers.GetProfile))
+	// s.mux.HandleFunc("GET /api/profile/{id}", goauth.Protected(handlers.GetProfile))
 
 	// ---------------- STATIC ----------------
 
