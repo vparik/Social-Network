@@ -19,6 +19,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	var targetID int
 	var err error
 
+	// change and add GetUserById later
 	if rawID == "" {
 		targetID = payload.UserID
 	} else {
