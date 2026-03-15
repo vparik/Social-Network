@@ -37,7 +37,7 @@ window.RegisterPage = {
         if (!response.ok) {
           const data = await response.json()
           console.error("Registration error:", data.error);
-          throw new Error("Something went wrong. Please try again.");
+          throw new Error(data.error ||"Something went wrong. Please try again.");
         }
 
         Router.push("/login");
@@ -55,49 +55,69 @@ window.RegisterPage = {
   },
 
   template: `
-    <div class="centered">
-      <div class="card">
-        <h1>Register</h1>
+  <div class="auth-page">
+    <div class="auth-shell">
+      <section class="auth-hero">
+        <div class="auth-hero-inner">
+          <div class="auth-brand">Social Network</div>
 
-        <form @submit.prevent="submit">
-            <div class="form-row">
-                <label>First Name</label>
-                <input v-model="firstName" type="text">
+          <h1 class="auth-hero-title">
+            Connect, share,<br />
+            and belong.
+          </h1>
+
+          <p class="auth-hero-text">
+            Join Social Network and stay close to the people and moments
+            that matter most.
+          </p>
+        </div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-card">
+          <h1 class="auth-title">Register</h1>
+          <p class="auth-switch-text">
+            Already have an account?
+            <button type="button" class="auth-switch-link" @click="loginNavigate">
+              Login
+            </button>
+          </p>
+
+          <form class="auth-form" @submit.prevent="submit">
+            <div class="auth-field">
+              <label>First name</label>
+              <input v-model="firstName" type="text" required />
             </div>
 
-            <div class="form-row">
-                <label>Last Name</label>
-                <input v-model="lastName" type="text">
+            <div class="auth-field">
+              <label>Last name</label>
+              <input v-model="lastName" type="text" required />
             </div>
 
-            <div class="form-row">
-                <label>Date of Birth</label>
-                <input v-model="dateOfBirth" type="date">
+            <div class="auth-field">
+              <label>Date of birth</label>
+              <input v-model="dateOfBirth" type="date" required />
             </div>
 
-            <div class="form-row">
-                <label>Email</label>
-                <input v-model="email" type="email">
+            <div class="auth-field">
+              <label>Email</label>
+              <input v-model="email" type="email" required />
             </div>
 
-            <div class="form-row">
-                <label>Password</label>
-                <input v-model="password" type="password">
+            <div class="auth-field">
+              <label>Password</label>
+              <input v-model="password" type="password" required />
             </div>
 
-            <div class="actions">
-                <button :disabled="loading" type="button" @click="loginNavigate">
-                    {{ loading ? "Login..." : "Login" }}
-                </button>
-                <button :disabled="loading" type="submit" @click="submit">
-                    {{ loading ? "Registering..." : "Register" }}
-                </button>
-            </div>
-                
-            
-          <p v-if="error" class="error">{{ error }}</p>
-        </form>
-      </div>
+            <button :disabled="loading" type="submit" class="auth-submit-btn">
+              {{ loading ? "Creating account..." : "Register" }}
+            </button>
+
+            <p v-if="error" class="error">{{ error }}</p>
+          </form>
+        </div>
+      </section>
     </div>
-  `
+  </div>
+`
 };

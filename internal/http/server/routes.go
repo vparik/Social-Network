@@ -45,5 +45,9 @@ func (s *Server) registerRoutes() {
 		http.ServeFile(w, r, "./web/index.html")
 	}))
 
+	// s.mux.HandleFunc("GET /profile", func(w http.ResponseWriter, r *http.Request) {
+	// 	http.ServeFile(w, r, "./web/index.html")
+	// })
+
 	log.Println("Routes registered")
 }
