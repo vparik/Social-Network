@@ -48,4 +48,4 @@ removed credentials: "include" header as it increases vulnerabilities
 fix profilepage get profile 
 
 check privacy mock plan
-https://excalidraw.com/#json=S-aej1aYIqAftTWN9I501,qynHGapRAdqslIdvSdgf7A
+https://excalidraw.com/#json=uX48VIRRK709nLm5OddrZ,wqNqYnzP5SJQ9h6c-TftHA
