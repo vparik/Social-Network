@@ -35,8 +35,8 @@ window.RegisterPage = {
         })
 
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          //console.error("Registration error:", data.error);
+          const data = await response.json()
+          console.error("Registration error:", data.error);
           throw new Error(data.error ||"Something went wrong. Please try again.");
         }
 
@@ -86,17 +86,17 @@ window.RegisterPage = {
           <form class="auth-form" @submit.prevent="submit">
             <div class="auth-field">
               <label>First name</label>
-              <input v-model="first_name" type="text" required />
+              <input v-model="firstName" type="text" required />
             </div>
 
             <div class="auth-field">
               <label>Last name</label>
-              <input v-model="last_name" type="text" required />
+              <input v-model="lastName" type="text" required />
             </div>
 
             <div class="auth-field">
               <label>Date of birth</label>
-              <input v-model="date_of_birth" type="date" required />
+              <input v-model="dateOfBirth" type="date" required />
             </div>
 
             <div class="auth-field">
