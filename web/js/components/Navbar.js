@@ -12,7 +12,8 @@ window.Navbar = {
       searchQuery: "",
       postVisibility: "public",
       postTitle: "",
-      postDescription: ""
+      postDescription: "",
+      currentUserName: ""
     };
   },
 
@@ -24,6 +25,19 @@ window.Navbar = {
     goProfile() {
       // Change this later to the real user profile route
       Router.push("/profile");
+    },
+
+    async loadCurrentUser() {
+      try {
+        const res = await fetch("/api/profile", { method: "GET" });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        this.currentUserName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+      } catch (err) {
+        console.warn("Failed to load current user data:", err);
+      }
     },
 
     toggleSearch() {
@@ -52,7 +66,6 @@ window.Navbar = {
 
       if (!query) return;
 
-      // Later:
       // here you can call your backend search endpoint
       console.log("Search users:", query);
     },
@@ -126,6 +139,7 @@ window.Navbar = {
 
     handleClickOutside(event) {
       const navbar = this.$refs.navbar;
+      const searchWrapper = this.$refs.searchWrapper;
 
       if (!navbar) return;
 
@@ -133,11 +147,25 @@ window.Navbar = {
         this.isNotificationsOpen = false;
         this.isSettingsOpen = false;
       }
+
+      if (
+        this.isSearchOpen &&
+        searchWrapper &&
+        !searchWrapper.contains(event.target)
+      ) {
+        this.closeSearch();
+      }
     },
 
     handleEscape(event) {
-      if (event.key === "Escape" && this.isCreatePostOpen) {
+      if (event.key === "Escape") {
+        if (this.isCreatePostOpen) {
         this.closeCreatePost();
+        }
+
+        if (this.isSearchOpen) {
+          this.closeSearch();
+        }
       }
     }
   },
@@ -145,6 +173,7 @@ window.Navbar = {
   mounted() {
     document.addEventListener("click", this.handleClickOutside);
     document.addEventListener("keyup", this.handleEscape);
+    this.loadCurrentUser();
   },
 
   beforeUnmount() {
@@ -161,7 +190,7 @@ template: `
         </div>
 
         <div class="navbar-center">
-          <button class="nav-icon-btn" @click="goHome" title="Home">
+          <button class="nav-icon-btn" @click="goHome" title="Home page">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 10.5L12 3l9 7.5"></path>
               <path d="M4.5 9.75V21h6v-6h3v6h6V9.75"></path>
@@ -175,15 +204,8 @@ template: `
             </svg>
           </button>
 
-          <button class="nav-icon-btn" @click="goProfile" title="Profile">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="7" r="4"></circle>
-              <path d="M5.5 21a6.5 6.5 0 0113 0"></path>
-            </svg>
-          </button>
-
-          <div class="nav-search-wrapper">
-            <button class="nav-icon-btn" @click="toggleSearch" title="Search">
+          <div class="nav-search-wrapper" ref="searchWrapper">
+            <button class="nav-icon-btn" @click.stop="toggleSearch" title="Search">
               <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="M21 21l-4.3-4.3"></path>
@@ -202,6 +224,14 @@ template: `
               <button class="nav-search-go" @click="submitSearch">Go</button>
             </div>
           </div>
+
+          <button class="nav-profile-link" @click="goProfile" title="Profile">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M5.5 21a6.5 6.5 0 0113 0"></path>
+            </svg>
+            <span class="nav-profile-name">{{ currentUserName || "Profile" }}</span>
+          </button>
         </div>
 
         <div class="navbar-right">
@@ -229,17 +259,18 @@ template: `
           </button>
 
           <div class="nav-dropdown-wrapper">
-            <button class="nav-icon-btn" @click.stop="toggleSettings" title="Settings">
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 2v2"></path>
-                <path d="M12 20v2"></path>
-                <path d="M4.93 4.93l1.41 1.41"></path>
-                <path d="M17.66 17.66l1.41 1.41"></path>
-                <path d="M2 12h2"></path>
-                <path d="M20 12h2"></path>
-                <path d="M4.93 19.07l1.41-1.41"></path>
-                <path d="M17.66 6.34l1.41-1.41"></path>
+            <button class="nav-power-btn" @click.stop="toggleSettings" title="Account">
+              <svg
+                class="nav-power-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 3v7"></path>
+                <path d="M7.05 5.8A8 8 0 1 0 16.95 5.8"></path>
               </svg>
             </button>
 

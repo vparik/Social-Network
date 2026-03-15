@@ -14,8 +14,8 @@ func (s *Server) registerRoutes() {
 
 	// ---------------- API ----------------
 
-	s.mux.HandleFunc("POST /api/login", goauth.Auth(handlers.Login))
-	s.mux.HandleFunc("POST /api/register", goauth.Auth(handlers.Register))
+	s.mux.HandleFunc("POST /api/login", handlers.Login)       //public route
+	s.mux.HandleFunc("POST /api/register", handlers.Register) //public route
 
 	s.mux.HandleFunc("POST /api/logout", goauth.ProtectedCsrfActive(handlers.Logout))
 	s.mux.HandleFunc("POST /api/posts", goauth.ProtectedCsrfActive(handlers.CreatePost))
@@ -44,6 +44,10 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /", (func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./web/index.html")
 	}))
+
+	// s.mux.HandleFunc("GET /profile", func(w http.ResponseWriter, r *http.Request) {
+	// 	http.ServeFile(w, r, "./web/index.html")
+	// })
 
 	log.Println("Routes registered")
 }

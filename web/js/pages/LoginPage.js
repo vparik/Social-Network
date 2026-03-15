@@ -49,34 +49,54 @@ window.LoginPage = {
   },
 
   template: `
-    <div class="centered">
-      <div class="card">
-        <h1>Login</h1>
+  <div class="auth-page">
+    <div class="auth-shell">
+      <section class="auth-hero">
+        <div class="auth-hero-inner">
+          <div class="auth-brand">Social Network</div>
 
-        <form @submit.prevent="submit">
-            <div class="form-row">
-                <label>Email</label>
-                <input v-model="email" type="email" required>
+          <h1 class="auth-hero-title">
+            Connect, share,<br />
+            and belong.
+          </h1>
+
+          <p class="auth-hero-text">
+            Join Social Network and stay close to the people and moments
+            that matter most.
+          </p>
+        </div>
+      </section>
+
+      <section class="auth-panel">
+        <div class="auth-card">
+          <h1 class="auth-title">Login</h1>
+          <p class="auth-switch-text">
+            Don't have an account?
+            <button type="button" class="auth-switch-link" @click="registerNavigate">
+              Register
+            </button>
+          </p>
+
+          <form class="auth-form" @submit.prevent="submit">
+            <div class="auth-field">
+              <label>Email</label>
+              <input v-model="email" type="email" required />
             </div>
 
-            <div class="form-row">
-                <label>Password</label>
-                <input v-model="password" type="password" required>
+            <div class="auth-field">
+              <label>Password</label>
+              <input v-model="password" type="password" required />
             </div>
-            
-            <div class="actions">
-                <button :disabled="loading" type="button" @click="registerNavigate">
-                    {{ loading ? "Registering..." : "Register" }}
-                </button>
-                <button :disabled="loading" type="submit" @click=submit>
-                    {{ loading ? "Signing in..." : "Login" }}
-                </button> 
-            </div>
-                
-            
-          <p v-if="error" class="error">{{ "Login failed" }}</p>
-        </form>
-      </div>
+
+            <button :disabled="loading" type="submit" class="auth-submit-btn">
+              {{ loading ? "Signing in..." : "Login" }}
+            </button>
+
+            <p v-if="error" class="error">{{ "Login failed" }}</p>
+          </form>
+        </div>
+      </section>
     </div>
-  `
+  </div>
+`
 };
