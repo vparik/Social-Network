@@ -19,6 +19,7 @@ func (s *Server) registerRoutes() {
 
 	s.mux.HandleFunc("POST /api/logout", goauth.ProtectedCsrfActive(handlers.Logout))
 	s.mux.HandleFunc("POST /api/posts", goauth.ProtectedCsrfActive(handlers.CreatePost))
+	s.mux.HandleFunc("GET /api/posts", goauth.Protected(handlers.GetPosts))
 	s.mux.HandleFunc("DELETE /api/posts/{id}", goauth.ProtectedCsrfActive(handlers.DeletePost))
 
 	s.mux.HandleFunc("GET /api/home", goauth.Protected(handlers.Home))
