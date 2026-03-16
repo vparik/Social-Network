@@ -1,7 +1,7 @@
 window.Navbar = {
   name: "Navbar",
 
-  emits: ["toggle-chat"],
+  emits: ["toggle-chat", "post-created"],
 
   data() {
     return {
@@ -106,18 +106,46 @@ window.Navbar = {
       this.postVisibility = value;
     },
 
-    handleCreatePost() {
-      const payload = {
-        visibility: this.postVisibility,
-        title: this.postTitle.trim(),
-        description: this.postDescription.trim()
-      };
+    async handleCreatePost() {
+      const title = this.postTitle.trim();
+      const content = this.postDescription.trim();
 
-      console.log("Create post payload:", payload);
+      // Basic client-side validation before hitting the API
+      if (!title || !content) {
+        alert("Title and content are required.");
+        return;
+      }
 
-      // later here you can call your backend create post endpoint
+      // Read CSRF token from cookie — required by the backend middleware
+      const csrfToken = document.cookie
+        .split("; ")
+        .find(row => row.startsWith("csrf_token="))
+        ?.split("=")[1];
 
-      this.closeCreatePost();
+      try {
+        // POST /api/posts — field names must match backend JSON struct
+        const res = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          body: JSON.stringify({ title, content, privacy: this.postVisibility })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to create post: " + err);
+          return;
+        }
+
+        // Tell the parent (HomePage) to refresh the feed
+        this.$emit("post-created");
+        this.closeCreatePost();
+      } catch (err) {
+        console.error("Create post error:", err);
+        alert("Network error. Please try again.");
+      }
     },
     
     async logout() {
@@ -310,6 +338,15 @@ template: `
                   @click="selectVisibility('public')"
                 >
                   Public
+                </button>
+
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  :class="{ 'is-active': postVisibility === 'selected' }"
+                  @click="selectVisibility('selected')"
+                >
+                  Almost private
                 </button>
 
                 <button
