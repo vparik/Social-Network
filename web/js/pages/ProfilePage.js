@@ -13,7 +13,7 @@ window.ProfilePage = {
     try {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
-      const url = id ? `/api/profile?id=${id}` : "/api/profile";
+      const url = id ? `/api/profile?id=${id}` : "/api/profile?id=me";
 
       const res = await fetch(url, { method: "GET" });
 
@@ -48,10 +48,10 @@ window.ProfilePage = {
             alt="Avatar"
           />
           <div v-else class="profile-avatar-placeholder">
-            {{ profile.first_name[0] }}{{ profile.last_name[0] }}
+            {{ profile.firstName[0] }}{{ profile.lastName[0] }}
           </div>
           <div class="profile-info">
-            <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
+            <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
             <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
             <p v-if="profile.about_me" class="profile-about">{{ profile.about_me }}</p>
           </div>
