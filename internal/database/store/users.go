@@ -26,7 +26,7 @@ func CreateUser(email, passwordHash, role, firstName, lastName, dateOfBirth, ava
 
 func GetUserByEmail(email string) (*models.User, error) {
 	row := database.DB.QueryRow(
-		`SELECT id, email, password_hash, role, first_name, last_name, date_of_birth, avatar_path, nickname, about_me, is_public, created_at
+		`SELECT id, email, password_hash, role
 		 FROM users
 		 WHERE email = ?`,
 		email,
@@ -40,14 +40,6 @@ func GetUserByEmail(email string) (*models.User, error) {
 		&u.Email,
 		&u.PasswordHash,
 		&u.Role,
-		&u.FirstName,
-		&u.LastName,
-		&u.DateOfBirth,
-		&avatarPath,
-		&nickname,
-		&aboutMe,
-		&u.IsPublic,
-		&u.CreatedAt,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -66,38 +58,38 @@ func GetUserByEmail(email string) (*models.User, error) {
 }
 
 func GetUserByID(id int) (*models.User, error) {
-    row := database.DB.QueryRow(
-        `SELECT id, first_name, last_name, date_of_birth, avatar_path, nickname, about_me, is_public, created_at
+	row := database.DB.QueryRow(
+		`SELECT id, first_name, last_name, date_of_birth, avatar_path, nickname, about_me, is_public, created_at
          FROM users
          WHERE id = ?`,
-        id,
-    )
+		id,
+	)
 
-    var u models.User
-    var avatarPath, nickname, aboutMe sql.NullString //nullables
+	var u models.User
+	var avatarPath, nickname, aboutMe sql.NullString //nullables
 
-    err := row.Scan(
-        &u.ID,
-        &u.FirstName,
-        &u.LastName,
-        &u.DateOfBirth,
-        &avatarPath,
-        &nickname,
-        &aboutMe,
-        &u.IsPublic,
-        &u.CreatedAt,
-    )
+	err := row.Scan(
+		&u.ID,
+		&u.FirstName,
+		&u.LastName,
+		&u.DateOfBirth,
+		&avatarPath,
+		&nickname,
+		&aboutMe,
+		&u.IsPublic,
+		&u.CreatedAt,
+	)
 
-    if errors.Is(err, sql.ErrNoRows) {
-        return nil, errors.New("user_not_found")
-    }
-    if err != nil {
-        return nil, err
-    }
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errors.New("user_not_found")
+	}
+	if err != nil {
+		return nil, err
+	}
 
-    u.AvatarPath = avatarPath.String
-    u.Nickname = nickname.String
-    u.AboutMe = aboutMe.String
+	u.AvatarPath = avatarPath.String
+	u.Nickname = nickname.String
+	u.AboutMe = aboutMe.String
 
-    return &u, nil
+	return &u, nil
 }

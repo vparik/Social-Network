@@ -19,7 +19,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	var targetID int
 	var err error
 
-	// change and add GetUserById later
+	// validate user id string
 	if rawID == "" {
 		targetID = payload.UserID
 	} else {
@@ -43,6 +43,10 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"error":"internal_error"}`))
 		return
 	}
-
+	// if !user.IsPublic && user.ID != payload.UserID {
+	// 	w.WriteHeader(http.StatusForbidden)
+	// 	w.Write([]byte(`{"error":"profile_private"}`))
+	// 	return
+	// }
 	json.NewEncoder(w).Encode(user)
 }
