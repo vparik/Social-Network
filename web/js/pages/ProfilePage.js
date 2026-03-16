@@ -37,7 +37,6 @@ window.ProfilePage = {
 
   template: `
     <div>
-      <Navbar @toggle-chat="() => {}" />
       <div v-if="loading" class="container">Loading...</div>
       <div v-else-if="error" class="container error">{{ error }}</div>
       <div v-else class="container">

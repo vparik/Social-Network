@@ -1,14 +1,20 @@
 window.HomePage = {
   name: "HomePage",
 
+  props: ["postRefreshTick"],
+
   data() {
     return {
-      isChatSidebarOpen: false,
-      activeChatUser: null,
       loading: true,
       error: null,
-      posts: []  // holds the list of posts returned by GET /api/posts
+      posts: []
     };
+  },
+
+  watch: {
+    postRefreshTick() {
+      this.loadPosts();
+    }
   },
 
   async mounted() {
@@ -35,7 +41,6 @@ window.HomePage = {
   },
 
   methods: {
-    // Fetches all public posts from the backend and updates the feed
     async loadPosts() {
       try {
         const res = await fetch("/api/posts", { method: "GET" });
@@ -45,31 +50,15 @@ window.HomePage = {
         console.error("Failed to load posts:", err);
       }
     },
-
-    toggleChatSidebar() {
-      this.isChatSidebarOpen = !this.isChatSidebarOpen;
-    },
-
-    openChatWithUser(user) {
-      this.activeChatUser = user;
-    },
-
-    closeChatBox() {
-      this.activeChatUser = null;
-    }
   },
 
   template: `
     <div>
-      <!-- Listen for post-created event from Navbar to refresh the feed -->
-      <Navbar @toggle-chat="toggleChatSidebar" @post-created="loadPosts" />
-
       <div v-if="loading" class="container">Loading...</div>
 
       <div v-else class="page-content">
         <main class="container">
 
-          <!-- Post feed -->
           <div v-if="posts.length === 0" class="feed-empty">
             No posts yet. Be the first to post!
           </div>
@@ -81,18 +70,6 @@ window.HomePage = {
           </div>
 
         </main>
-
-        <ChatSidebar
-          :isOpen="isChatSidebarOpen"
-          @close="isChatSidebarOpen = false"
-          @select-user="openChatWithUser"
-        />
-
-        <ChatBox
-          v-if="activeChatUser"
-          :user="activeChatUser"
-          @close="closeChatBox"
-        />
       </div>
 
       <div v-if="error" class="container error">
