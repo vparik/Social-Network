@@ -22,4 +22,7 @@ type Post struct {
 	Content   string `json:"content"`
 	Privacy   string `json:"privacy"`
 	CreatedAt int64  `json:"createdAt"`
+
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 }

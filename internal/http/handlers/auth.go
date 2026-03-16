@@ -93,7 +93,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// issue tokens
 	goauth.Login(w, user.Role, user.ID)
 	w.Write([]byte(`{"status":"logged_in"}`))
-	
+
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {

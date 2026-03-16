@@ -4,6 +4,7 @@ window.ProfilePage = {
   data() {
     return {
       profile: null,
+      posts: [],
       loading: true,
       error: null,
     };
@@ -28,10 +29,28 @@ window.ProfilePage = {
       }
 
       this.profile = await res.json();
+      await this.loadProfilePosts();
       this.loading = false;
     } catch {
       this.error = "Network error.";
       this.loading = false;
+    }
+  },
+
+  methods: {
+    async loadProfilePosts() {
+      try {
+        const res = await fetch("/api/posts", { method: "GET" });
+        if (!res.ok) {
+          this.posts = [];
+          return;
+        }
+
+        const allPosts = await res.json();
+        this.posts = allPosts.filter((post) => post.userId === this.profile.id);
+      } catch {
+        this.posts = [];
+      }
     }
   },
 
@@ -42,8 +61,8 @@ window.ProfilePage = {
       <div v-else class="container">
         <div class="profile-header">
           <img
-            v-if="profile.avatar_path"
-            :src="profile.avatar_path"
+            v-if="profile.avatarPath"
+            :src="profile.avatarPath"
             class="profile-avatar"
             alt="Avatar"
           />
@@ -53,9 +72,56 @@ window.ProfilePage = {
           <div class="profile-info">
             <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
             <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
-            <p v-if="profile.about_me" class="profile-about">{{ profile.about_me }}</p>
+            <p v-if="profile.aboutMe" class="profile-about">{{ profile.aboutMe }}</p>
           </div>
         </div>
+
+        <section class="profile-posts-section">
+          <h2 class="profile-posts-heading">Posts</h2>
+
+          <div v-if="posts.length === 0" class="feed-empty">
+            This user has not posted anything yet.
+          </div>
+
+          <div v-for="post in posts" :key="post.id" class="feed-post-card profile-post-card">
+            <div class="feed-post-header">
+              <div class="feed-post-user-block">
+                <div class="feed-post-avatar">
+                  {{ post.firstName ? post.firstName.charAt(0) : "U" }}
+                </div>
+
+                <div class="feed-post-user-info">
+                  <div class="feed-post-author">
+                    {{ post.firstName }} {{ post.lastName }}
+                  </div>
+                  <div class="feed-post-date">
+                    {{ new Date(post.createdAt * 1000).toLocaleString() }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="feed-post-body">
+              <h3 class="feed-post-title">{{ post.title }}</h3>
+              <p class="feed-post-content">{{ post.content }}</p>
+
+              <div v-if="post.imageUrl" class="feed-post-image-wrap">
+                <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
+              </div>
+            </div>
+
+            <div class="feed-post-footer">
+              <div class="feed-post-meta">{{ post.privacy }}</div>
+
+              <div class="feed-post-comments-box">
+                <div class="feed-post-comments-title">Comments</div>
+                <div class="feed-post-comments-empty">
+                  Comments will go here next.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   `
