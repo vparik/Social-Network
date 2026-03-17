@@ -106,21 +106,23 @@ window.Navbar = {
       this.postVisibility = value;
     },
 
+    extractCsrfToken() {
+      return document.cookie
+              .split("; ")
+              .find(row => row.startsWith("csrf_token="))
+              ?.split("=")[1]
+    },
+
     async handleCreatePost() {
       const title = this.postTitle.trim();
       const content = this.postDescription.trim();
 
       // Basic client-side validation before hitting the API
       if (!title || !content) {
+        //TODO: fix
         alert("Title and content are required.");
         return;
       }
-
-      // Read CSRF token from cookie — required by the backend middleware
-      const csrfToken = document.cookie
-        .split("; ")
-        .find(row => row.startsWith("csrf_token="))
-        ?.split("=")[1];
 
       try {
         // POST /api/posts — field names must match backend JSON struct
@@ -128,7 +130,7 @@ window.Navbar = {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRF-Token": csrfToken
+            "X-CSRF-Token": this.extractCsrfToken(),
           },
           body: JSON.stringify({ title, content, privacy: this.postVisibility })
         });
@@ -149,15 +151,10 @@ window.Navbar = {
     },
     
     async logout() {
-      const csrfToken = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('csrf_token='))
-        ?.split('=')[1]
-
       await fetch("/api/logout", { 
         method: "POST",
         headers: {
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-Token": this.extractCsrfToken(),
         }
       })
       
@@ -367,6 +364,7 @@ template: `
                 v-model="postTitle"
                 type="text"
                 class="create-post-input"
+                required
               />
 
               <label class="create-post-label" for="post-description">Description</label>
@@ -375,6 +373,7 @@ template: `
                   id="post-description"
                   v-model="postDescription"
                   class="create-post-textarea"
+                  required
                 ></textarea>
 
                 <button

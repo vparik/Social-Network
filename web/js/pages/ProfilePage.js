@@ -19,13 +19,10 @@ window.ProfilePage = {
 
       const res = await fetch(url, { method: "GET" });
 
-      if (res.status === 401) {
-        Router.replace("/login");
-        return;
-      }
       if (!res.ok) {
         this.error = "Failed to load profile.";
         this.loading = false;
+        Router.replace("/login");
         return;
       }
 
