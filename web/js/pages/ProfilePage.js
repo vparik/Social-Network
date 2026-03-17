@@ -7,7 +7,8 @@ window.ProfilePage = {
       posts: [],
       loading: true,
       error: null,
-    };
+      showPosts: false,
+    }
   },
 
   async mounted() {
@@ -47,10 +48,16 @@ window.ProfilePage = {
         }
 
         const allPosts = await res.json();
-        this.posts = allPosts.filter((post) => post.userId === this.profile.id);
+        this.posts = allPosts.filter(
+          (post) => post.userId === this.profile.id
+        );
       } catch {
         this.posts = [];
       }
+    },
+
+    revealPosts() {
+      this.showPosts = true
     }
   },
 
@@ -83,44 +90,48 @@ window.ProfilePage = {
             This user has not posted anything yet.
           </div>
 
-          <div v-for="post in posts" :key="post.id" class="feed-post-card profile-post-card">
-            <div class="feed-post-header">
-              <div class="feed-post-user-block">
-                <div class="feed-post-avatar">
-                  {{ post.firstName ? post.firstName.charAt(0) : "U" }}
-                </div>
+          <button
+            v-else-if="!showPosts"
+            class="load-posts-btn"
+            @click="revealPosts"
+          >
+            Load Posts
+          </button>
 
-                <div class="feed-post-user-info">
-                  <div class="feed-post-author">
-                    {{ post.firstName }} {{ post.lastName }}
-                  </div>
-                  <div class="feed-post-date">
-                    {{ new Date(post.createdAt * 1000).toLocaleString() }}
+          <div v-else>
+            <div v-for="post in posts" :key="post.id" class="feed-post-card profile-post-card">
+              <div class="profile-post-header">
+                <div class="feed-post-user-block">
+                  <div class="feed-post-user-info">
+                    <div class="feed-post-date">
+                      {{ new Date(post.createdAt * 1000).toLocaleString() }}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div class="feed-post-body">
-              <h3 class="feed-post-title">{{ post.title }}</h3>
-              <p class="feed-post-content">{{ post.content }}</p>
+              <div class="feed-post-body">
+                <h3 class="feed-post-title">{{ post.title }}</h3>
+                <p class="feed-post-content">{{ post.content }}</p>
 
-              <div v-if="post.imageUrl" class="feed-post-image-wrap">
-                <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
+                <div v-if="post.imageUrl" class="feed-post-image-wrap">
+                  <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
+                </div>
               </div>
-            </div>
 
-            <div class="feed-post-footer">
-              <div class="feed-post-meta">{{ post.privacy }}</div>
+              <div class="feed-post-footer">
+                <div class="feed-post-meta">{{ post.privacy }}</div>
 
-              <div class="feed-post-comments-box">
-                <div class="feed-post-comments-title">Comments</div>
-                <div class="feed-post-comments-empty">
-                  Comments will go here next.
+                <div class="feed-post-comments-box">
+                  <div class="feed-post-comments-title">Comments</div>
+                  <div class="feed-post-comments-empty">
+                    Comments will go here next.
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
         </section>
       </div>
     </div>

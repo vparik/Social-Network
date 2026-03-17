@@ -12,7 +12,7 @@ type User struct {
 	Nickname     string `json:"nickname"`
 	AboutMe      string `json:"aboutMe"`
 	IsPublic     bool   `json:"isPublic"`
-	CreatedAt    int64  `json:"created_at"`
+	CreatedAt    int64  `json:"createdAt"`
 }
 
 type Post struct {

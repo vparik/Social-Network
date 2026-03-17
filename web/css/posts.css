@@ -7,25 +7,29 @@
 .feed-empty {
   padding: 24px;
   border-radius: 18px;
-  background: rgba(30, 41, 59, 0.95);
+  background: transparent;
   border: 1px solid rgba(148, 163, 184, 0.12);
   text-align: center;
   color: #cbd5e1;
 }
 
 .feed-post-card {
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: #0b1423;
+  border: 1px solid rgb(165, 165, 165);
   border-radius: 22px;
   margin-bottom: 22px;
   overflow: hidden;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+  transition: all 0.3s ease;
+  /* box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22); */
+}
+
+.feed-post-card:hover {
+  box-shadow: -10px 10px 0px rgba(0, 0, 0, 0.6);
 }
 
 .feed-post-header {
-  padding: 18px 20px 14px;
-  background: #cbd5e1;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  padding-bottom: 8px;
+  background: transparent;
 }
 
 .feed-post-user-block {
@@ -35,8 +39,8 @@
 }
 
 .feed-post-avatar {
-  width: 46px;
-  height: 46px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -49,7 +53,7 @@
 
 .feed-post-user-info {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 4px;
 }
 
@@ -66,7 +70,7 @@
 
 .feed-post-body {
   padding: 18px 20px;
-  background: #57616F;
+  background: transparent;
 }
 
 .feed-post-title {
@@ -100,7 +104,7 @@
 
 .feed-post-footer {
   padding: 16px 20px 20px;
-  background: #dee3e9;
+  background: transparent;
   border-top: 1px solid rgba(148, 163, 184, 0.08);
 }
 
@@ -149,3 +153,27 @@
 .profile-post-card {
   margin-bottom: 22px;
 }
+
+.profile-post-header {
+  display:flex;
+  justify-content: end;
+  padding-right: 18px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.load-posts-btn {
+  background-color: transparent; /* matches background */
+  color: white;
+  border: 1px solid white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+.load-posts-btn:hover {
+  background-color: white;
+  color: black; /* or your theme color */
+} 
