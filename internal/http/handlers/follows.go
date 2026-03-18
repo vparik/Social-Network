@@ -23,16 +23,13 @@ func Follow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := store.Follow(payload.UserID, targetID); err != nil {
-		switch err.Error() {
-		case "cannot_follow_self":
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(`{"error":"cannot_follow_self"}`))
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"error":"internal_error"}`))
-		}
-		return
-	}
+    if err.Error() == "cannot_follow_self" {
+        http.Error(w, `{"error":"cannot_follow_self"}`, http.StatusBadRequest)
+    } else {
+        http.Error(w, `{"error":"internal_error"}`, http.StatusInternalServerError)
+    }
+    return
+}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"ok":true}`))

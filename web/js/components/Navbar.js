@@ -35,7 +35,6 @@ window.Navbar = {
 
         const data = await res.json();
         this.currentUserName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-        window.currentUserId = data.id;
       } catch (err) {
         console.warn("Failed to load current user data:", err);
       }

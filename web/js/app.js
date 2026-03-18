@@ -22,6 +22,9 @@ const App = {
     },
     showNavbar() {
       return !publicRoutes.includes(window.Router.state.path)
+    },
+    routeKey() {
+      return window.Router.state.path + window.Router.state.query;
     }
   },
 
@@ -48,6 +51,7 @@ const App = {
     />
     <component
       :is="CurrentComponent"
+      :key="routeKey"
       :postRefreshTick="postRefreshTick"
     ></component>
     <template v-if="showNavbar">

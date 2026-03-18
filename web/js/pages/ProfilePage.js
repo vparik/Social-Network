@@ -16,24 +16,27 @@ window.ProfilePage = {
 
   async mounted() {
     try {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
-      const url = id ? `/api/profile?id=${id}` : "/api/profile?id=me";
-
-      const res = await fetch(url, { method: "GET" });
-
-      if (!res.ok) {
-        this.error = "Failed to load profile.";
-        this.loading = false;
+      const meRes = await fetch("/api/profile", { method: "GET" });
+      if (!meRes.ok) {
         Router.replace("/login");
         return;
       }
+      const me = await meRes.json();
 
-      this.profile = await res.json();
-
-      this.isOwnProfile = !id || id === "me" || this.profile.id === window.currentUserId;
-      if (!this.isOwnProfile) {
+      const id = new URLSearchParams(window.location.search).get("id");
+      if (id && parseInt(id) !== me.id) {
+        const res = await fetch(`/api/profile?id=${id}`, { method: "GET" });
+        if (!res.ok) {
+          this.error = "Failed to load profile.";
+          // this.loading = false;
+          return;
+        }
+        this.profile = await res.json();
+        this.isOwnProfile = false;
         await this.loadFollowStatus();
+      } else {
+        this.profile = me;
+        this.isOwnProfile = true;
       }
 
       await this.loadProfilePosts();
