@@ -85,6 +85,35 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 // DeletePost handles DELETE /api/posts/{id}.
 // TODO: implement ownership check before deleting
 func DeletePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	payload := goauth.FromContext(r.Context())
-	w.Write([]byte("delete post by user " + strconv.Itoa(payload.UserID)))
+	userID := payload.UserID
+
+	postIDRaw := r.PathValue("id")
+	postID, err := strconv.Atoi(postIDRaw)
+	if err != nil {
+		http.Error(w, "invalid post id", http.StatusBadRequest)
+		return
+	}
+
+	err = store.DeletePost(postID, userID)
+	if err != nil {
+		switch err.Error() {
+		case "post_not_found":
+			http.Error(w, "post not found", http.StatusNotFound)
+			return
+		case "forbidden":
+			http.Error(w, "you can only delete your own posts", http.StatusForbidden)
+			return
+		default:
+			http.Error(w, "failed to delete post", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

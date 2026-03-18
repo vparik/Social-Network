@@ -11,6 +11,8 @@ window.HomePage = {
     };
   },
 
+
+  // fix it with emit
   watch: {
     postRefreshTick() {
       this.loadPosts();
@@ -48,6 +50,38 @@ window.HomePage = {
         this.posts = await res.json();
       } catch (err) {
         console.error("Failed to load posts:", err);
+      }
+    },
+
+    isOwnPost(post) {
+      return window.currentUser && post.userId === window.currentUser.id;
+    },
+
+    async deletePost(post) {
+      const confirmed = window.confirm(
+        `Are you sure that you want to delete the post "${post.title}" ?`
+      );
+
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/posts/${post.id}`, {
+          method: "DELETE",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to delete post: " + err);
+          return;
+        }
+
+        await this.loadPosts();
+      } catch (err) {
+        console.error("Failed to delete post:", err);
+        alert("Network error.");
       }
     },
 
@@ -89,6 +123,15 @@ template: `
           </div>
 
           <div class="feed-post-card">
+            <button
+              v-if="isOwnPost(post)"
+              class="feed-post-delete-btn"
+              @click="deletePost(post)"
+              title="Delete post"
+            >
+              Delete
+            </button>
+            
             <div class="feed-post-body">
               <h3 class="feed-post-title">{{ post.title }}</h3>
               <p class="feed-post-content">{{ post.content }}</p>

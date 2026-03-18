@@ -1,6 +1,8 @@
 package store
 
 import (
+	"database/sql"
+	"errors"
 	"socialnet/internal/database"
 	"socialnet/internal/models"
 )
@@ -62,4 +64,30 @@ func GetPrivacy(userID int) string {
 		return "public"
 	}
 	return "private"
+}
+
+// delete post from the creator
+func DeletePost(postID int, userID int) error {
+	var ownerID int
+	err := database.DB.QueryRow(
+		`SELECT user_id FROM posts WHERE id = ?`,
+		postID,
+	).Scan(&ownerID)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("post_not_found")
+		}
+		return err
+	}
+
+	if ownerID != userID {
+		return errors.New("forbidden")
+	}
+
+	_, err = database.DB.Exec(
+		`DELETE FROM posts WHERE id = ?`,
+		postID,
+	)
+	return err
 }

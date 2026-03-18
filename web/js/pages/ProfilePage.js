@@ -107,6 +107,38 @@ window.ProfilePage = {
     }
   },
 
+      isOwnPost(post) {
+      return window.currentUser && post.userId === window.currentUser.id;
+    },
+
+    async deletePost(post) {
+      const confirmed = window.confirm(
+        `Are you sure you want to delete the post "${post.title}" ?`
+      );
+
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/posts/${post.id}`, {
+          method: "DELETE",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to delete post: " + err);
+          return;
+        }
+
+        await this.loadProfilePosts();
+      } catch (err) {
+        console.error("Failed to delete post:", err);
+        alert("Network error.");
+      }
+    },
+
   template: `
     <div>
       <div v-if="loading" class="container">Loading...</div>
@@ -156,6 +188,15 @@ window.ProfilePage = {
 
           <div v-else-if="showPosts">
             <div v-for="post in posts" :key="post.id" class="feed-post-card profile-post-card">
+              <button
+                v-if="isOwnPost(post)"
+                class="feed-post-delete-btn"
+                @click-"deletePost(post)"
+                title="Delete post"
+              >
+                Delete
+              </button
+              
               <div class="profile-post-header">
                 <div class="feed-post-user-block">
                   <div class="feed-post-user-info">
