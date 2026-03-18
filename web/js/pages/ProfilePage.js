@@ -16,12 +16,15 @@ window.ProfilePage = {
 
   async mounted() {
     try {
-      const meRes = await fetch("/api/profile", { method: "GET" });
-      if (!meRes.ok) {
-        Router.replace("/login");
-        return;
-      }
-      const me = await meRes.json();
+     let me = window.currentUser;
+
+     if (!me) {
+       await new Promise(resolve => {
+         window.addEventListener("user-ready", resolve, { once: true });
+       });
+     
+       me = window.currentUser;
+     }
 
       const id = new URLSearchParams(window.location.search).get("id");
       if (id && parseInt(id) !== me.id) {

@@ -34,6 +34,10 @@ window.Navbar = {
         if (!res.ok) return;
 
         const data = await res.json();
+        // store globally
+        window.currentUser = data;
+        // notify the app
+        window.dispatchEvent(new Event("user-ready"));
         this.currentUserName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
       } catch (err) {
         console.warn("Failed to load current user data:", err);
