@@ -1,33 +1,3 @@
-/* ============================= */
-/* Animated Ambient Background   */
-/* ============================= */
-
-body {
-  background: radial-gradient(circle at 20% 20%, #1e293b 0%, #020617 60%);
-  background-attachment: fixed;
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* moving light */
-body::before {
-  content: "";
-  position: fixed;
-  top: -30%;
-  left: -30%;
-  width: 160%;
-  height: 160%;
-  background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%);
-  animation: ambientMove 25s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes ambientMove {
-  0% { transform: translate(0,0) rotate(0deg); }
-  50% { transform: translate(10%,8%) rotate(180deg); }
-  100% { transform: translate(0,0) rotate(360deg); }
-}
-
 
 /* ============================= */
 /* Feed Layout                   */

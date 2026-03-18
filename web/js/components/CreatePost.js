@@ -72,12 +72,10 @@ window.CreatePost = {
 
   template: `
   <div class="create-post-overlay" @click.self="close">
-
     <div
       class="create-post-modal"
       :class="{ 'create-post-modal--with-sidebar': postVisibility === 'private' }"
     >
-
       <div class="create-post-main">
 
         <div class="create-post-header">
@@ -85,13 +83,11 @@ window.CreatePost = {
         </div>
 
         <div class="create-post-visibility">
-
           <span class="create-post-visibility-label">
             Select visibility:
           </span>
 
           <div class="create-post-visibility-actions">
-
             <button
               class="create-post-visibility-btn"
               :class="{ 'is-active': postVisibility === 'public' }"
@@ -115,12 +111,10 @@ window.CreatePost = {
             >
               Private
             </button>
-
           </div>
         </div>
 
         <div class="create-post-form">
-
           <label class="create-post-label">Title</label>
           <input
             v-model="postTitle"
@@ -129,16 +123,22 @@ window.CreatePost = {
           />
 
           <label class="create-post-label">Description</label>
+          <div class="create-post-textarea-wrap">
+            <textarea
+              v-model="postDescription"
+              class="create-post-textarea"
+            ></textarea>
 
-          <textarea
-            v-model="postDescription"
-            class="create-post-textarea"
-          ></textarea>
-
+            <button
+              type="button"
+              class="create-post-image-btn"
+            >
+              Img
+            </button>
+          </div>
         </div>
 
         <div class="create-post-footer">
-
           <button
             class="create-post-action-btn create-post-cancel-btn"
             @click="close"
@@ -152,10 +152,28 @@ window.CreatePost = {
           >
             Create
           </button>
-
         </div>
 
       </div>
+
+      <aside
+        v-if="postVisibility === 'private'"
+        class="create-post-sidebar"
+      >
+        <div class="create-post-sidebar-section">
+          <div class="create-post-sidebar-title">Groups</div>
+          <div class="create-post-sidebar-empty">
+            Groups will appear here when that feature is ready.
+          </div>
+        </div>
+
+        <div class="create-post-sidebar-section">
+          <div class="create-post-sidebar-title">Users</div>
+          <div class="create-post-sidebar-empty">
+            User selection will appear here later.
+          </div>
+        </div>
+      </aside>
 
     </div>
   </div>
