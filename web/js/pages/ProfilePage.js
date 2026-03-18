@@ -104,10 +104,9 @@ window.ProfilePage = {
 
     togglePosts() {
       this.showPosts = !this.showPosts;
-    }
-  },
-
-      isOwnPost(post) {
+    },
+  
+    isOwnPost(post) {
       return window.currentUser && post.userId === window.currentUser.id;
     },
 
@@ -137,7 +136,8 @@ window.ProfilePage = {
         console.error("Failed to delete post:", err);
         alert("Network error.");
       }
-    },
+    }
+  },
 
   template: `
     <div>
@@ -191,11 +191,11 @@ window.ProfilePage = {
               <button
                 v-if="isOwnPost(post)"
                 class="feed-post-delete-btn"
-                @click-"deletePost(post)"
+                @click="deletePost(post)"
                 title="Delete post"
               >
                 Delete
-              </button
+              </button>
               
               <div class="profile-post-header">
                 <div class="feed-post-user-block">
