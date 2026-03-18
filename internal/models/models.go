@@ -1,18 +1,27 @@
 package models
 
 type User struct {
-	ID           int `json:"id"`
-	Email        string
-	PasswordHash string
-	Role         string
-	FirstName    string `json:"firstName"`
-	LastName     string `json:"lastName"`
-	DateOfBirth  string `json:"dateOfBirth"`
-	AvatarPath   string `json:"avatarPath"`
-	Nickname     string `json:"nickname"`
-	AboutMe      string `json:"aboutMe"`
-	IsPublic     bool   `json:"isPublic"`
-	CreatedAt    int64  `json:"createdAt"`
+	ID             int   `json:"id"`
+	Email          string
+	PasswordHash   string
+	Role           string
+	FirstName      string `json:"firstName"`
+	LastName       string `json:"lastName"`
+	DateOfBirth    string `json:"dateOfBirth"`
+	AvatarPath     string `json:"avatarPath"`
+	Nickname       string `json:"nickname"`
+	AboutMe        string `json:"aboutMe"`
+	IsPublic       bool   `json:"isPublic"`
+	CreatedAt      int64  `json:"createdAt"`
+	FollowersCount int    `json:"followersCount"`
+	FollowingCount int    `json:"followingCount"`
+}
+
+type Follow struct {
+	ID          int   `json:"id"`
+	FollowerID  int   `json:"followerId"`
+	FollowingID int   `json:"followingId"`
+	CreatedAt   int64 `json:"createdAt"`
 }
 
 type Post struct {
@@ -24,6 +33,7 @@ type Post struct {
 	CreatedAt int64  `json:"createdAt"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
+	Nickname  string `json:"nickname"`
 }
 
 type Event struct {

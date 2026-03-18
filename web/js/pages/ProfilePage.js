@@ -8,6 +8,9 @@ window.ProfilePage = {
       loading: true,
       error: null,
       showPosts: false,
+      isOwnProfile: false,
+      isFollowing: false,
+      followLoading: false,
     }
   },
 
@@ -27,6 +30,12 @@ window.ProfilePage = {
       }
 
       this.profile = await res.json();
+
+      this.isOwnProfile = !id || id === "me" || this.profile.id === window.currentUserId;
+      if (!this.isOwnProfile) {
+        await this.loadFollowStatus();
+      }
+
       await this.loadProfilePosts();
       this.loading = false;
     } catch {
@@ -53,8 +62,42 @@ window.ProfilePage = {
       }
     },
 
-    revealPosts() {
-      this.showPosts = true
+    async loadFollowStatus() {
+      try {
+        const res = await fetch(`/api/follow/status?id=${this.profile.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          this.isFollowing = data.following;
+        }
+      } catch (err) {
+        console.error("failed to load follow status: ", err)
+        // non-critical
+      }
+    },
+
+    async toggleFollow() {
+      if (this.followLoading) return;
+      this.followLoading = true;
+      try {
+        const method = this.isFollowing ? "DELETE" : "POST";
+        const res = await fetch(`/api/follow?id=${this.profile.id}`, {
+          method,
+          headers: { "X-CSRF-Token": window.extractCsrfToken() },
+        });
+
+        if (res.ok) {
+          this.isFollowing = !this.isFollowing;
+          this.profile.followersCount += this.isFollowing ? 1 : -1;
+        }
+      } catch {
+        // non-critical
+      } finally {
+        this.followLoading = false;
+      }
+    },
+
+    togglePosts() {
+      this.showPosts = !this.showPosts;
     }
   },
 
@@ -77,25 +120,35 @@ window.ProfilePage = {
             <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
             <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
             <p v-if="profile.aboutMe" class="profile-about">{{ profile.aboutMe }}</p>
+            <div class="profile-stats">
+              <span class="profile-stat"><strong>{{ profile.followersCount }}</strong> Followers</span>
+              <span class="profile-stat"><strong>{{ profile.followingCount }}</strong> Following</span>
+            </div>
+            <button
+              v-if="!isOwnProfile"
+              class="follow-btn"
+              :class="{ following: isFollowing }"
+              :disabled="followLoading"
+              @click="toggleFollow"
+            >
+              {{ isFollowing ? 'Unfollow' : 'Follow' }}
+            </button>
           </div>
         </div>
 
         <section class="profile-posts-section">
-          <h2 class="profile-posts-heading">Posts</h2>
+          <h2
+            class="profile-posts-heading"
+            @click="posts.length > 0 && togglePosts()"
+          >
+            Posts
+          </h2>
 
           <div v-if="posts.length === 0" class="feed-empty">
             This user has not posted anything yet.
           </div>
 
-          <button
-            v-else-if="!showPosts"
-            class="load-posts-btn"
-            @click="revealPosts"
-          >
-            Load Posts
-          </button>
-
-          <div v-else>
+          <div v-else-if="showPosts">
             <div v-for="post in posts" :key="post.id" class="feed-post-card profile-post-card">
               <div class="profile-post-header">
                 <div class="feed-post-user-block">

@@ -35,6 +35,7 @@ window.Navbar = {
 
         const data = await res.json();
         this.currentUserName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+        window.currentUserId = data.id;
       } catch (err) {
         console.warn("Failed to load current user data:", err);
       }
@@ -107,10 +108,7 @@ window.Navbar = {
     },
 
     extractCsrfToken() {
-      return document.cookie
-              .split("; ")
-              .find(row => row.startsWith("csrf_token="))
-              ?.split("=")[1]
+      return window.extractCsrfToken();
     },
 
     async handleCreatePost() {

@@ -50,6 +50,10 @@ window.HomePage = {
         console.error("Failed to load posts:", err);
       }
     },
+
+    navigateToProfile(userId) {
+      Router.push("/profile?id=" + userId);
+    }
   },
 
 template: `
@@ -69,9 +73,13 @@ template: `
               </div>
 
               <div class="feed-post-user-info">
-                <div class="feed-post-author">
-                  {{ post.firstName }} {{ post.lastName }} 
-                </div>
+                <a
+                  class="feed-post-author"
+                  :href="'/profile?id=' + post.userId"
+                  @click.prevent="navigateToProfile(post.userId)"
+                >
+                  {{ post.nickname ? '@' + post.nickname : post.firstName + ' ' + post.lastName }}
+                </a>
                 <div class="feed-post-date"> • </div>
                 <div class="feed-post-date">
                   {{ new Date(post.createdAt * 1000).toLocaleString() }}

@@ -28,6 +28,12 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/home", goauth.Protected(handlers.Home))
 	s.mux.HandleFunc("GET /api/profile", goauth.Protected(handlers.GetProfile))
 
+	s.mux.HandleFunc("POST /api/follow", goauth.ProtectedCsrfActive(handlers.Follow))
+	s.mux.HandleFunc("DELETE /api/follow", goauth.ProtectedCsrfActive(handlers.Unfollow))
+	s.mux.HandleFunc("GET /api/follow/status", goauth.Protected(handlers.FollowStatus))
+	s.mux.HandleFunc("GET /api/followers", goauth.Protected(handlers.GetFollowers))
+	s.mux.HandleFunc("GET /api/following", goauth.Protected(handlers.GetFollowing))
+
 	// ---------------- STATIC ----------------
 
 	fs := http.FileServer(http.Dir("./web"))

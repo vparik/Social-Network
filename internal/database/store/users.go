@@ -59,9 +59,13 @@ func GetUserByEmail(email string) (*models.User, error) {
 
 func GetUserByID(id int) (*models.User, error) {
 	row := database.DB.QueryRow(
-		`SELECT id, first_name, last_name, date_of_birth, avatar_path, nickname, about_me, is_public, created_at
-         FROM users
-         WHERE id = ?`,
+		`SELECT
+			u.id, u.first_name, u.last_name, u.date_of_birth,
+			u.avatar_path, u.nickname, u.about_me, u.is_public, u.created_at,
+			(SELECT COUNT(*) FROM follows WHERE following_id = u.id) AS followers_count,
+			(SELECT COUNT(*) FROM follows WHERE follower_id  = u.id) AS following_count
+		 FROM users u
+		 WHERE u.id = ?`,
 		id,
 	)
 
@@ -78,6 +82,8 @@ func GetUserByID(id int) (*models.User, error) {
 		&aboutMe,
 		&u.IsPublic,
 		&u.CreatedAt,
+		&u.FollowersCount,
+		&u.FollowingCount,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {

@@ -13,7 +13,7 @@ var DB *sql.DB
 func InitDb() {
 	err := sqlitekit.SetConfig(sqlitekit.Config{
 		WAL:          false,
-		ForeignKeys:  false,
+		ForeignKeys:  true,
 		MaxOpenConns: 5,
 		MaxIdleConns: 2,
 	})

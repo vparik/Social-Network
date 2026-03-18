@@ -6,8 +6,6 @@
 
 .profile-header {
   display: flex;
-  align-items: center;  
-  text-align: center;
   margin-bottom: 30px;
 }
 
@@ -26,8 +24,12 @@
   overflow: hidden;
 }
 
+.profile-info {
+  margin-left: 26px
+}
+
 .profile-info h1 {
-  margin: 12px 0 5px 10px;
+  margin: 12px 0 5px 0px;
 }
 
 .profile-nickname {
@@ -38,4 +40,64 @@
 .profile-about {
   max-width: 600px;
   line-height: 1.5;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  color: #ccc;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.follow-btn {
+  margin-top: 0.75rem;
+  padding: 0.35rem 1.1rem;
+  border: 1px solid #4a90e2;
+  border-radius: 6px;
+  background: transparent;
+  color: #4a90e2;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.follow-btn:hover:not(:disabled) {
+  background: #4a90e2;
+  color: #fff;
+}
+
+.follow-btn.following {
+  border-color: #666;
+  color: #ccc;
+}
+
+.follow-btn.following:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #999;
+  color: #fff;
+}
+
+.follow-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-posts-heading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #444;
+  border-radius: 6px;
+  font-size: 18px;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.profile-posts-heading:hover {
+  border-color: #666;
+  transform: scale(1.05);
 }

@@ -4,14 +4,15 @@ window.Router = (function () {
   });
 
   function push(path) {
-    if (path === state.path) return;
+    const pathname = path.split("?")[0];
+    if (pathname === state.path) return;
     history.pushState({}, "", path);
-    state.path = path;
+    state.path = pathname;
   }
 
   function replace(path) {
     history.replaceState({}, "", path);
-    state.path = path;
+    state.path = path.split("?")[0];
   }
 
   window.addEventListener("popstate", () => {

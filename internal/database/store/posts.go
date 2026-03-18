@@ -28,7 +28,7 @@ func CreatePost(user_id int, title, content, privacy string) error {
 //   - "private" posts where the requesting user is in the creator's chosen-followers list
 func GetPosts() ([]*models.Post, error) {
 	rows, err := database.DB.Query(
-		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at, u.first_name, u.last_name
+		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at, u.first_name, u.last_name, COALESCE(u.nickname, '')
 		 FROM posts p
 		 JOIN users u ON p.user_id = u.id
 		 WHERE p.privacy = 'public'
@@ -39,11 +39,10 @@ func GetPosts() ([]*models.Post, error) {
 	}
 	defer rows.Close()
 
-	// Scan each row into a Post struct
 	var posts []*models.Post
 	for rows.Next() {
 		p := &models.Post{}
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.Privacy, &p.CreatedAt, &p.FirstName, &p.LastName); err != nil {
+		if err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.Privacy, &p.CreatedAt, &p.FirstName, &p.LastName, &p.Nickname); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)
