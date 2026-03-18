@@ -1,3 +1,38 @@
+/* ============================= */
+/* Animated Ambient Background   */
+/* ============================= */
+
+body {
+  background: radial-gradient(circle at 20% 20%, #1e293b 0%, #020617 60%);
+  background-attachment: fixed;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* moving light */
+body::before {
+  content: "";
+  position: fixed;
+  top: -30%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
+  background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%);
+  animation: ambientMove 25s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes ambientMove {
+  0% { transform: translate(0,0) rotate(0deg); }
+  50% { transform: translate(10%,8%) rotate(180deg); }
+  100% { transform: translate(0,0) rotate(360deg); }
+}
+
+
+/* ============================= */
+/* Feed Layout                   */
+/* ============================= */
+
 .feed-page {
   max-width: 720px;
   margin: 32px auto;
@@ -7,27 +42,78 @@
 .feed-empty {
   padding: 24px;
   border-radius: 18px;
-  background: transparent;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(15,23,42,0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(148,163,184,0.12);
   text-align: center;
   color: #cbd5e1;
 }
 
+
+/* ============================= */
+/* Post Card                     */
+/* ============================= */
+
 .feed-post-card {
-  background: #0b1423;
-  border: 1px solid rgb(165, 165, 165);
+
+  background: linear-gradient(
+      180deg,
+      rgba(11,20,35,0.95),
+      rgba(6,12,22,0.98)
+  );
+
+  border: 1px solid rgba(148,163,184,0.25);
   border-radius: 22px;
   margin-bottom: 22px;
   overflow: hidden;
-  transition: all 0.1s ease;
- 
+
+  position: relative;
+
+  box-shadow:
+    -10px 10px 0 rgba(0,0,0,0.65),
+    0 10px 25px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+
+  transition: transform 0.1s ease,
+              box-shadow 0.1s ease;
 }
 
-.feed-post-card:hover {
-  transform: translateX(4px);
-  box-shadow: -10px 10px 0px rgba(0, 0, 0, 0.6);
-  /* transform: scale(1.001); */
+
+/* subtle top light */
+.feed-post-card::before {
+
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:120px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(59,130,246,0.15),
+    transparent
+  );
+
+  opacity:0.35;
+  pointer-events:none;
 }
+
+
+.feed-post-card:hover {
+
+  transform: translateX(4px);
+
+  box-shadow:
+    -14px 10px 0 rgba(0,0,0,0.75),
+    0 14px 40px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+
+/* ============================= */
+/* Header                        */
+/* ============================= */
 
 .feed-post-header {
   padding-bottom: 8px;
@@ -44,10 +130,17 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   background: linear-gradient(135deg, #2563eb, #60a5fa);
+
+  box-shadow:
+    0 0 12px rgba(96,165,250,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+
   color: white;
   font-weight: 700;
   font-size: 18px;
@@ -62,13 +155,13 @@
 .feed-post-author {
   font-size: 16px;
   font-weight: 700;
-  color: #386599;
+  color: #60a5fa;
   text-decoration: none;
   cursor: pointer;
 }
 
 .feed-post-author:hover {
-  color: #809dbe;
+  color: #93c5fd;
 }
 
 .feed-post-date {
@@ -76,9 +169,13 @@
   color: #94a3b8;
 }
 
+
+/* ============================= */
+/* Post Body                     */
+/* ============================= */
+
 .feed-post-body {
   padding: 18px 20px;
-  background: transparent;
 }
 
 .feed-post-title {
@@ -95,11 +192,16 @@
   white-space: pre-wrap;
 }
 
+
+/* ============================= */
+/* Images                        */
+/* ============================= */
+
 .feed-post-image-wrap {
   margin-top: 16px;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148,163,184,0.12);
   background: #020617;
 }
 
@@ -110,10 +212,14 @@
   object-fit: cover;
 }
 
+
+/* ============================= */
+/* Footer                        */
+/* ============================= */
+
 .feed-post-footer {
   padding: 16px 20px 20px;
-  background: transparent;
-  border-top: 1px solid rgba(148, 163, 184, 0.08);
+  border-top: 1px solid rgba(148,163,184,0.08);
 }
 
 .feed-post-meta {
@@ -121,17 +227,30 @@
   margin-bottom: 14px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
-  color: #386599;
+
+  background: rgba(59,130,246,0.15);
+  color: #60a5fa;
+
   font-size: 12px;
   text-transform: capitalize;
+
+  box-shadow: inset 0 0 8px rgba(59,130,246,0.25);
 }
 
+
+/* ============================= */
+/* Comments Box                  */
+/* ============================= */
+
 .feed-post-comments-box {
+
   padding: 14px;
   border-radius: 16px;
-  background: rgba(30, 41, 59, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+
+  background: rgba(30,41,59,0.65);
+  backdrop-filter: blur(4px);
+
+  border: 1px solid rgba(148,163,184,0.08);
 }
 
 .feed-post-comments-title {
@@ -146,6 +265,11 @@
   color: #94a3b8;
 }
 
+
+/* ============================= */
+/* Profile Posts Section         */
+/* ============================= */
+
 .profile-posts-section {
   max-width: 720px;
   margin: 32px auto;
@@ -153,12 +277,18 @@
 }
 
 .profile-posts-heading {
-  width: 50px;
+  width: 60px;
   margin: 0 0 18px;
   font-size: 24px;
   color: #f8fafc;
+
   background-color:#0f172a;
   border-radius: 9px;
+
+  padding-left:6px;
+
+  box-shadow:
+    0 0 12px rgba(59,130,246,0.15);
 }
 
 .profile-post-card {
