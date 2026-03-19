@@ -74,5 +74,6 @@ const app = Vue.createApp(App);
 app.component("Navbar", Navbar);
 app.component("ChatSidebar", ChatSidebar);
 app.component("ChatBox", ChatBox);
+app.component("CommentSection", CommentSection);
 
 app.mount("#app");

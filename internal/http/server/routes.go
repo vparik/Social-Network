@@ -21,6 +21,8 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("POST /api/posts", goauth.ProtectedCsrfActive(handlers.CreatePost))
 	s.mux.HandleFunc("GET /api/posts", goauth.Protected(handlers.GetPosts))
 	s.mux.HandleFunc("DELETE /api/posts/{id}", goauth.ProtectedCsrfActive(handlers.DeletePost))
+	s.mux.HandleFunc("POST /api/posts/{id}/comments", goauth.ProtectedCsrfActive(handlers.CreateComment))
+	s.mux.HandleFunc("GET /api/posts/{id}/comments", goauth.Protected(handlers.GetComments))
 
 	s.mux.HandleFunc("POST /api/events", goauth.ProtectedCsrfActive(handlers.CreateEvent))
 	s.mux.HandleFunc("GET /api/events", goauth.Protected(handlers.GetEvents))

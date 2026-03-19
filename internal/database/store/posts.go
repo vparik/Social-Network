@@ -85,9 +85,11 @@ func DeletePost(postID int, userID int) error {
 		return errors.New("forbidden")
 	}
 
-	_, err = database.DB.Exec(
-		`DELETE FROM posts WHERE id = ?`,
-		postID,
-	)
+	_, err = database.DB.Exec(`DELETE FROM comments WHERE post_id = ?`, postID)
+	if err != nil {
+		return err
+	}
+
+	_, err = database.DB.Exec(`DELETE FROM posts WHERE id = ?`, postID)
 	return err
 }

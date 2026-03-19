@@ -219,12 +219,7 @@ window.ProfilePage = {
               <div class="feed-post-footer">
                 <div class="feed-post-meta">{{ post.privacy }}</div>
 
-                <div class="feed-post-comments-box">
-                  <div class="feed-post-comments-title">Comments</div>
-                  <div class="feed-post-comments-empty">
-                    Comments will go here next.
-                  </div>
-                </div>
+                <CommentSection :post-id="post.id" />
               </div>
             </div>
           </div>

@@ -36,6 +36,17 @@ type Post struct {
 	Nickname  string `json:"nickname"`
 }
 
+type Comment struct {
+	ID        int    `json:"id"`
+	PostID    int    `json:"postId"`
+	UserID    int    `json:"userId"`
+	Content   string `json:"content"`
+	CreatedAt int64  `json:"createdAt"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Nickname  string `json:"nickname"`
+}
+
 type Event struct {
 	ID        int    `json:"id"`
 	UserID    int    `json:"userId"`
