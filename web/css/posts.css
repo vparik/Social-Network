@@ -1,92 +1,67 @@
-
 /* ============================= */
 /* Feed Layout                   */
 /* ============================= */
 
 .feed-page {
-  max-width: 720px;
+  max-width: 760px;
   margin: 32px auto;
   padding: 0 16px 40px;
 }
 
 .feed-empty {
   padding: 24px;
-  border-radius: 18px;
-  background: rgba(15,23,42,0.6);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(148,163,184,0.12);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(214, 224, 234, 0.85);
   text-align: center;
-  color: #cbd5e1;
+  color: var(--text-soft);
+  box-shadow: 0 16px 40px rgba(6, 24, 38, 0.18);
 }
-
 
 /* ============================= */
 /* Post Card                     */
 /* ============================= */
 
 .feed-post-card {
-
-  background: linear-gradient(
-      180deg,
-      rgba(11,20,35,0.95),
-      rgba(6,12,22,0.98)
-  );
-
-  border: 1px solid rgba(148,163,184,0.25);
-  border-radius: 22px;
-  margin-bottom: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 251, 255, 0.96) 100%);
+  border: 1px solid rgba(214, 224, 234, 0.9);
+  border-radius: 12px;
+  margin-bottom: 20px;
   overflow: hidden;
-
   position: relative;
-
-  box-shadow:
-    -10px 10px 0 rgba(0,0,0,0.65),
-    0 10px 25px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.03);
-
-  transition: transform 0.1s ease,
-              box-shadow 0.1s ease;
+  box-shadow: 0 18px 42px rgba(6, 24, 38, 0.18);
+  backdrop-filter: blur(10px);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 }
 
-
-/* subtle top light */
 .feed-post-card::before {
-
-  content:"";
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  height:120px;
-
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 110px;
   background: linear-gradient(
     180deg,
-    rgba(59,130,246,0.15),
+    rgba(11, 34, 57, 0.06),
+    rgba(46, 196, 182, 0.035),
     transparent
   );
-
-  opacity:0.35;
-  pointer-events:none;
+  pointer-events: none;
 }
-
 
 .feed-post-card:hover {
-
-  transform: translateX(4px);
-
-  box-shadow:
-    -14px 10px 0 rgba(0,0,0,0.75),
-    0 14px 40px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+  transform: translateY(-3px);
+  box-shadow: 0 24px 52px rgba(6, 24, 38, 0.24);
+  border-color: rgba(46, 196, 182, 0.28);
 }
-
 
 /* ============================= */
 /* Header                        */
 /* ============================= */
 
 .feed-post-header {
-  padding-bottom: 8px;
+  padding: 18px 20px 8px;
   background: transparent;
 }
 
@@ -97,71 +72,64 @@
 }
 
 .feed-post-avatar {
-  width: 30px;
-  height: 30px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background: linear-gradient(135deg, #2563eb, #60a5fa);
-
-  box-shadow:
-    0 0 12px rgba(96,165,250,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.3);
-
+  background: linear-gradient(135deg, var(--navy-800), var(--teal-500));
   color: white;
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 10px 22px rgba(11, 34, 57, 0.22);
 }
 
 .feed-post-user-info {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .feed-post-author {
   font-size: 16px;
-  font-weight: 700;
-  color: #60a5fa;
+  font-weight: 800;
+  color: rgb(166, 211, 255);
   text-decoration: none;
   cursor: pointer;
 }
 
 .feed-post-author:hover {
-  color: #93c5fd;
+  color: var(--teal-600);
 }
 
 .feed-post-date {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-soft);
 }
-
 
 /* ============================= */
 /* Post Body                     */
 /* ============================= */
 
 .feed-post-body {
-  padding: 18px 20px;
+  padding: 6px 20px 18px;
 }
 
 .feed-post-title {
   margin: 0 0 10px;
   font-size: 22px;
-  color: #f8fafc;
+  color: var(--navy-900);
 }
 
 .feed-post-content {
   margin: 0;
   font-size: 15px;
-  line-height: 1.7;
-  color: #dbeafe;
+  line-height: 1.75;
+  color: var(--text);
   white-space: pre-wrap;
 }
-
 
 /* ============================= */
 /* Images                        */
@@ -169,10 +137,10 @@
 
 .feed-post-image-wrap {
   margin-top: 16px;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(148,163,184,0.12);
-  background: #020617;
+  border: 1px solid rgba(214, 224, 234, 0.9);
+  background: #dfe8f1;
 }
 
 .feed-post-image {
@@ -182,83 +150,72 @@
   object-fit: cover;
 }
 
-
 /* ============================= */
 /* Footer                        */
 /* ============================= */
 
 .feed-post-footer {
   padding: 16px 20px 20px;
-  border-top: 1px solid rgba(148,163,184,0.08);
+  border-top: 1px solid rgba(214, 224, 234, 0.65);
 }
 
 .feed-post-meta {
   display: inline-block;
   margin-bottom: 14px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-
-  background: rgba(59,130,246,0.15);
-  color: #60a5fa;
-
+  background: rgba(46, 196, 182, 0.10);
+  color: var(--teal-600);
   font-size: 12px;
   text-transform: capitalize;
-
-  box-shadow: inset 0 0 8px rgba(59,130,246,0.25);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(46, 196, 182, 0.12);
 }
-
 
 /* ============================= */
 /* Comments Box                  */
 /* ============================= */
 
 .feed-post-comments-box {
-
   padding: 14px;
-  border-radius: 16px;
-
-  background: rgba(30,41,59,0.65);
-  backdrop-filter: blur(4px);
-
-  border: 1px solid rgba(148,163,184,0.08);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f1f6fb 100%);
+  border: 1px solid rgba(214, 224, 234, 0.85);
 }
 
 .feed-post-comments-title {
   margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 700;
-  color: #f8fafc;
+  font-weight: 800;
+  color: var(--navy-900);
 }
 
 .feed-post-comments-empty {
   font-size: 14px;
-  color: #94a3b8;
+  color: var(--text-soft);
 }
-
 
 /* ============================= */
 /* Profile Posts Section         */
 /* ============================= */
 
 .profile-posts-section {
-  max-width: 720px;
+  max-width: 760px;
   margin: 32px auto;
   padding: 0 16px 40px;
 }
 
 .profile-posts-heading {
-  width: 60px;
+  width: auto;
   margin: 0 0 18px;
-  font-size: 24px;
-  color: #f8fafc;
-
-  background-color:#0f172a;
-  border-radius: 9px;
-
-  padding-left:6px;
-
-  box-shadow:
-    0 0 12px rgba(59,130,246,0.15);
+  font-size: 22px;
+  color: var(--navy-900);
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(214, 224, 234, 0.85);
+  box-shadow: 0 14px 34px rgba(6, 24, 38, 0.16);
+  backdrop-filter: blur(8px);
 }
 
 .profile-post-card {
@@ -266,28 +223,29 @@
 }
 
 .profile-post-header {
-  display:flex;
+  display: flex;
   justify-content: end;
-  padding-right: 18px;
+  padding: 14px 18px 0;
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-soft);
 }
-
 
 .feed-post-delete-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 6px 10px;
+  top: 14px;
+  right: 14px;
+  padding: 7px 11px;
   border: none;
-  border-radius: 6px;
-  background: #dc2626;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--coral-500), var(--coral-600));
   color: white;
   font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   z-index: 2;
 }
 
 .feed-post-delete-btn:hover {
-  opacity: 0.9;
+  filter: brightness(1.03);
+  box-shadow: 0 10px 20px rgba(226, 85, 85, 0.22);
 }
