@@ -56,3 +56,13 @@ type Event struct {
 	EventAt   int64  `json:"eventAt"`
 	CreatedAt int64  `json:"createdAt"`
 }
+
+type Message struct {
+	ID         int    `json:"id"`
+	SenderID   int    `json:"senderId"`
+	ReceiverID int    `json:"receiverId"`
+	Content    string `json:"content"`
+	SentAt     int64  `json:"sentAt"`
+	ReceivedAt int64  `json:"receivedAt"`
+	ReadAt     int64  `json:"readAt"`
+}

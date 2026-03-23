@@ -1,46 +1,382 @@
+// MockChat is the client-side chat service used by the UI.
+//
+// this is now the real chat transport/state layer for:
+// - websocket connection management
+// - presence updates
+// - local user cache
+// - conversation cache
+// - message send/read events
+//
+// It acts as the shared bridge between backend chat endpoints and the
+// frontend chat components.
 window.MockChat = (function () {
-  const users = [
-    { id: 1, name: "Alice Brown", online: true },
-    { id: 2, name: "John Smith", online: true },
-    { id: 3, name: "Maria Doe", online: false },
-    { id: 4, name: "Chris Evans", online: true }
-  ];
+  let socket = null;
+  let connected = false;
+  let listeners = [];
+  let conversations = {};
+  let users = [];
+  let currentUserId = null;
 
-  const conversations = {
-    1: [
-      { id: 1, fromMe: false, text: "Hey! How are you?" },
-      { id: 2, fromMe: true, text: "I am good, you?" }
-    ],
-    2: [
-      { id: 1, fromMe: false, text: "Are you coming later?" }
-    ],
-    3: [],
-    4: [
-      { id: 1, fromMe: true, text: "Hello!" },
-      { id: 2, fromMe: false, text: "Hi there 👋" }
-    ]
-  };
+  function notify(event) {
+    listeners.forEach(fn => fn(event));
+  }
+
+  function getWsUrl() {
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    return `${proto}//${window.location.host}/ws/chat`;
+  }
+
+  function normalizeMessage(message) {
+    return {
+      id: message.id,
+      fromMe: message.senderId === currentUserId,
+      text: message.content,
+      senderId: message.senderId,
+      receiverId: message.receiverId,
+      sentAt: message.sentAt,
+      receivedAt: message.receivedAt,
+      readAt: message.readAt
+    };
+  }
+
+  function upsertMessage(rawMessage) {
+    const otherUserId =
+      rawMessage.senderId === currentUserId
+        ? rawMessage.receiverId
+        : rawMessage.senderId;
+
+    if (!conversations[otherUserId]) {
+      conversations[otherUserId] = [];
+    }
+
+    const normalized = normalizeMessage(rawMessage);
+    const idx = conversations[otherUserId].findIndex(m => m.id === normalized.id);
+
+    if (idx === -1) {
+      conversations[otherUserId].push(normalized);
+    } else {
+      conversations[otherUserId][idx] = normalized;
+    }
+
+    conversations[otherUserId].sort((a, b) => {
+      if (a.sentAt !== b.sentAt) return a.sentAt - b.sentAt;
+      return a.id - b.id;
+    });
+
+    return { otherUserId, message: normalized };
+  }
+
+  async function fetchCurrentUser() {
+    let me = window.currentUser;
+
+    if (!me) {
+      await new Promise(resolve => {
+        window.addEventListener("user-ready", resolve, { once: true });
+      });
+
+      me = window.currentUser;
+    }
+
+    if (!me || !me.id) {
+      throw new Error("failed_to_load_current_user");
+    }
+
+    currentUserId = me.id;
+    return currentUserId;
+  }
+
+  async function fetchUsers() {
+    const res = await fetch("/api/chat/users", {
+      credentials: "include"
+    });
+
+    if (!res.ok) {
+      throw new Error("failed_to_load_chat_users");
+    }
+
+    const data = await res.json();
+    users = Array.isArray(data) ? data : [];
+    return [...users];
+  }
+
+async function init() {
+  if (!currentUserId) {
+    await fetchCurrentUser();
+  }
+
+  await fetchUsers();
+
+  if (connected) {
+    return;
+  }
+
+  await new Promise((resolve, reject) => {
+    connect();
+
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      resolve();
+      return;
+    }
+
+    let done = false;
+
+    const unsubscribe = subscribe((event) => {
+      if (done) return;
+
+      if (event.type === "ws_open") {
+        done = true;
+        unsubscribe();
+        resolve();
+      }
+
+      if (event.type === "ws_error") {
+        done = true;
+        unsubscribe();
+        reject(new Error("ws_open_failed"));
+      }
+    });
+
+    setTimeout(() => {
+      if (done) return;
+      done = true;
+      unsubscribe();
+      reject(new Error("ws_open_timeout"));
+    }, 5000);
+  });
+}
+
+  function connect() {
+    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
+    socket = new WebSocket(getWsUrl());
+
+    socket.onopen = function () {
+      connected = true;
+      notify({ type: "ws_open" });
+    };
+
+    socket.onclose = function () {
+      connected = false;
+        socket = null;
+      notify({ type: "ws_close" });
+    };
+
+    socket.onerror = function () {
+      notify({ type: "ws_error" });
+    };
+
+    socket.onmessage = function (event) {
+      let payload;
+
+      try {
+        payload = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (!payload || !payload.type) return;
+
+      switch (payload.type) {
+        case "presence": {
+          const data = payload.data;
+
+          users = users.map(user => {
+            if (user.id === data.userId) {
+              return { ...user, online: data.online };
+            }
+            return user;
+          });
+
+          notify({
+            type: "presence",
+            userId: data.userId,
+            online: data.online
+          });
+          break;
+        }
+
+        case "presence_snapshot": {
+          const data = payload.data;
+          const onlineSet = new Set(data.userIds || []);
+
+          users = users.map(user => ({
+            ...user,
+            online: onlineSet.has(user.id)
+          }));
+
+          notify({
+            type: "presence_snapshot",
+            userIds: data.userIds || []
+          });
+          break;
+        }
+
+        case "message_sent":
+        case "message_received": {
+          const result = upsertMessage(payload.data);
+
+          notify({
+            type: payload.type,
+            userId: result.otherUserId,
+            message: result.message
+          });
+          break;
+        }
+
+        case "message_status": {
+          const status = payload.data;
+
+          Object.keys(conversations).forEach(userId => {
+            const list = conversations[userId];
+            const found = list.find(m => m.id === status.messageId);
+            if (!found) return;
+
+            if (status.status === "received" && !found.receivedAt) {
+              found.receivedAt = Math.floor(Date.now() / 1000);
+            }
+
+            if (status.status === "read" && !found.readAt) {
+              found.readAt = Math.floor(Date.now() / 1000);
+            }
+          });
+
+          notify({
+            type: "message_status",
+            data: status
+          });
+          break;
+        }
+
+        case "conversation_read": {
+          const data = payload.data;
+          const userId = data.userId;
+
+          if (conversations[userId]) {
+            conversations[userId] = conversations[userId].map(msg => {
+              if (data.messageIds.includes(msg.id)) {
+                return { ...msg, readAt: data.readAt };
+              }
+              return msg;
+            });
+          }
+
+          notify({
+            type: "conversation_read",
+            userId,
+            data
+          });
+          break;
+        }
+      }
+    };
+  }
+
+  async function loadConversation(userId) {
+    const res = await fetch(`/api/messages?userId=${encodeURIComponent(userId)}`, {
+      credentials: "include"
+    });
+
+    if (!res.ok) {
+      throw new Error("failed_to_load_messages");
+    }
+
+    const data = await res.json();
+    conversations[userId] = Array.isArray(data) ? data.map(normalizeMessage) : [];
+    return [...conversations[userId]];
+  }
+
+  function getMessages(userId) {
+    return conversations[userId] ? [...conversations[userId]] : [];
+  }
+
+  async function getUsers() {
+    if (!users.length) {
+      await fetchUsers();
+    }
+    return [...users];
+  }
+
+  function getUsersSync() {
+    return [...users];
+  }
+
+  async function refreshUsers() {
+    return await fetchUsers();
+  }
+
+  function sendMessage(userId, text) {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      throw new Error("ws_not_connected");
+    }
+
+    socket.send(JSON.stringify({
+      type: "send_message",
+      data: {
+        receiverId: userId,
+        content: text
+      }
+    }));
+  }
+
+  function markRead(messageId) {
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    socket.send(JSON.stringify({
+      type: "mark_read",
+      data: {
+        messageId
+      }
+    }));
+  }
+
+  function subscribe(fn) {
+    listeners.push(fn);
+
+    return function unsubscribe() {
+      listeners = listeners.filter(x => x !== fn);
+    };
+  }
+
+  function isConnected() {
+    return connected;
+  }
+
+  function getCurrentUserId() {
+    return currentUserId;
+  }
+
+  function disconnect() {
+    if (!socket) {
+      connected = false;
+      return;
+    }
+
+    const current = socket;
+    socket = null;
+    connected = false;
+
+    try {
+      current.close();
+    } catch {}
+  }
 
   return {
-    getUsers() {
-      return users;
-    },
-
-    getMessages(userId) {
-      return conversations[userId] ? [...conversations[userId]] : [];
-    },
-
-    sendMessage(userId, text) {
-      if (!conversations[userId]) conversations[userId] = [];
-
-      const newMessage = {
-        id: Date.now(),
-        fromMe: true,
-        text: text
-      };
-
-      conversations[userId].push(newMessage);
-      return newMessage;
-    }
+    init,
+    connect,
+    disconnect,
+    subscribe,
+    getUsers,
+    getUsersSync,
+    refreshUsers,
+    getMessages,
+    loadConversation,
+    sendMessage,
+    markRead,
+    isConnected,
+    getCurrentUserId
   };
 })();

@@ -96,13 +96,14 @@ window.Navbar = {
     },
 
     async logout() {
+      window.MockChat.disconnect();
+      window.dispatchEvent(new Event("chat-reset"));
       await fetch("/api/logout", {
         method: "POST",
         headers: {
           "X-CSRF-Token": window.extractCsrfToken(),
         }
       });
-
       Router.push("/login");
     },
 

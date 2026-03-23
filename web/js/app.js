@@ -13,6 +13,7 @@ const App = {
       isChatSidebarOpen: false,
       activeChatUser: null,
       postRefreshTick: 0,
+      chatInitialized: false,
     };
   },
 
@@ -28,7 +29,34 @@ const App = {
     }
   },
 
+  mounted() {
+    window.addEventListener("chat-reset", () => {
+      this.chatInitialized = false;
+    });
+
+    this.ensureChatInit();
+  },
+  watch: {
+    showNavbar() {
+      this.ensureChatInit();
+    }
+  },
+  
   methods: {
+    // ensureChatInit starts the chat service once the app is on a
+    // private/authenticated route. This allows websocket chat to come
+    // online after SPA login without requiring a full page refresh.
+    async ensureChatInit() {
+      if (!this.showNavbar) return;
+      if (this.chatInitialized && window.MockChat.isConnected()) return;
+    
+      try {
+        await window.MockChat.init();
+        this.chatInitialized = true;
+      } catch (err) {
+        console.error("chat init failed", err);
+      }
+    },
     toggleChatSidebar() {
       this.isChatSidebarOpen = !this.isChatSidebarOpen;
     },

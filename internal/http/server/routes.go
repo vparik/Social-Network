@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"socialnet/internal/http/handlers"
+	"socialnet/internal/http/handlers/chat"
 
 	"github.com/Des1red/goauthlib/goauth"
 )
@@ -36,6 +37,10 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/followers", goauth.Protected(handlers.GetFollowers))
 	s.mux.HandleFunc("GET /api/following", goauth.Protected(handlers.GetFollowing))
 
+	// ---------------- CHAT ----------------
+	s.mux.HandleFunc("GET /api/chat/users", goauth.Protected(chat.GetChatUsers))
+	s.mux.HandleFunc("GET /api/messages", goauth.Protected(chat.GetConversation))
+	s.mux.HandleFunc("GET /ws/chat", goauth.Protected(chat.ChatWS))
 	// ---------------- STATIC ----------------
 
 	fs := http.FileServer(http.Dir("./web"))

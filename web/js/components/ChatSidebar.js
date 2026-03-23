@@ -1,3 +1,13 @@
+// ChatSidebar displays the available private chat users.
+//
+// It loads the initial user list from the chat service, then keeps the
+// sidebar presence state in sync through chat websocket events.
+//
+// Current behavior:
+// - initial user list comes from the backend
+// - after websocket open, users are refreshed once from the backend
+// - live online/offline changes are applied from the local chat cache
+// - selecting a user opens the private chat box for that user
 window.ChatSidebar = {
   name: "ChatSidebar",
 
@@ -12,12 +22,40 @@ window.ChatSidebar = {
 
   data() {
     return {
-      users: []
+      users: [],
+      unsubscribe: null
     };
   },
 
-  mounted() {
-    this.users = MockChat.getUsers();
+  async mounted() {
+    try {
+      this.users = await MockChat.getUsers();
+    } catch (err) {
+      console.error("failed to load chat users", err);
+      this.users = [];
+    }
+
+    this.unsubscribe = MockChat.subscribe(async (event) => {
+      if (event.type === "ws_open") {
+        try {
+          this.users = await MockChat.refreshUsers();
+        } catch (err) {
+          console.error("failed to refresh chat users", err);
+        }
+        return;
+      }
+
+      if (event.type === "presence" || event.type === "presence_snapshot") {
+        this.users = MockChat.getUsersSync();
+      }
+    });
+  },
+
+  beforeUnmount() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
   },
 
   template: `
