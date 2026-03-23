@@ -5,7 +5,7 @@ window.Navbar = {
     CreatePost: window.CreatePost
   },
 
-  emits: ["toggle-chat", "post-created"],
+  emits: ["toggle-chat", "close-chat", "post-created"],
 
   data() {
     return {
@@ -19,6 +19,12 @@ window.Navbar = {
   },
 
   methods: {
+    closeNavbarPanels() {
+      this.isSearchOpen = false;
+      this.isNotificationsOpen = false;
+      this.isSettingsOpen = false;
+      this.isCreatePostOpen = false;
+    },
     goHome() {
       Router.push("/");
     },
@@ -43,13 +49,14 @@ window.Navbar = {
     },
 
     toggleSearch() {
-      this.isSearchOpen = !this.isSearchOpen;
+      const willOpen = !this.isSearchOpen;
+
+      this.closeNavbarPanels();
+      this.$emit("close-chat");
+
+      this.isSearchOpen = willOpen;
 
       if (this.isSearchOpen) {
-        this.isNotificationsOpen = false;
-        this.isSettingsOpen = false;
-        this.isCreatePostOpen = false;
-
         this.$nextTick(() => {
           if (this.$refs.searchInput) {
             this.$refs.searchInput.focus();
@@ -71,28 +78,37 @@ window.Navbar = {
     },
 
     toggleNotifications() {
-      this.isNotificationsOpen = !this.isNotificationsOpen;
-      this.isSettingsOpen = false;
-      this.isSearchOpen = false;
-      this.isCreatePostOpen = false;
+      const willOpen = !this.isNotificationsOpen;
+
+      this.closeNavbarPanels();
+      this.$emit("close-chat");
+
+      this.isNotificationsOpen = willOpen;
     },
 
     toggleSettings() {
-      this.isSettingsOpen = !this.isSettingsOpen;
-      this.isNotificationsOpen = false;
-      this.isSearchOpen = false;
-      this.isCreatePostOpen = false;
+      const willOpen = !this.isSettingsOpen;
+
+      this.closeNavbarPanels();
+      this.$emit("close-chat");
+
+      this.isSettingsOpen = willOpen;
     },
 
     openChat() {
+      this.closeNavbarPanels();
       this.$emit("toggle-chat");
     },
 
+    isChatButtonTarget(target) {
+      const chatButton = this.$refs.chatButton;
+      return !!chatButton && chatButton.contains(target);
+    },
+
     openCreatePost() {
+      this.closeNavbarPanels();
+      this.$emit("close-chat");
       this.isCreatePostOpen = true;
-      this.isNotificationsOpen = false;
-      this.isSettingsOpen = false;
-      this.isSearchOpen = false;
     },
 
     async logout() {
@@ -220,7 +236,7 @@ window.Navbar = {
           </div>
         </div>
 
-        <button class="nav-icon-btn" @click="openChat" title="Chat">
+        <button ref="chatButton" class="nav-icon-btn" @click.stop="openChat" title="Chat">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z"></path>
           </svg>
