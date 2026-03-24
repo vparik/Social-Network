@@ -129,3 +129,46 @@ func AreMutualFollows(userA, userB int) (bool, error) {
 	}
 	return err == nil, err
 }
+
+func GetAffectedRelationshipUserIDs(actorID, targetID int) ([]int, error) {
+	unique := map[int]struct{}{
+		actorID:  {},
+		targetID: {},
+	}
+
+	collect := func(userID int) error {
+		followers, err := GetFollowers(userID)
+		if err != nil {
+			return err
+		}
+		for _, u := range followers {
+			unique[u.ID] = struct{}{}
+		}
+
+		following, err := GetFollowing(userID)
+		if err != nil {
+			return err
+		}
+		for _, u := range following {
+			unique[u.ID] = struct{}{}
+		}
+
+		return nil
+	}
+
+	if err := collect(actorID); err != nil {
+		return nil, err
+	}
+	if actorID != targetID {
+		if err := collect(targetID); err != nil {
+			return nil, err
+		}
+	}
+
+	ids := make([]int, 0, len(unique))
+	for id := range unique {
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}

@@ -1,13 +1,3 @@
-// ChatBox renders a private conversation with the selected user.
-//
-// It loads persisted message history when opened, listens for live websocket
-// updates through the chat service, and sends new messages in real time.
-//
-// Current behavior:
-// - loads conversation history from the backend
-// - updates instantly on incoming and outgoing chat events
-// - marks visible incoming messages as read when appropriate
-// - shows delivery and read status for the latest outgoing message
 window.ChatBox = {
   name: "ChatBox",
 
@@ -18,8 +8,6 @@ window.ChatBox = {
     }
   },
 
-  emits: ["close", "minimize-change"],
-  
   data() {
     return {
       messages: [],
@@ -29,14 +17,22 @@ window.ChatBox = {
     };
   },
 
-  mounted() {
-    window.__chatState = window.__chatState || {
-      activeChatUserId: null,
-      chatBoxMinimized: false
-    };
+  watch: {
+    user: {
+      immediate: true,
+      handler() {
+        if (this.user) {
+          this.minimized = window.Events.state.chat.boxMinimized;
+          this.loadMessages();
+        }
+      }
+    }
+  },
 
-    window.__chatState.activeChatUserId = this.user.id;
-    window.__chatState.chatBoxMinimized = this.minimized;
+  mounted() {
+    if (this.user) {
+      this.minimized = window.Events.state.chat.boxMinimized;
+    }
 
     this.unsubscribe = window.MockChat.subscribe((event) => {
       if (!this.user) return;
@@ -46,7 +42,7 @@ window.ChatBox = {
         event.userId === this.user.id
       ) {
         this.messages = window.MockChat.getMessages(this.user.id);
-      
+
         if (
           event.type === "message_received" &&
           !this.minimized &&
@@ -68,33 +64,12 @@ window.ChatBox = {
         this.messages = window.MockChat.getMessages(this.user.id);
       }
     });
-
-    this.loadMessages();
   },
 
   beforeUnmount() {
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
-    }
-  },
-
-  watch: {
-    user: {
-      immediate: true,
-      handler() {
-        if (this.user) {
-          window.__chatState = window.__chatState || {
-            activeChatUserId: null,
-            chatBoxMinimized: false
-          };
-
-          window.__chatState.activeChatUserId = this.user.id;
-          window.__chatState.chatBoxMinimized = this.minimized;
-        }
-
-        this.loadMessages();
-      }
     }
   },
 
@@ -124,7 +99,11 @@ window.ChatBox = {
 
     toggleMinimize() {
       this.minimized = !this.minimized;
-      this.$emit("minimize-change", this.minimized);
+      window.Events.chat.setMinimized(this.minimized);
+    },
+
+    closeBox() {
+      window.Events.chat.closeBox();
     },
 
     isLastOutgoing(message) {
@@ -155,7 +134,7 @@ window.ChatBox = {
           <strong>{{ user.name }}</strong>
         </div>
         <button class="chat-minimize-btn" @click="toggleMinimize">_</button>
-        <button class="chat-close-btn" @click="$emit('close')">✕</button>
+        <button class="chat-close-btn" @click="closeBox">✕</button>
       </div>
 
       <div v-if="!minimized" class="chat-box-messages">

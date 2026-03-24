@@ -67,22 +67,34 @@ window.MockChat = (function () {
   }
 
   async function fetchCurrentUser() {
-    let me = window.currentUser;
+    const existing = window.Events?.state?.auth?.currentUser;
 
-    if (!me) {
-      await new Promise(resolve => {
-        window.addEventListener("user-ready", resolve, { once: true });
-      });
-
-      me = window.currentUser;
+    if (existing && existing.id) {
+      currentUserId = existing.id;
+      return currentUserId;
     }
 
-    if (!me || !me.id) {
-      throw new Error("failed_to_load_current_user");
-    }
+    return await new Promise((resolve, reject) => {
+      if (!window.Events) {
+        reject(new Error("events_not_available"));
+        return;
+      }
 
-    currentUserId = me.id;
-    return currentUserId;
+      const unsubscribe = window.Events.on(
+        window.Events.EVENT.AUTH_USER_READY,
+        ({ user }) => {
+          if (!user || !user.id) {
+            unsubscribe();
+            reject(new Error("failed_to_load_current_user"));
+            return;
+          }
+
+          currentUserId = user.id;
+          unsubscribe();
+          resolve(currentUserId);
+        }
+      );
+    });
   }
 
   async function fetchUsers() {
@@ -99,54 +111,58 @@ window.MockChat = (function () {
     return [...users];
   }
 
-async function init() {
-  if (!currentUserId) {
-    await fetchCurrentUser();
-  }
+  async function init() {
+    if (!currentUserId) {
+      await fetchCurrentUser();
+    }
 
-  await fetchUsers();
+    await fetchUsers();
 
-  if (connected) {
-    return;
-  }
-
-  await new Promise((resolve, reject) => {
-    connect();
-
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      resolve();
+    if (connected) {
       return;
     }
 
-    let done = false;
+    await new Promise((resolve, reject) => {
+      connect();
 
-    const unsubscribe = subscribe((event) => {
-      if (done) return;
-
-      if (event.type === "ws_open") {
-        done = true;
-        unsubscribe();
+      if (socket && socket.readyState === WebSocket.OPEN) {
         resolve();
+        return;
       }
 
-      if (event.type === "ws_error") {
+      let done = false;
+
+      const unsubscribe = subscribe((event) => {
+        if (done) return;
+
+        if (event.type === "ws_open") {
+          done = true;
+          unsubscribe();
+          resolve();
+        }
+
+        if (event.type === "ws_error") {
+          done = true;
+          unsubscribe();
+          reject(new Error("ws_open_failed"));
+        }
+      });
+
+      setTimeout(() => {
+        if (done) return;
         done = true;
         unsubscribe();
-        reject(new Error("ws_open_failed"));
-      }
+        reject(new Error("ws_open_timeout"));
+      }, 5000);
     });
-
-    setTimeout(() => {
-      if (done) return;
-      done = true;
-      unsubscribe();
-      reject(new Error("ws_open_timeout"));
-    }, 5000);
-  });
-}
+  }
 
   function connect() {
-    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+    if (
+      socket &&
+      (socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -159,7 +175,7 @@ async function init() {
 
     socket.onclose = function () {
       connected = false;
-        socket = null;
+      socket = null;
       notify({ type: "ws_close" });
     };
 
@@ -179,6 +195,13 @@ async function init() {
       if (!payload || !payload.type) return;
 
       switch (payload.type) {
+        case "relationship_changed": {
+          notify({
+            type: "relationship_changed",
+            data: payload.data
+          });
+          break;
+        }
         case "presence": {
           const data = payload.data;
 
@@ -212,26 +235,27 @@ async function init() {
           });
           break;
         }
-       case "message_sent":
-       case "message_received": {
-         const result = upsertMessage(payload.data);
-       
-         if (
-           payload.type === "message_received" &&
-           result.message &&
-           !result.message.fromMe &&
-           !isChatOpenWith(result.otherUserId)
-         ) {
-           incrementUnread(result.otherUserId);
-         }
-       
-         notify({
-           type: payload.type,
-           userId: result.otherUserId,
-           message: result.message
-         });
-         break;
-       }
+
+        case "message_sent":
+        case "message_received": {
+          const result = upsertMessage(payload.data);
+
+          if (
+            payload.type === "message_received" &&
+            result.message &&
+            !result.message.fromMe &&
+            !isChatOpenWith(result.otherUserId)
+          ) {
+            incrementUnread(result.otherUserId);
+          }
+
+          notify({
+            type: payload.type,
+            userId: result.otherUserId,
+            message: result.message
+          });
+          break;
+        }
 
         case "message_status": {
           const status = payload.data;
@@ -293,9 +317,11 @@ async function init() {
     const data = await res.json();
     conversations[userId] = Array.isArray(data) ? data.map(normalizeMessage) : [];
     setUnreadCount(userId, 0);
+
     notify({
       type: "users_updated"
     });
+
     return [...conversations[userId]];
   }
 
@@ -315,7 +341,13 @@ async function init() {
   }
 
   async function refreshUsers() {
-    return await fetchUsers();
+    const refreshed = await fetchUsers();
+
+    notify({
+      type: "users_updated"
+    });
+
+    return refreshed;
   }
 
   function sendMessage(userId, text) {
@@ -346,12 +378,17 @@ async function init() {
   }
 
   function isChatOpenWith(userId) {
-  return !!(
-    window.__chatState &&
-    window.__chatState.activeChatUserId === userId &&
-    window.__chatState.chatBoxMinimized === false
-  );
-}
+    const chatState = window.Events?.state?.chat;
+
+    if (!chatState || !chatState.activeUser) {
+      return false;
+    }
+
+    return (
+      chatState.activeUser.id === userId &&
+      chatState.boxMinimized === false
+    );
+  }
 
   function updateUser(userId, updater) {
     users = users.map(user => {
@@ -373,6 +410,7 @@ async function init() {
       unreadCount: (user.unreadCount || 0) + 1
     }));
   }
+
   function subscribe(fn) {
     listeners.push(fn);
 
@@ -380,9 +418,11 @@ async function init() {
       listeners = listeners.filter(x => x !== fn);
     };
   }
+
   function getTotalUnreadCount() {
     return users.reduce((sum, user) => sum + (user.unreadCount || 0), 0);
   }
+
   function isConnected() {
     return connected;
   }

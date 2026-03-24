@@ -5,86 +5,107 @@ const routes = {
   "/profile": ProfilePage
 };
 
-const publicRoutes = ["/login", "/register"]
+const publicRoutes = ["/login", "/register"];
 
 const App = {
-  data() {
-    return {
-      isChatSidebarOpen: false,
-      activeChatUser: null,
-      postRefreshTick: 0,
-      chatInitialized: false,
-      chatBoxMinimized: false,
-    };
-  },
-
   computed: {
-    CurrentComponent() {
-      return routes[window.Router.state.path]
+    routeState() {
+      return window.Events.state.route;
     },
+
+    chatState() {
+      return window.Events.state.chat;
+    },
+
+    authState() {
+      return window.Events.state.auth;
+    },
+
+    isPublicRoute() {
+      return publicRoutes.includes(this.routeState.path);
+    },
+
     showNavbar() {
-      return !publicRoutes.includes(window.Router.state.path)
+      return !this.isPublicRoute && this.authState.status === "authenticated";
     },
+
+    CurrentComponent() {
+      return routes[this.routeState.path] || null;
+    },
+
     routeKey() {
-      return window.Router.state.path + window.Router.state.query;
+      return this.routeState.path + this.routeState.query;
+    },
+
+    canRenderCurrentRoute() {
+      if (this.isPublicRoute) return true;
+      return this.authState.status !== "unknown";
     }
   },
 
-  mounted() {
-    window.addEventListener("chat-reset", () => {
-      this.chatInitialized = false;
-    });
-    window.__chatState = {
-      activeChatUserId: null,
-      chatBoxMinimized: false
-    };
-    this.ensureChatInit();
+  async mounted() {
+    await this.bootstrapAuth();
+    await this.ensureChatInit();
     document.addEventListener("click", this.handleDocumentClick, true);
   },
+
   watch: {
-    showNavbar() {
+    "routeState.path"() {
+      this.bootstrapAuth();
+      this.ensureChatInit();
+    },
+
+    "authState.status"() {
+      this.ensureChatInit();
+    },
+
+    "authState.currentUser"() {
       this.ensureChatInit();
     }
   },
-  
+
   methods: {
-    // ensureChatInit starts the chat service once the app is on a
-    // private/authenticated route. This allows websocket chat to come
-    // online after SPA login without requiring a full page refresh.
+    async bootstrapAuth() {
+      if (this.isPublicRoute) return;
+      if (this.authState.status !== "unknown") return;
+
+      try {
+        const res = await fetch("/api/profile", { method: "GET" });
+
+        if (!res.ok) {
+          window.Events.auth.markGuest();
+          window.Router.replace("/login");
+          return;
+        }
+
+        const user = await res.json();
+        window.currentUser = user;
+        window.Events.auth.setCurrentUser(user);
+      } catch (err) {
+        window.Events.auth.markGuest();
+        window.Router.replace("/login");
+      }
+    },
+
     async ensureChatInit() {
-      if (!this.showNavbar) return;
-      if (this.chatInitialized && window.MockChat.isConnected()) return;
-    
+      if (this.isPublicRoute) return;
+      if (this.authState.status !== "authenticated") return;
+      if (!this.authState.currentUser || !this.authState.currentUser.id) return;
+
+      if (this.chatState.initialized && window.MockChat.isConnected()) {
+        return;
+      }
+
       try {
         await window.MockChat.init();
-        this.chatInitialized = true;
+        window.Events.chat.markInitialized(true);
       } catch (err) {
         console.error("chat init failed", err);
       }
     },
-    toggleChatSidebar() {
-      this.isChatSidebarOpen = !this.isChatSidebarOpen;
-    },
-    closeChatSidebar() {
-      this.isChatSidebarOpen = false;
-    },
-    openChatWithUser(user) {
-      this.activeChatUser = user;
-      window.__chatState.activeChatUserId = user.id;
-      window.__chatState.chatBoxMinimized = false;
-    },
-
-    closeChatBox() {
-      this.activeChatUser = null;
-      window.__chatState.activeChatUserId = null;
-      window.__chatState.chatBoxMinimized = false;
-    },
-    onPostCreated() {
-      this.postRefreshTick++;
-    },
 
     handleDocumentClick(event) {
-     if (!this.isChatSidebarOpen) return;
+      if (!this.chatState.sidebarOpen) return;
 
       const navbarComponent = this.$refs.navbar;
       const chatSidebarComponent = this.$refs.chatSidebar;
@@ -100,7 +121,7 @@ const App = {
         chatSidebarComponent.$el.contains(event.target);
 
       if (!clickedChatButton && !clickedInsideSidebar) {
-        this.isChatSidebarOpen = false;
+        window.Events.chat.closeSidebar();
       }
     }
   },
@@ -113,27 +134,31 @@ const App = {
     <Navbar
       v-if="showNavbar"
       ref="navbar"
-      @toggle-chat="toggleChatSidebar"
-      @close-chat="closeChatSidebar"
-      @post-created="onPostCreated"
     />
+
+    <div v-if="!CurrentComponent" class="container error">
+      Page not found.
+    </div>
+
+    <div v-else-if="!canRenderCurrentRoute" class="container">
+      Loading...
+    </div>
+
     <component
+      v-else
       :is="CurrentComponent"
       :key="routeKey"
-      :postRefreshTick="postRefreshTick"
     ></component>
+
     <template v-if="showNavbar">
       <ChatSidebar
         ref="chatSidebar"
-        :isOpen="isChatSidebarOpen"
-        @close="isChatSidebarOpen = false"
-        @select-user="openChatWithUser"
+        :isOpen="chatState.sidebarOpen"
       />
+
       <ChatBox
-        v-if="activeChatUser"
-        :user="activeChatUser"
-        @close="closeChatBox"
-        @minimize-change="chatBoxMinimized = $event; window.__chatState.chatBoxMinimized = $event"
+        v-if="chatState.activeUser"
+        :user="chatState.activeUser"
       />
     </template>
   `

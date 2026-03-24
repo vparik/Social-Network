@@ -1,13 +1,3 @@
-// ChatSidebar displays the available private chat users.
-//
-// It loads the initial user list from the chat service, then keeps the
-// sidebar presence state in sync through chat websocket events.
-//
-// Current behavior:
-// - initial user list comes from the backend
-// - after websocket open, users are refreshed once from the backend
-// - live online/offline changes are applied from the local chat cache
-// - selecting a user opens the private chat box for that user
 window.ChatSidebar = {
   name: "ChatSidebar",
 
@@ -18,24 +8,38 @@ window.ChatSidebar = {
     }
   },
 
-  emits: ["close", "select-user"],
-
   data() {
     return {
       users: [],
-      unsubscribe: null
+      unsubscribeChat: null,
+      unsubscribeFollowChanged: null
     };
+  },
+
+  methods: {
+    openConversation(user) {
+      window.Events.chat.openUser(user);
+      window.Events.chat.closeSidebar();
+    },
+
+    async refreshUsers() {
+      try {
+        this.users = await window.MockChat.refreshUsers();
+      } catch (err) {
+        console.error("failed to refresh chat users", err);
+      }
+    }
   },
 
   async mounted() {
     try {
-      this.users = await MockChat.getUsers();
+      this.users = await window.MockChat.getUsers();
     } catch (err) {
       console.error("failed to load chat users", err);
       this.users = [];
     }
 
-     this.unsubscribe = MockChat.subscribe((event) => {
+    this.unsubscribeChat = window.MockChat.subscribe(async (event) => {
       if (
         event.type === "presence" ||
         event.type === "presence_snapshot" ||
@@ -44,15 +48,32 @@ window.ChatSidebar = {
         event.type === "conversation_read" ||
         event.type === "users_updated"
       ) {
-        this.users = MockChat.getUsersSync();
+        this.users = window.MockChat.getUsersSync();
+        return;
+      }
+
+      if (event.type === "relationship_changed") {
+        await this.refreshUsers();
       }
     });
+
+    this.unsubscribeFollowChanged = window.Events.on(
+      window.Events.EVENT.PROFILE_FOLLOW_CHANGED,
+      async () => {
+        await this.refreshUsers();
+      }
+    );
   },
 
   beforeUnmount() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
+    if (this.unsubscribeChat) {
+      this.unsubscribeChat();
+      this.unsubscribeChat = null;
+    }
+
+    if (this.unsubscribeFollowChanged) {
+      this.unsubscribeFollowChanged();
+      this.unsubscribeFollowChanged = null;
     }
   },
 
@@ -60,7 +81,7 @@ window.ChatSidebar = {
     <aside class="chat-sidebar" :class="{ open: isOpen }" @click.stop>
       <div class="chat-sidebar-header">
         <h3>Chats</h3>
-        <button class="chat-close-btn" @click="$emit('close')">✕</button>
+        <button class="chat-close-btn" @click="window.Events.chat.closeSidebar()">✕</button>
       </div>
 
       <div class="chat-user-list">
@@ -68,7 +89,7 @@ window.ChatSidebar = {
           v-for="user in users"
           :key="user.id"
           class="chat-user-item"
-          @click="$emit('select-user', user)"
+          @click="openConversation(user)"
         >
           <div class="chat-user-avatar">
             {{ user.name.charAt(0) }}

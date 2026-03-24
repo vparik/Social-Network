@@ -5,8 +5,6 @@ window.Navbar = {
     CreatePost: window.CreatePost
   },
 
-  emits: ["toggle-chat", "close-chat", "post-created"],
-
   data() {
     return {
       isSearchOpen: false,
@@ -27,6 +25,7 @@ window.Navbar = {
       this.isSettingsOpen = false;
       this.isCreatePostOpen = false;
     },
+
     goHome() {
       Router.push("/");
     },
@@ -38,13 +37,15 @@ window.Navbar = {
     async loadCurrentUser() {
       try {
         const res = await fetch("/api/profile", { method: "GET" });
-
         if (!res.ok) return;
 
         const data = await res.json();
+
         window.currentUser = data;
-        window.dispatchEvent(new Event("user-ready"));
-        this.currentUserName = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+        window.Events.auth.setCurrentUser(data);
+
+        this.currentUserName =
+          `${data.firstName || ""} ${data.lastName || ""}`.trim();
       } catch (err) {
         console.warn("Failed to load current user data:", err);
       }
@@ -54,7 +55,7 @@ window.Navbar = {
       const willOpen = !this.isSearchOpen;
 
       this.closeNavbarPanels();
-      this.$emit("close-chat");
+      window.Events.chat.closeSidebar();
 
       this.isSearchOpen = willOpen;
 
@@ -83,7 +84,7 @@ window.Navbar = {
       const willOpen = !this.isNotificationsOpen;
 
       this.closeNavbarPanels();
-      this.$emit("close-chat");
+      window.Events.chat.closeSidebar();
 
       this.isNotificationsOpen = willOpen;
     },
@@ -92,14 +93,14 @@ window.Navbar = {
       const willOpen = !this.isSettingsOpen;
 
       this.closeNavbarPanels();
-      this.$emit("close-chat");
+      window.Events.chat.closeSidebar();
 
       this.isSettingsOpen = willOpen;
     },
 
     openChat() {
       this.closeNavbarPanels();
-      this.$emit("toggle-chat");
+      window.Events.chat.toggleSidebar();
     },
 
     isChatButtonTarget(target) {
@@ -109,20 +110,27 @@ window.Navbar = {
 
     openCreatePost() {
       this.closeNavbarPanels();
-      this.$emit("close-chat");
+      window.Events.chat.closeSidebar();
       this.isCreatePostOpen = true;
     },
 
     async logout() {
-      window.MockChat.disconnect();
-      window.dispatchEvent(new Event("chat-reset"));
-      await fetch("/api/logout", {
-        method: "POST",
-        headers: {
-          "X-CSRF-Token": window.extractCsrfToken(),
-        }
-      });
-      Router.push("/login");
+      try {
+        window.MockChat.disconnect();
+        window.Events.chat.reset();
+        window.Events.auth.clearCurrentUser();
+
+        await fetch("/api/logout", {
+          method: "POST",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+      } catch (err) {
+        console.error("logout failed", err);
+      } finally {
+        Router.push("/login");
+      }
     },
 
     handleClickOutside(event) {
@@ -155,14 +163,19 @@ window.Navbar = {
           this.closeSearch();
         }
       }
+    },
+
+    handlePostCreated(post) {
+      this.isCreatePostOpen = false;
+      window.Events.emit(window.Events.EVENT.POSTS_CREATED, post);
     }
   },
 
   mounted() {
     document.addEventListener("click", this.handleClickOutside);
     document.addEventListener("keyup", this.handleEscape);
-    this.loadCurrentUser();
 
+    this.loadCurrentUser();
     this.unreadChatCount = window.MockChat.getTotalUnreadCount();
 
     this.unsubscribeChat = window.MockChat.subscribe((event) => {
@@ -182,13 +195,14 @@ window.Navbar = {
   beforeUnmount() {
     document.removeEventListener("click", this.handleClickOutside);
     document.removeEventListener("keyup", this.handleEscape);
+
     if (this.unsubscribeChat) {
       this.unsubscribeChat();
       this.unsubscribeChat = null;
     }
   },
 
- template: `
+  template: `
     <header class="navbar" ref="navbar">
       <div class="navbar-left">
         <button class="nav-brand" @click="goHome">
@@ -304,7 +318,7 @@ window.Navbar = {
     <CreatePost
       v-if="isCreatePostOpen"
       @close="isCreatePostOpen = false"
-      @post-created="$emit('post-created')"
+      @post-created="handlePostCreated"
     />
   `
 };

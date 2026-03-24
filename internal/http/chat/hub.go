@@ -70,6 +70,19 @@ func (h *Hub) OnlineUserIDs() []int {
 	return ids
 }
 
+func (h *Hub) SendToMany(userIDs []int, event models.ChatEvent) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	for _, userID := range userIDs {
+		conn, ok := h.clients[userID]
+		if !ok || conn == nil {
+			continue
+		}
+		_ = conn.WriteJSON(event)
+	}
+}
+
 func (h *Hub) BroadcastPresence(userID int, online bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()

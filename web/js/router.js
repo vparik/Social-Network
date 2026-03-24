@@ -4,37 +4,80 @@ window.Router = (function () {
     query: window.location.search
   });
 
+  function getParts(path) {
+    const queryIndex = path.indexOf("?");
+
+    if (queryIndex === -1) {
+      return {
+        path,
+        query: ""
+      };
+    }
+
+    return {
+      path: path.slice(0, queryIndex),
+      query: path.slice(queryIndex)
+    };
+  }
+
+  function syncFromLocation() {
+    state.path = window.location.pathname;
+    state.query = window.location.search;
+  }
+
+  function notifyRouteChange(mode) {
+    if (!window.Events) return;
+
+    window.Events.route.setCurrent(state.path, state.query, mode);
+  }
+
   function push(path) {
-    const pathname = path.split("?")[0];
+    const next = getParts(path);
     const currentFull = window.location.pathname + window.location.search;
-    if (path === currentFull) return;
-    history.pushState({}, "", path);
-    state.path = pathname;
-    state.query = path.includes("?") ? path.slice(path.indexOf("?")) : "";
+    const nextFull = next.path + next.query;
+
+    if (nextFull === currentFull) return;
+
+    history.pushState({}, "", nextFull);
+    syncFromLocation();
+    notifyRouteChange("push");
   }
 
   function replace(path) {
-    history.replaceState({}, "", path);
-    state.path = path.split("?")[0];
-    state.query = path.includes("?") ? path.slice(path.indexOf("?")) : "";
+    const next = getParts(path);
+    const nextFull = next.path + next.query;
+    const currentFull = window.location.pathname + window.location.search;
+
+    if (nextFull === currentFull) return;
+
+    history.replaceState({}, "", nextFull);
+    syncFromLocation();
+    notifyRouteChange("replace");
   }
 
-  window.addEventListener("popstate", () => {
-    state.path = window.location.pathname;
-    state.query = window.location.search;
+  window.addEventListener("popstate", function () {
+    syncFromLocation();
+    notifyRouteChange("pop");
   });
 
-  // Intercept internal links
   document.addEventListener("click", function (e) {
     const a = e.target.closest("a");
     if (!a) return;
 
     const href = a.getAttribute("href");
-    if (!href || !href.startsWith("/")) return;
+    if (!href) return;
+    if (!href.startsWith("/")) return;
+    if (a.hasAttribute("target")) return;
+    if (e.defaultPrevented) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
     e.preventDefault();
     push(href);
   });
 
-  return { state, push, replace };
+  return {
+    state,
+    push,
+    replace
+  };
 })();

@@ -1,43 +1,59 @@
 window.CommentSection = {
   name: "CommentSection",
 
-  // postId is passed in from the parent (HomePage or ProfilePage)
-  // The component owns all comment state internally — the parent doesn't need to know anything
-  props: ["postId"],
+  props: {
+    postId: {
+      type: Number,
+      required: true
+    }
+  },
 
   data() {
     return {
       comments: [],
       commentInput: "",
       isOpen: false,
-      loaded: false
+      loaded: false,
+      loadingComments: false,
+      submittingComment: false
     };
   },
 
   methods: {
     async toggle() {
       this.isOpen = !this.isOpen;
-      // Fetch only once — on first open
+
       if (this.isOpen && !this.loaded) {
         await this.loadComments();
       }
     },
 
     async loadComments() {
+      if (this.loadingComments) return;
+
+      this.loadingComments = true;
+
       try {
         const res = await fetch(`/api/posts/${this.postId}/comments`);
-        if (res.ok) {
-          this.comments = await res.json();
-          this.loaded = true;
+
+        if (!res.ok) {
+          return;
         }
+
+        this.comments = await res.json();
+        this.loaded = true;
       } catch (err) {
         console.error("Failed to load comments:", err);
+      } finally {
+        this.loadingComments = false;
       }
     },
 
     async submitComment() {
       const content = this.commentInput.trim();
-      if (!content) return;
+      if (!content || this.submittingComment) return;
+
+      this.submittingComment = true;
 
       try {
         const res = await fetch(`/api/posts/${this.postId}/comments`, {
@@ -49,14 +65,26 @@ window.CommentSection = {
           body: JSON.stringify({ content })
         });
 
-        if (res.ok) {
-          const comment = await res.json();
-          // Push the returned full comment object directly — no re-fetch
-          this.comments.push(comment);
-          this.commentInput = "";
+        if (!res.ok) {
+          return;
+        }
+
+        const comment = await res.json();
+
+        this.comments.push(comment);
+        this.commentInput = "";
+        this.loaded = true;
+
+        if (window.Events) {
+          window.Events.emit(window.Events.EVENT.COMMENTS_CREATED, {
+            postId: this.postId,
+            comment
+          });
         }
       } catch (err) {
         console.error("Failed to submit comment:", err);
+      } finally {
+        this.submittingComment = false;
       }
     }
   },
@@ -85,9 +113,16 @@ window.CommentSection = {
             type="text"
             placeholder="Write a comment..."
             v-model="commentInput"
+            :disabled="submittingComment"
             @keyup.enter="submitComment"
           />
-          <button class="feed-comment-submit" @click="submitComment">Post</button>
+          <button
+            class="feed-comment-submit"
+            :disabled="submittingComment"
+            @click="submitComment"
+          >
+            {{ submittingComment ? "Posting..." : "Post" }}
+          </button>
         </div>
       </div>
     </div>

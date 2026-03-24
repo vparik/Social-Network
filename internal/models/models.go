@@ -1,7 +1,7 @@
 package models
 
 type User struct {
-	ID             int   `json:"id"`
+	ID             int `json:"id"`
 	Email          string
 	PasswordHash   string
 	Role           string
@@ -65,4 +65,12 @@ type Message struct {
 	SentAt     int64  `json:"sentAt"`
 	ReceivedAt int64  `json:"receivedAt"`
 	ReadAt     int64  `json:"readAt"`
+}
+
+type RelationshipChangedPayload struct {
+	ActorID  int    `json:"actorId"`
+	TargetID int    `json:"targetId"`
+	Action   string `json:"action"` // "follow" or "unfollow"
+	Entity   string `json:"entity"` // "follow"
+	Scope    string `json:"scope"`  // "relationship"
 }

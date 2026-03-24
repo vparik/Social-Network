@@ -10,79 +10,83 @@ window.CreatePost = {
       showEventInviteSidebar: false,
       postVisibility: "public",
       postTitle: "",
-      postDescription: ""
-    }
+      postDescription: "",
+      submitting: false
+    };
   },
 
   computed: {
     isEventMode() {
-      return this.mode === "event"
+      return this.mode === "event";
     },
 
     modalTitle() {
-      return this.isEventMode ? "Create event" : "Create post"
+      return this.isEventMode ? "Create event" : "Create post";
     },
 
     cornerButtonLabel() {
-      return this.isEventMode ? "POST" : "EVENT"
+      return this.isEventMode ? "POST" : "EVENT";
     },
 
     showSidebar() {
-      return (!this.isEventMode && this.postVisibility === "private") || 
-        (this.isEventMode && this.showEventInviteSidebar)
+      return (!this.isEventMode && this.postVisibility === "private") ||
+        (this.isEventMode && this.showEventInviteSidebar);
     }
   },
 
   methods: {
-
     selectVisibility(value) {
-      this.postVisibility = value
+      this.postVisibility = value;
     },
 
     toggleMode() {
-      if (this.isFlipping) return
+      if (this.isFlipping || this.submitting) return;
 
-      this.isFlipping = true
-
-      setTimeout(() => {
-        this.mode = this.isEventMode ? "post" : "event"
-        this.showEventInviteSidebar = false
-      }, 180)
+      this.isFlipping = true;
 
       setTimeout(() => {
-        this.isFlipping = false
-      }, 520)
+        this.mode = this.isEventMode ? "post" : "event";
+        this.showEventInviteSidebar = false;
+      }, 180);
+
+      setTimeout(() => {
+        this.isFlipping = false;
+      }, 520);
     },
 
     toggleEventInviteSidebar() {
-      this.showEventInviteSidebar = !this.showEventInviteSidebar
+      if (this.submitting) return;
+      this.showEventInviteSidebar = !this.showEventInviteSidebar;
     },
 
     close() {
-      this.mode = "post"
-      this.showEventInviteSidebar = false
-      this.postTitle = ""
-      this.postDescription = ""
-      this.postVisibility = "public"
-      this.$emit("close")
+      if (this.submitting) return;
+
+      this.mode = "post";
+      this.showEventInviteSidebar = false;
+      this.postTitle = "";
+      this.postDescription = "";
+      this.postVisibility = "public";
+      this.$emit("close");
     },
 
     extractCsrfToken() {
-      return window.extractCsrfToken()
+      return window.extractCsrfToken();
     },
 
     async handleCreatePost() {
-
-      const title = this.postTitle.trim()
-      const content = this.postDescription.trim()
+      const title = this.postTitle.trim();
+      const content = this.postDescription.trim();
 
       if (!title || !content) {
-        alert("Title and content are required.")
-        return
+        alert("Title and content are required.");
+        return;
       }
 
-      try {
+      if (this.submitting) return;
+      this.submitting = true;
 
+      try {
         const res = await fetch("/api/posts", {
           method: "POST",
           headers: {
@@ -94,23 +98,25 @@ window.CreatePost = {
             content,
             privacy: this.postVisibility
           })
-        })
+        });
 
         if (!res.ok) {
-          const err = await res.text()
-          alert("Failed to create post: " + err)
-          return
+          const err = await res.text();
+          alert("Failed to create post: " + err);
+          return;
         }
 
-        this.$emit("post-created")
-        this.close()
+        const createdPost = await res.json();
 
+        this.$emit("post-created", createdPost);
+        this.close();
       } catch (err) {
-        console.error(err)
-        alert("Network error.")
+        console.error(err);
+        alert("Network error.");
+      } finally {
+        this.submitting = false;
       }
     }
-
   },
 
   template: `
@@ -178,6 +184,7 @@ window.CreatePost = {
             v-model="postTitle"
             type="text"
             class="create-post-input"
+            :disabled="submitting"
           />
 
           <label class="create-post-label">Description</label>
@@ -185,11 +192,13 @@ window.CreatePost = {
             <textarea
               v-model="postDescription"
               class="create-post-textarea"
+              :disabled="submitting"
             ></textarea>
 
             <button
               type="button"
               class="create-post-image-btn"
+              :disabled="submitting"
             >
               Img
             </button>
@@ -200,6 +209,7 @@ window.CreatePost = {
           <button
             class="create-post-action-btn create-post-cancel-btn"
             @click="close"
+            :disabled="submitting"
           >
             Cancel
           </button>
@@ -207,8 +217,9 @@ window.CreatePost = {
           <button
             class="create-post-action-btn create-post-submit-btn"
             @click="handleCreatePost"
+            :disabled="submitting"
           >
-            Create
+            {{ submitting ? "Creating..." : "Create" }}
           </button>
         </div>
       </template>
@@ -220,6 +231,7 @@ window.CreatePost = {
             class="create-event-invite-btn"
             :class="{ 'is-active': showEventInviteSidebar }"
             @click="toggleEventInviteSidebar"
+            :disabled="submitting"
           >
             Invite
           </button>
@@ -231,6 +243,7 @@ window.CreatePost = {
             type="text"
             class="create-event-input"
             placeholder="Enter event title"
+            :disabled="submitting"
           />
 
           <label class="create-event-label">Description</label>
@@ -238,11 +251,13 @@ window.CreatePost = {
             <textarea
               class="create-event-textarea"
               placeholder="Write something about the event"
+              :disabled="submitting"
             ></textarea>
 
             <button
               type="button"
               class="create-event-image-btn"
+              :disabled="submitting"
             >
               Img
             </button>
@@ -254,6 +269,7 @@ window.CreatePost = {
             type="button"
             class="create-event-action-btn create-event-cancel-btn"
             @click="close"
+            :disabled="submitting"
           >
             Cancel
           </button>
@@ -261,6 +277,7 @@ window.CreatePost = {
           <button
             type="button"
             class="create-event-action-btn create-event-submit-btn"
+            :disabled="submitting"
           >
             Create
           </button>
@@ -309,4 +326,4 @@ window.CreatePost = {
     </div>
   </div>
   `
-}
+};
