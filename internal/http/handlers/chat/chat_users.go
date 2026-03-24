@@ -30,9 +30,9 @@ func GetChatUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := store.GetAllUsersExcept(payload.UserID)
+	users, err := store.GetMutualFollows(payload.UserID)
 	if err != nil {
-		log.Println("GetAllUsersExcept error:", err)
+		log.Println("GetMutualFollows error:", err)
 		http.Error(w, "failed to load users", http.StatusInternalServerError)
 		return
 	}

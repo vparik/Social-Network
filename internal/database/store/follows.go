@@ -87,3 +87,45 @@ func scanUserList(rows *sql.Rows) ([]models.User, error) {
 	}
 	return users, rows.Err()
 }
+
+func GetMutualFollows(userID int) ([]models.User, error) {
+	rows, err := database.DB.Query(
+		`SELECT DISTINCT u.id, u.first_name, u.last_name, u.nickname, u.avatar_path
+		 FROM follows f1
+		 JOIN follows f2
+		   ON f1.following_id = f2.follower_id
+		  AND f1.follower_id = f2.following_id
+		 JOIN users u
+		   ON u.id = f1.following_id
+		 WHERE f1.follower_id = ?
+		 ORDER BY u.first_name ASC, u.last_name ASC, u.id ASC`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanUserList(rows)
+}
+
+// this is a small guard to prevent message craft to non mutual follow/following users
+func AreMutualFollows(userA, userB int) (bool, error) {
+	var exists int
+	err := database.DB.QueryRow(
+		`SELECT 1
+		 FROM follows f1
+		 JOIN follows f2
+		   ON f1.following_id = f2.follower_id
+		  AND f1.follower_id = f2.following_id
+		 WHERE f1.follower_id = ?
+		   AND f1.following_id = ?
+		 LIMIT 1`,
+		userA, userB,
+	).Scan(&exists)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return err == nil, err
+}
