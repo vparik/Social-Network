@@ -220,3 +220,22 @@
   color: white;
   cursor: pointer;
 }
+
+/* ADRIKO DIKO SOU */
+
+.chat-message-wrapper {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.chat-message-wrapper.mine {
+  align-items: flex-end;
+}
+
+.chat-message-status {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 4px;
+  padding: 0 4px;
+}

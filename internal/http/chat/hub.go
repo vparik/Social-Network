@@ -1,0 +1,91 @@
+// Package chat manages active websocket chat connections.
+//
+// The hub keeps track of which authenticated users are currently connected
+// to the chat websocket so the server can:
+//   - route private messages to online users
+//   - check online presence
+//   - broadcast presence changes to other connected users
+//
+// Current behavior:
+//   - one active websocket connection per user
+//   - a new connection for the same user replaces the old one
+//   - presence is derived from the current in-memory connections
+package chat
+
+import (
+	"socialnet/internal/models"
+	"sync"
+
+	"github.com/gorilla/websocket"
+)
+
+type Hub struct {
+	mu      sync.RWMutex
+	clients map[int]*websocket.Conn
+}
+
+func NewHub() *Hub {
+	return &Hub{
+		clients: make(map[int]*websocket.Conn),
+	}
+}
+
+func (h *Hub) Add(userID int, conn *websocket.Conn) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if old, ok := h.clients[userID]; ok && old != nil {
+		old.Close()
+	}
+
+	h.clients[userID] = conn
+}
+
+func (h *Hub) Remove(userID int, conn *websocket.Conn) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	current, ok := h.clients[userID]
+	if ok && current == conn {
+		delete(h.clients, userID)
+	}
+}
+
+func (h *Hub) Get(userID int) (*websocket.Conn, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	conn, ok := h.clients[userID]
+	return conn, ok
+}
+
+func (h *Hub) OnlineUserIDs() []int {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	ids := make([]int, 0, len(h.clients))
+	for userID := range h.clients {
+		ids = append(ids, userID)
+	}
+	return ids
+}
+
+func (h *Hub) BroadcastPresence(userID int, online bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	event := models.ChatEvent{
+		Type: "presence",
+		Data: models.PresencePayload{
+			UserID: userID,
+			Online: online,
+		},
+	}
+
+	for id, conn := range h.clients {
+		if id == userID {
+			continue
+		}
+		_ = conn.WriteJSON(event)
+	}
+}
