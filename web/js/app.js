@@ -14,6 +14,7 @@ const App = {
       activeChatUser: null,
       postRefreshTick: 0,
       chatInitialized: false,
+      chatBoxMinimized: false,
     };
   },
 
@@ -33,8 +34,12 @@ const App = {
     window.addEventListener("chat-reset", () => {
       this.chatInitialized = false;
     });
-
+    window.__chatState = {
+      activeChatUserId: null,
+      chatBoxMinimized: false
+    };
     this.ensureChatInit();
+    document.addEventListener("click", this.handleDocumentClick, true);
   },
   watch: {
     showNavbar() {
@@ -65,9 +70,14 @@ const App = {
     },
     openChatWithUser(user) {
       this.activeChatUser = user;
+      window.__chatState.activeChatUserId = user.id;
+      window.__chatState.chatBoxMinimized = false;
     },
+
     closeChatBox() {
       this.activeChatUser = null;
+      window.__chatState.activeChatUserId = null;
+      window.__chatState.chatBoxMinimized = false;
     },
     onPostCreated() {
       this.postRefreshTick++;
@@ -93,10 +103,6 @@ const App = {
         this.isChatSidebarOpen = false;
       }
     }
-  },
-
-  mounted() {
-    document.addEventListener("click", this.handleDocumentClick, true);
   },
 
   beforeUnmount() {
@@ -127,6 +133,7 @@ const App = {
         v-if="activeChatUser"
         :user="activeChatUser"
         @close="closeChatBox"
+        @minimize-change="chatBoxMinimized = $event; window.__chatState.chatBoxMinimized = $event"
       />
     </template>
   `

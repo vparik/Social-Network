@@ -14,7 +14,9 @@ window.Navbar = {
       isSettingsOpen: false,
       isCreatePostOpen: false,
       searchQuery: "",
-      currentUserName: ""
+      currentUserName: "",
+      unreadChatCount: 0,
+      unsubscribeChat: null
     };
   },
 
@@ -160,14 +162,33 @@ window.Navbar = {
     document.addEventListener("click", this.handleClickOutside);
     document.addEventListener("keyup", this.handleEscape);
     this.loadCurrentUser();
+
+    this.unreadChatCount = window.MockChat.getTotalUnreadCount();
+
+    this.unsubscribeChat = window.MockChat.subscribe((event) => {
+      if (
+        event.type === "presence" ||
+        event.type === "presence_snapshot" ||
+        event.type === "message_received" ||
+        event.type === "message_sent" ||
+        event.type === "conversation_read" ||
+        event.type === "users_updated"
+      ) {
+        this.unreadChatCount = window.MockChat.getTotalUnreadCount();
+      }
+    });
   },
 
   beforeUnmount() {
     document.removeEventListener("click", this.handleClickOutside);
     document.removeEventListener("keyup", this.handleEscape);
+    if (this.unsubscribeChat) {
+      this.unsubscribeChat();
+      this.unsubscribeChat = null;
+    }
   },
 
-  template: `
+ template: `
     <header class="navbar" ref="navbar">
       <div class="navbar-left">
         <button class="nav-brand" @click="goHome">
@@ -237,10 +258,22 @@ window.Navbar = {
           </div>
         </div>
 
-        <button ref="chatButton" class="nav-icon-btn" @click.stop="openChat" title="Chat">
+        <button
+          ref="chatButton"
+          class="nav-icon-btn nav-chat-btn"
+          @click.stop="openChat"
+          title="Chat"
+        >
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z"></path>
           </svg>
+
+          <span
+            v-if="unreadChatCount > 0"
+            class="nav-chat-badge"
+          >
+            {{ unreadChatCount }}
+          </span>
         </button>
 
         <div class="nav-dropdown-wrapper">

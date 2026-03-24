@@ -30,17 +30,18 @@ func GetChatUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := store.GetAllUsersExcept(payload.UserID)
+	users, err := store.GetMutualFollows(payload.UserID)
 	if err != nil {
-		log.Println("GetAllUsersExcept error:", err)
+		log.Println("GetMutualFollows error:", err)
 		http.Error(w, "failed to load users", http.StatusInternalServerError)
 		return
 	}
 
 	type chatUser struct {
-		ID     int    `json:"id"`
-		Name   string `json:"name"`
-		Online bool   `json:"online"`
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Online      bool   `json:"online"`
+		UnreadCount int    `json:"unreadCount"`
 	}
 
 	out := make([]chatUser, 0, len(users))
@@ -56,10 +57,18 @@ func GetChatUsers(w http.ResponseWriter, r *http.Request) {
 
 		_, online := chat.Manager.Get(u.ID)
 
+		unreadCount, err := store.CountUnreadFromUser(payload.UserID, u.ID)
+		if err != nil {
+			log.Println("CountUnreadFromUser error:", err)
+			http.Error(w, "failed to load unread counts", http.StatusInternalServerError)
+			return
+		}
+
 		out = append(out, chatUser{
-			ID:     u.ID,
-			Name:   name,
-			Online: online,
+			ID:          u.ID,
+			Name:        name,
+			Online:      online,
+			UnreadCount: unreadCount,
 		})
 	}
 

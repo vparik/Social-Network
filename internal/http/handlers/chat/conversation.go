@@ -42,6 +42,16 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	allowed, err := store.AreMutualFollows(payload.UserID, otherUserID)
+	if err != nil {
+		http.Error(w, "failed to verify chat access", http.StatusInternalServerError)
+		return
+	}
+	if !allowed {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
 	// find unread incoming messages first
 	unreadIDs, err := store.GetUnreadMessageIDs(otherUserID, payload.UserID)
 	if err != nil {

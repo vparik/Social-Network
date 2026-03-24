@@ -85,6 +85,15 @@ func ChatWS(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
+			allowed, err := store.AreMutualFollows(userID, msgReq.ReceiverID)
+			if err != nil {
+				log.Println("AreMutualFollows error:", err)
+				continue
+			}
+			if !allowed {
+				continue
+			}
+
 			msg, err := store.CreateMessage(userID, msgReq.ReceiverID, msgReq.Content)
 			if err != nil {
 				continue
@@ -115,7 +124,6 @@ func ChatWS(w http.ResponseWriter, r *http.Request) {
 					})
 				}
 			}
-
 		case "mark_read":
 			var status struct {
 				MessageID int `json:"messageId"`

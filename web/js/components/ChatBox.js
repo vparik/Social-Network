@@ -18,8 +18,8 @@ window.ChatBox = {
     }
   },
 
-  emits: ["close"],
-
+  emits: ["close", "minimize-change"],
+  
   data() {
     return {
       messages: [],
@@ -30,6 +30,14 @@ window.ChatBox = {
   },
 
   mounted() {
+    window.__chatState = window.__chatState || {
+      activeChatUserId: null,
+      chatBoxMinimized: false
+    };
+
+    window.__chatState.activeChatUserId = this.user.id;
+    window.__chatState.chatBoxMinimized = this.minimized;
+
     this.unsubscribe = window.MockChat.subscribe((event) => {
       if (!this.user) return;
 
@@ -75,6 +83,16 @@ window.ChatBox = {
     user: {
       immediate: true,
       handler() {
+        if (this.user) {
+          window.__chatState = window.__chatState || {
+            activeChatUserId: null,
+            chatBoxMinimized: false
+          };
+
+          window.__chatState.activeChatUserId = this.user.id;
+          window.__chatState.chatBoxMinimized = this.minimized;
+        }
+
         this.loadMessages();
       }
     }
@@ -106,6 +124,7 @@ window.ChatBox = {
 
     toggleMinimize() {
       this.minimized = !this.minimized;
+      this.$emit("minimize-change", this.minimized);
     },
 
     isLastOutgoing(message) {
