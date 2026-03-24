@@ -122,17 +122,21 @@ template: `
           </div>
 
           <div class="feed-post-card">
-            <button
-              v-if="isOwnPost(post)"
-              class="feed-post-delete-btn"
-              @click="deletePost(post)"
-              title="Delete post"
-            >
-              Delete
-            </button>
+            <div class="profile-post-header">
+              <h3 class="feed-post-title">{{ post.title }}</h3>
+              <div class="feed-post-user-info">
+                <button
+                  v-if="isOwnPost(post)"
+                  class="feed-post-delete-btn"
+                  @click="deletePost(post)"
+                  title="Delete post"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
 
             <div class="feed-post-body">
-              <h3 class="feed-post-title">{{ post.title }}</h3>
               <p class="feed-post-content">{{ post.content }}</p>
 
               <div v-if="post.imageUrl" class="feed-post-image-wrap">

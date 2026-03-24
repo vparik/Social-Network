@@ -61,7 +61,7 @@
 /* ============================= */
 
 .feed-post-header {
-  padding: 18px 20px 8px;
+  padding: 0 0 12px;
   background: transparent;
 }
 
@@ -114,7 +114,7 @@
 /* ============================= */
 
 .feed-post-body {
-  padding: 6px 20px 18px;
+  padding: 16px 20px 18px;
 }
 
 .feed-post-title {
@@ -224,14 +224,20 @@
 
 .profile-post-header {
   display: flex;
-  justify-content: end;
-  padding: 14px 18px 0;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 20px 0;
   font-size: 13px;
   color: var(--text-soft);
 }
 
+.feed-post-header {
+  display: flex;
+  
+}
+
 .feed-post-delete-btn {
-  position: absolute;
+  /* position: absolute; */
   top: 14px;
   right: 14px;
   padding: 7px 11px;
