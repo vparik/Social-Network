@@ -60,6 +60,9 @@ const App = {
     toggleChatSidebar() {
       this.isChatSidebarOpen = !this.isChatSidebarOpen;
     },
+    closeChatSidebar() {
+      this.isChatSidebarOpen = false;
+    },
     openChatWithUser(user) {
       this.activeChatUser = user;
     },
@@ -68,13 +71,44 @@ const App = {
     },
     onPostCreated() {
       this.postRefreshTick++;
+    },
+
+    handleDocumentClick(event) {
+     if (!this.isChatSidebarOpen) return;
+
+      const navbarComponent = this.$refs.navbar;
+      const chatSidebarComponent = this.$refs.chatSidebar;
+
+      const clickedChatButton =
+        navbarComponent &&
+        typeof navbarComponent.isChatButtonTarget === "function" &&
+        navbarComponent.isChatButtonTarget(event.target);
+
+      const clickedInsideSidebar =
+        chatSidebarComponent &&
+        chatSidebarComponent.$el &&
+        chatSidebarComponent.$el.contains(event.target);
+
+      if (!clickedChatButton && !clickedInsideSidebar) {
+        this.isChatSidebarOpen = false;
+      }
     }
+  },
+
+  mounted() {
+    document.addEventListener("click", this.handleDocumentClick, true);
+  },
+
+  beforeUnmount() {
+    document.removeEventListener("click", this.handleDocumentClick, true);
   },
 
   template: `
     <Navbar
       v-if="showNavbar"
+      ref="navbar"
       @toggle-chat="toggleChatSidebar"
+      @close-chat="closeChatSidebar"
       @post-created="onPostCreated"
     />
     <component
@@ -84,6 +118,7 @@ const App = {
     ></component>
     <template v-if="showNavbar">
       <ChatSidebar
+        ref="chatSidebar"
         :isOpen="isChatSidebarOpen"
         @close="isChatSidebarOpen = false"
         @select-user="openChatWithUser"

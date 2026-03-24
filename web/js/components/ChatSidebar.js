@@ -59,7 +59,7 @@ window.ChatSidebar = {
   },
 
   template: `
-    <aside class="chat-sidebar" :class="{ open: isOpen }">
+    <aside class="chat-sidebar" :class="{ open: isOpen }" @click.stop>
       <div class="chat-sidebar-header">
         <h3>Chats</h3>
         <button class="chat-close-btn" @click="$emit('close')">✕</button>
