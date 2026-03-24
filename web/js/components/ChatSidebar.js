@@ -35,17 +35,15 @@ window.ChatSidebar = {
       this.users = [];
     }
 
-    this.unsubscribe = MockChat.subscribe(async (event) => {
-      if (event.type === "ws_open") {
-        try {
-          this.users = await MockChat.refreshUsers();
-        } catch (err) {
-          console.error("failed to refresh chat users", err);
-        }
-        return;
-      }
-
-      if (event.type === "presence" || event.type === "presence_snapshot") {
+     this.unsubscribe = MockChat.subscribe((event) => {
+      if (
+        event.type === "presence" ||
+        event.type === "presence_snapshot" ||
+        event.type === "message_received" ||
+        event.type === "message_sent" ||
+        event.type === "conversation_read" ||
+        event.type === "users_updated"
+      ) {
         this.users = MockChat.getUsersSync();
       }
     });
@@ -78,7 +76,16 @@ window.ChatSidebar = {
           </div>
 
           <div class="chat-user-info">
-            <div class="chat-user-name">{{ user.name }}</div>
+            <div class="chat-user-name-row">
+              <div class="chat-user-name">{{ user.name }}</div>
+              <span
+                v-if="user.unreadCount > 0"
+                class="chat-unread-badge"
+              >
+                {{ user.unreadCount }}
+              </span>
+            </div>
+
             <div class="chat-user-presence">
               {{ user.online ? "Online" : "Offline" }}
             </div>

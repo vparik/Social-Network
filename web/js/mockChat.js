@@ -212,18 +212,26 @@ async function init() {
           });
           break;
         }
-
-        case "message_sent":
-        case "message_received": {
-          const result = upsertMessage(payload.data);
-
-          notify({
-            type: payload.type,
-            userId: result.otherUserId,
-            message: result.message
-          });
-          break;
-        }
+       case "message_sent":
+       case "message_received": {
+         const result = upsertMessage(payload.data);
+       
+         if (
+           payload.type === "message_received" &&
+           result.message &&
+           !result.message.fromMe &&
+           !isChatOpenWith(result.otherUserId)
+         ) {
+           incrementUnread(result.otherUserId);
+         }
+       
+         notify({
+           type: payload.type,
+           userId: result.otherUserId,
+           message: result.message
+         });
+         break;
+       }
 
         case "message_status": {
           const status = payload.data;
@@ -284,6 +292,10 @@ async function init() {
 
     const data = await res.json();
     conversations[userId] = Array.isArray(data) ? data.map(normalizeMessage) : [];
+    setUnreadCount(userId, 0);
+    notify({
+      type: "users_updated"
+    });
     return [...conversations[userId]];
   }
 
@@ -333,6 +345,34 @@ async function init() {
     }));
   }
 
+  function isChatOpenWith(userId) {
+  return !!(
+    window.__chatState &&
+    window.__chatState.activeChatUserId === userId &&
+    window.__chatState.chatBoxMinimized === false
+  );
+}
+
+  function updateUser(userId, updater) {
+    users = users.map(user => {
+      if (user.id !== userId) return user;
+      return updater(user);
+    });
+  }
+
+  function setUnreadCount(userId, count) {
+    updateUser(userId, user => ({
+      ...user,
+      unreadCount: Math.max(0, count)
+    }));
+  }
+
+  function incrementUnread(userId) {
+    updateUser(userId, user => ({
+      ...user,
+      unreadCount: (user.unreadCount || 0) + 1
+    }));
+  }
   function subscribe(fn) {
     listeners.push(fn);
 
@@ -340,7 +380,9 @@ async function init() {
       listeners = listeners.filter(x => x !== fn);
     };
   }
-
+  function getTotalUnreadCount() {
+    return users.reduce((sum, user) => sum + (user.unreadCount || 0), 0);
+  }
   function isConnected() {
     return connected;
   }
@@ -377,6 +419,7 @@ async function init() {
     sendMessage,
     markRead,
     isConnected,
-    getCurrentUserId
+    getCurrentUserId,
+    getTotalUnreadCount
   };
 })();
