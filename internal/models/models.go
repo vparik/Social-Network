@@ -17,6 +17,12 @@ type User struct {
 	FollowingCount int    `json:"followingCount"`
 }
 
+type ProfileResponse struct {
+	User           *User `json:"user"`
+	CanViewContent bool  `json:"canViewContent"`
+	IsOwnProfile   bool  `json:"isOwnProfile"`
+}
+
 type Follow struct {
 	ID          int   `json:"id"`
 	FollowerID  int   `json:"followerId"`

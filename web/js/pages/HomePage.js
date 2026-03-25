@@ -7,7 +7,8 @@ window.HomePage = {
       error: null,
       posts: [],
       unsubscribePostCreated: null,
-      unsubscribePostDeleted: null
+      unsubscribePostDeleted: null,
+      unsubscribePrivacyChanged: null
     };
   },
 
@@ -29,6 +30,13 @@ window.HomePage = {
       ({ postId }) => {
         if (!postId) return;
         this.posts = this.posts.filter(post => post.id !== postId);
+      }
+    );
+
+    this.unsubscribePrivacyChanged = window.Events.on(
+      window.Events.EVENT.PROFILE_PRIVACY_CHANGED,
+      async () => {
+        await this.loadPosts();
       }
     );
 
@@ -59,6 +67,11 @@ window.HomePage = {
     if (this.unsubscribePostDeleted) {
       this.unsubscribePostDeleted();
       this.unsubscribePostDeleted = null;
+    }
+
+    if (this.unsubscribePrivacyChanged) {
+      this.unsubscribePrivacyChanged();
+      this.unsubscribePrivacyChanged = null;
     }
   },
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"socialnet/internal/database/store"
+	"socialnet/internal/http/ws"
 	"socialnet/internal/models"
 	"strconv"
 
@@ -12,6 +13,8 @@ import (
 
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	payload := goauth.FromContext(r.Context())
 
 	targetID, ok := resolveTargetUserID(w, r)
 	if !ok {
@@ -23,7 +26,26 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(user)
+	isOwnProfile := user.ID == payload.UserID
+	canViewContent := false
+
+	if isOwnProfile || user.IsPublic {
+		canViewContent = true
+	} else {
+		following, err := store.IsFollowing(payload.UserID, user.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error":"internal_error"}`))
+			return
+		}
+		canViewContent = following
+	}
+
+	json.NewEncoder(w).Encode(map[string]any{
+		"user":           user,
+		"isOwnProfile":   isOwnProfile,
+		"canViewContent": canViewContent,
+	})
 }
 
 func resolveTargetUserID(w http.ResponseWriter, r *http.Request) (int, bool) {
@@ -64,10 +86,36 @@ func fetchUser(w http.ResponseWriter, id int) (*models.User, bool) {
 	return user, true
 }
 
-// Add this when profile privacy is available
-//
-// if !user.IsPublic && user.ID != payload.UserID {
-// 	w.WriteHeader(http.StatusForbidden)
-// 	w.Write([]byte(`{"error":"profile_private"}`))
-// 	return
-// }
+func SetProfilePrivacy(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	payload := goauth.FromContext(r.Context())
+
+	var body struct {
+		IsPublic bool `json:"isPublic"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := store.SetUserPrivacy(payload.UserID, body.IsPublic); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
+	user, err := store.GetUserByID(payload.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+	ws.NotifyProfilePrivacyChanged(user.ID, user.IsPublic)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}

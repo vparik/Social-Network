@@ -99,3 +99,17 @@ func GetUserByID(id int) (*models.User, error) {
 
 	return &u, nil
 }
+
+func SetUserPrivacy(userID int, isPublic bool) error {
+	value := 0
+	if isPublic {
+		value = 1
+	}
+
+	_, err := database.DB.Exec(
+		`UPDATE users SET is_public = ? WHERE id = ?`,
+		value,
+		userID,
+	)
+	return err
+}

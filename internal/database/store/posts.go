@@ -69,13 +69,24 @@ func GetPostByID(postID int) (*models.Post, error) {
 // TODO: once the follow system is built, extend this to also return:
 //   - "selected" posts where the requesting user follows the creator
 //   - "private" posts where the requesting user is in the creator's chosen-followers list
-func GetPosts() ([]*models.Post, error) {
+func GetPosts(viewerID int) ([]*models.Post, error) {
 	rows, err := database.DB.Query(
-		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at, u.first_name, u.last_name, COALESCE(u.nickname, '')
+		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at,
+		        u.first_name, u.last_name, COALESCE(u.nickname, '')
 		 FROM posts p
 		 JOIN users u ON p.user_id = u.id
-		 WHERE p.privacy = 'public'
+		 WHERE
+		   u.is_public = 1
+		   OR p.user_id = ?
+		   OR EXISTS (
+		     SELECT 1
+		     FROM follows f
+		     WHERE f.follower_id = ?
+		       AND f.following_id = p.user_id
+		   )
 		 ORDER BY p.created_at DESC`,
+		viewerID,
+		viewerID,
 	)
 	if err != nil {
 		return nil, err
@@ -85,7 +96,17 @@ func GetPosts() ([]*models.Post, error) {
 	var posts []*models.Post
 	for rows.Next() {
 		p := &models.Post{}
-		if err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.Privacy, &p.CreatedAt, &p.FirstName, &p.LastName, &p.Nickname); err != nil {
+		if err := rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.Title,
+			&p.Content,
+			&p.Privacy,
+			&p.CreatedAt,
+			&p.FirstName,
+			&p.LastName,
+			&p.Nickname,
+		); err != nil {
 			return nil, err
 		}
 		posts = append(posts, p)
@@ -97,7 +118,7 @@ func GetPosts() ([]*models.Post, error) {
 // Used as a fallback if no privacy is specified when creating a post.
 func GetPrivacy(userID int) string {
 	var isPublic int
-	err := database.DB.QueryRow("SELECT is_public FROM users WHERE id=$1", userID).Scan(&isPublic)
+	err := database.DB.QueryRow("SELECT is_public FROM users WHERE id = ?", userID).Scan(&isPublic)
 	if err != nil {
 		return ""
 	}

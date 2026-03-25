@@ -58,19 +58,18 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 // GetPosts handles GET /api/posts.
 // Returns all public posts ordered by newest first, to feed the home page.
 func GetPosts(w http.ResponseWriter, r *http.Request) {
-	// -- Fetch posts from DB --
-	posts, err := store.GetPosts()
+	payload := goauth.FromContext(r.Context())
+
+	posts, err := store.GetPosts(payload.UserID)
 	if err != nil {
 		http.Error(w, "failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
 
-	// Return an empty array instead of null when there are no posts
 	if posts == nil {
 		posts = []*models.Post{}
 	}
 
-	// -- Return posts as JSON --
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(posts)
 }

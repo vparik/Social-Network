@@ -57,12 +57,15 @@ window.Navbar = {
         if (!res.ok) return;
 
         const data = await res.json();
+        const user = data.user;
 
-        window.currentUser = data;
-        window.Events.auth.setCurrentUser(data);
+        if (!user) return;
+
+        window.currentUser = user;
+        window.Events.auth.setCurrentUser(user);
 
         this.currentUserName =
-          `${data.firstName || ""} ${data.lastName || ""}`.trim();
+          `${user.firstName || ""} ${user.lastName || ""}`.trim();
       } catch (err) {
         console.warn("Failed to load current user data:", err);
       }

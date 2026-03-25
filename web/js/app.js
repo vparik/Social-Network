@@ -97,34 +97,49 @@ const App = {
           
           case "relationship_changed":
             if (!event.data) return;
-            window.Events.emit(window.Events.EVENT.PROFILE_FOLLOW_CHANGED, event.data);            break;
+            window.Events.emit(window.Events.EVENT.PROFILE_FOLLOW_CHANGED, event.data);           
+            break;
+          
+          case "profile_privacy_changed":
+          if (!event.data) return;
+          window.Events.emit(window.Events.EVENT.PROFILE_PRIVACY_CHANGED, event.data);
+          break;
         }
       });
     },
 
-    async bootstrapAuth() {
-      if (this.isPublicRoute) return;
-      if (this.authState.status !== "unknown") return;
+  async bootstrapAuth() {
+    if (this.isPublicRoute) return;
+    if (this.authState.status !== "unknown") return;
 
-      try {
-        const res = await fetch("/api/profile", { method: "GET" });
+    try {
+      const res = await fetch("/api/profile", { method: "GET" });
 
-        if (!res.ok) {
-          window.WS.disconnect();
-          window.Events.auth.markGuest();
-          window.Router.replace("/login");
-          return;
-        }
-
-        const user = await res.json();
-        window.currentUser = user;
-        window.Events.auth.setCurrentUser(user);
-      } catch (err) {
+      if (!res.ok) {
         window.WS.disconnect();
         window.Events.auth.markGuest();
         window.Router.replace("/login");
+        return;
       }
-    },
+
+      const data = await res.json();
+      const user = data.user;
+
+      if (!user) {
+        window.WS.disconnect();
+        window.Events.auth.markGuest();
+        window.Router.replace("/login");
+        return;
+      }
+
+      window.currentUser = user;
+      window.Events.auth.setCurrentUser(user);
+    } catch (err) {
+      window.WS.disconnect();
+      window.Events.auth.markGuest();
+      window.Router.replace("/login");
+    }
+  },
 
     async ensureRealtimeConnected() {
       if (this.isPublicRoute) {

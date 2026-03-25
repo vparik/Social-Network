@@ -65,6 +65,7 @@ window.Events = (function () {
     COMMENTS_CREATED: "comments:created",
 
     PROFILE_FOLLOW_CHANGED: "profile:follow-changed",
+    PROFILE_PRIVACY_CHANGED: "profile:privacy-changed",
 
     AUTH_USER_READY: "auth:user-ready",
     AUTH_LOGOUT: "auth:logout"
