@@ -100,29 +100,6 @@ window.MockChat = (function () {
 
     window.WS.subscribe((event) => {
       switch (event.type) {
-        case "ws_open": {
-          notify({ type: "ws_open" });
-          break;
-        }
-
-        case "ws_close": {
-          notify({ type: "ws_close" });
-          break;
-        }
-
-        case "ws_error": {
-          notify({ type: "ws_error" });
-          break;
-        }
-
-        case "relationship_changed": {
-          notify({
-            type: "relationship_changed",
-            data: event.data
-          });
-          break;
-        }
-
         case "presence": {
           const data = event.data || {};
 
@@ -234,44 +211,6 @@ window.MockChat = (function () {
     }
 
     await fetchUsers();
-
-    if (window.WS.isConnected()) {
-      return;
-    }
-
-    await new Promise((resolve, reject) => {
-      window.WS.connect();
-
-      if (window.WS.isConnected()) {
-        resolve();
-        return;
-      }
-
-      let done = false;
-
-      const unsubscribe = subscribe((event) => {
-        if (done) return;
-
-        if (event.type === "ws_open") {
-          done = true;
-          unsubscribe();
-          resolve();
-        }
-
-        if (event.type === "ws_error") {
-          done = true;
-          unsubscribe();
-          reject(new Error("ws_open_failed"));
-        }
-      });
-
-      setTimeout(() => {
-        if (done) return;
-        done = true;
-        unsubscribe();
-        reject(new Error("ws_open_timeout"));
-      }, 5000);
-    });
   }
 
   async function loadConversation(userId) {
@@ -327,9 +266,7 @@ window.MockChat = (function () {
   }
 
   function markRead(messageId) {
-    if (!window.WS.isConnected()) {
-      return;
-    }
+    if (!window.WS.isConnected()) return;
 
     window.WS.send("mark_read", {
       messageId
@@ -390,18 +327,8 @@ window.MockChat = (function () {
     return currentUserId;
   }
 
-  function connect() {
-    window.WS.connect();
-  }
-
-  function disconnect() {
-    window.WS.disconnect();
-  }
-
   return {
     init,
-    connect,
-    disconnect,
     subscribe,
     getUsers,
     getUsersSync,

@@ -15,8 +15,33 @@ window.CommentSection = {
       isOpen: false,
       loaded: false,
       loadingComments: false,
-      submittingComment: false
+      submittingComment: false,
+      unsubscribeCommentsCreated: null
     };
+  },
+
+  mounted() {
+    if (window.Events) {
+      this.unsubscribeCommentsCreated = window.Events.on(
+        window.Events.EVENT.COMMENTS_CREATED,
+        ({ postId, comment }) => {
+          if (postId !== this.postId || !comment || !comment.id) return;
+
+          const exists = this.comments.some(existing => existing.id === comment.id);
+          if (exists) return;
+
+          this.comments.push(comment);
+          this.loaded = true;
+        }
+      );
+    }
+  },
+
+  beforeUnmount() {
+    if (this.unsubscribeCommentsCreated) {
+      this.unsubscribeCommentsCreated();
+      this.unsubscribeCommentsCreated = null;
+    }
   },
 
   methods: {
@@ -71,7 +96,6 @@ window.CommentSection = {
 
         const comment = await res.json();
 
-        this.comments.push(comment);
         this.commentInput = "";
         this.loaded = true;
 

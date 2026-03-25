@@ -70,6 +70,20 @@ func (h *Hub) OnlineUserIDs() []int {
 	return ids
 }
 
+func onlineUserIDsExcept(excludeUserID int) []int {
+	ids := Manager.OnlineUserIDs()
+	out := make([]int, 0, len(ids))
+
+	for _, id := range ids {
+		if id == excludeUserID {
+			continue
+		}
+		out = append(out, id)
+	}
+
+	return out
+}
+
 func (h *Hub) SendToMany(userIDs []int, event models.ChatEvent) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()

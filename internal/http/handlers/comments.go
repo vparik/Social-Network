@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"socialnet/internal/database/store"
+	"socialnet/internal/http/ws"
 	"socialnet/internal/models"
 	"strconv"
 
@@ -46,6 +47,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ws.NotifyCommentCreated(comment)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(comment)

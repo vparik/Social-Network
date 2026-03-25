@@ -44,32 +44,36 @@ const App = {
   },
 
   async mounted() {
-    this.bindRealtimePosts();
+    this.bindRealtimeFeed();
     await this.bootstrapAuth();
+    await this.ensureRealtimeConnected();
     await this.ensureChatInit();
     document.addEventListener("click", this.handleDocumentClick, true);
   },
 
   watch: {
-    "routeState.path"() {
-      this.bootstrapAuth();
-      this.ensureChatInit();
+    async "routeState.path"() {
+      await this.bootstrapAuth();
+      await this.ensureRealtimeConnected();
+      await this.ensureChatInit();
     },
 
-    "authState.status"() {
-      this.ensureChatInit();
+    async "authState.status"() {
+      await this.ensureRealtimeConnected();
+      await this.ensureChatInit();
     },
 
-    "authState.currentUser"() {
-      this.ensureChatInit();
+    async "authState.currentUser"() {
+      await this.ensureRealtimeConnected();
+      await this.ensureChatInit();
     }
   },
 
   methods: {
-    bindRealtimePosts() {
-      if (this._unsubscribeRealtimePosts) return;
+    bindRealtimeFeed() {
+      if (this._unsubscribeRealtimeFeed) return;
 
-      this._unsubscribeRealtimePosts = window.WS.subscribe((event) => {
+      this._unsubscribeRealtimeFeed = window.WS.subscribe((event) => {
         switch (event.type) {
           case "post_created":
             if (!event.data || !event.data.id) return;
@@ -82,9 +86,18 @@ const App = {
               postId: event.data.postId
             });
             break;
+
+          case "comment_created":
+            if (!event.data || !event.data.postId || !event.data.comment) return;
+            window.Events.emit(window.Events.EVENT.COMMENTS_CREATED, {
+              postId: event.data.postId,
+              comment: event.data.comment
+            });
+            break;
         }
       });
     },
+
     async bootstrapAuth() {
       if (this.isPublicRoute) return;
       if (this.authState.status !== "unknown") return;
@@ -93,6 +106,7 @@ const App = {
         const res = await fetch("/api/profile", { method: "GET" });
 
         if (!res.ok) {
+          window.WS.disconnect();
           window.Events.auth.markGuest();
           window.Router.replace("/login");
           return;
@@ -102,19 +116,31 @@ const App = {
         window.currentUser = user;
         window.Events.auth.setCurrentUser(user);
       } catch (err) {
+        window.WS.disconnect();
         window.Events.auth.markGuest();
         window.Router.replace("/login");
       }
+    },
+
+    async ensureRealtimeConnected() {
+      if (this.isPublicRoute) {
+        window.WS.disconnect();
+        return;
+      }
+    
+      if (this.authState.status !== "authenticated") return;
+      if (!this.authState.currentUser || !this.authState.currentUser.id) return;
+      if (window.WS.isConnected()) return;
+    
+      await window.WS.connect();
     },
 
     async ensureChatInit() {
       if (this.isPublicRoute) return;
       if (this.authState.status !== "authenticated") return;
       if (!this.authState.currentUser || !this.authState.currentUser.id) return;
-
-      if (this.chatState.initialized && window.MockChat.isConnected()) {
-        return;
-      }
+      if (!window.WS.isConnected()) return;
+      if (this.chatState.initialized) return;
 
       try {
         await window.MockChat.init();
@@ -148,9 +174,10 @@ const App = {
 
   beforeUnmount() {
     document.removeEventListener("click", this.handleDocumentClick, true);
-    if (this._unsubscribeRealtimePosts) {
-      this._unsubscribeRealtimePosts();
-      this._unsubscribeRealtimePosts = null;
+  
+    if (this._unsubscribeRealtimeFeed) {
+      this._unsubscribeRealtimeFeed();
+      this._unsubscribeRealtimeFeed = null;
     }
   },
 

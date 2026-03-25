@@ -2,6 +2,7 @@ window.WS = (function () {
   let socket = null;
   let connected = false;
   let listeners = [];
+  let connectPromise = null;
 
   function notify(event) {
     listeners.forEach(fn => fn(event));
@@ -12,51 +13,106 @@ window.WS = (function () {
     return `${proto}//${window.location.host}/ws`;
   }
 
-  function connect() {
+  function subscribe(fn) {
+    listeners.push(fn);
+
+    return function unsubscribe() {
+      listeners = listeners.filter(x => x !== fn);
+    };
+  }
+
+  function isConnected() {
+    return connected;
+  }
+
+  async function connect() {
+    if (connected) return;
+    if (connectPromise) return connectPromise;
+
     if (
       socket &&
       (socket.readyState === WebSocket.OPEN ||
         socket.readyState === WebSocket.CONNECTING)
     ) {
-      return;
+      return connectPromise || Promise.resolve();
     }
 
-    socket = new WebSocket(getWsUrl());
+    connectPromise = new Promise((resolve, reject) => {
+      let settled = false;
 
-    socket.onopen = function () {
-      connected = true;
-      notify({ type: "ws_open" });
-    };
+      socket = new WebSocket(getWsUrl());
 
-    socket.onclose = function () {
-      connected = false;
-      socket = null;
-      notify({ type: "ws_close" });
-    };
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        connectPromise = null;
 
-    socket.onerror = function () {
-      notify({ type: "ws_error" });
-    };
+        try {
+          socket.close();
+        } catch {}
 
-    socket.onmessage = function (event) {
-      let payload;
+        reject(new Error("ws_open_timeout"));
+      }, 5000);
 
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
+      socket.onopen = function () {
+        connected = true;
+        notify({ type: "ws_open" });
 
-      if (!payload || !payload.type) return;
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        connectPromise = null;
+        resolve();
+      };
 
-      notify({
-        type: payload.type,
-        data: payload.data
-      });
-    };
+      socket.onclose = function () {
+        connected = false;
+        socket = null;
+        notify({ type: "ws_close" });
+
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          connectPromise = null;
+          reject(new Error("ws_closed_before_open"));
+        }
+      };
+
+      socket.onerror = function () {
+        notify({ type: "ws_error" });
+
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          connectPromise = null;
+          reject(new Error("ws_open_failed"));
+        }
+      };
+
+      socket.onmessage = function (event) {
+        let payload;
+
+        try {
+          payload = JSON.parse(event.data);
+        } catch {
+          return;
+        }
+
+        if (!payload || !payload.type) return;
+
+        notify({
+          type: payload.type,
+          data: payload.data
+        });
+      };
+    });
+
+    return connectPromise;
   }
 
   function disconnect() {
+    connectPromise = null;
+
     if (!socket) {
       connected = false;
       return;
@@ -77,18 +133,6 @@ window.WS = (function () {
     }
 
     socket.send(JSON.stringify({ type, data }));
-  }
-
-  function subscribe(fn) {
-    listeners.push(fn);
-
-    return function unsubscribe() {
-      listeners = listeners.filter(x => x !== fn);
-    };
-  }
-
-  function isConnected() {
-    return connected;
   }
 
   return {

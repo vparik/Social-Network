@@ -31,17 +31,3 @@ func NotifyPostDeleted(actorUserID, postID int) {
 		},
 	})
 }
-
-func onlineUserIDsExcept(excludeUserID int) []int {
-	ids := Manager.OnlineUserIDs()
-	out := make([]int, 0, len(ids))
-
-	for _, id := range ids {
-		if id == excludeUserID {
-			continue
-		}
-		out = append(out, id)
-	}
-
-	return out
-}
