@@ -12,10 +12,20 @@ window.Navbar = {
       isSettingsOpen: false,
       isCreatePostOpen: false,
       searchQuery: "",
+      searchResults: [],
+      searchLoading: false,
+      searchError: "",
+      searchDebounce: null,
       currentUserName: "",
       unreadChatCount: 0,
       unsubscribeChat: null
     };
+  },
+
+  watch: {
+    searchQuery() {
+      this.queueSearch();
+    }
   },
 
   methods: {
@@ -32,6 +42,13 @@ window.Navbar = {
 
     goProfile() {
       Router.push("/profile");
+    },
+
+    goToUserProfile(user) {
+      if (!user || !user.id) return;
+
+      this.closeSearch();
+      Router.push(`/profile?id=${user.id}`);
     },
 
     async loadCurrentUser() {
@@ -71,13 +88,88 @@ window.Navbar = {
     closeSearch() {
       this.isSearchOpen = false;
       this.searchQuery = "";
+      this.searchResults = [];
+      this.searchError = "";
+      this.searchLoading = false;
+
+      if (this.searchDebounce) {
+        clearTimeout(this.searchDebounce);
+        this.searchDebounce = null;
+      }
     },
 
-    submitSearch() {
-      const query = this.searchQuery.trim();
-      if (!query) return;
+    queueSearch() {
+      if (!this.isSearchOpen) return;
 
-      console.log("Search users:", query);
+      if (this.searchDebounce) {
+        clearTimeout(this.searchDebounce);
+      }
+
+      const query = this.searchQuery.trim();
+      if (!query) {
+        this.searchResults = [];
+        this.searchError = "";
+        this.searchLoading = false;
+        return;
+      }
+
+      this.searchDebounce = setTimeout(() => {
+        this.submitSearch();
+      }, 250);
+    },
+
+    async submitSearch() {
+      const query = this.searchQuery.trim();
+
+      if (!query) {
+        this.searchResults = [];
+        this.searchError = "";
+        this.searchLoading = false;
+        return;
+      }
+
+      this.searchLoading = true;
+      this.searchError = "";
+
+      try {
+        const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`, {
+          method: "GET",
+          credentials: "include"
+        });
+
+        if (!res.ok) {
+          this.searchError = "Failed to search users.";
+          this.searchResults = [];
+          return;
+        }
+
+        const results = await res.json();
+
+        if (this.searchQuery.trim() !== query) {
+          return;
+        }
+
+        this.searchResults = Array.isArray(results) ? results : [];
+      } catch (err) {
+        console.error("user search failed", err);
+        this.searchError = "Failed to search users.";
+        this.searchResults = [];
+      } finally {
+        if (this.searchQuery.trim() === query) {
+          this.searchLoading = false;
+        }
+      }
+    },
+
+    displayUserName(user) {
+      if (!user) return "User";
+
+      if (user.nickname) {
+        return `@${user.nickname}`;
+      }
+
+      const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
+      return fullName || "User";
     },
 
     toggleNotifications() {
@@ -116,7 +208,7 @@ window.Navbar = {
 
     async logout() {
       try {
-        window.MockChat.disconnect();
+        window.WS.disconnect();
         window.Events.chat.reset();
         window.Events.auth.clearCurrentUser();
 
@@ -165,7 +257,7 @@ window.Navbar = {
       }
     },
 
-    handlePostCreated(post) {
+    handlePostCreated() {
       this.isCreatePostOpen = false;
     }
   },
@@ -194,6 +286,11 @@ window.Navbar = {
   beforeUnmount() {
     document.removeEventListener("click", this.handleClickOutside);
     document.removeEventListener("keyup", this.handleEscape);
+
+    if (this.searchDebounce) {
+      clearTimeout(this.searchDebounce);
+      this.searchDebounce = null;
+    }
 
     if (this.unsubscribeChat) {
       this.unsubscribeChat();
@@ -239,9 +336,40 @@ window.Navbar = {
               type="text"
               placeholder="Search users..."
               class="nav-search-input"
-              @keyup.enter="submitSearch"
             />
             <button class="nav-search-go" @click="submitSearch">Go</button>
+
+            <div v-if="searchLoading" class="nav-search-results">
+              <div class="nav-dropdown-empty">
+                Searching...
+              </div>
+            </div>
+
+            <div v-else-if="searchError" class="nav-search-results">
+              <div class="nav-dropdown-empty">
+                {{ searchError }}
+              </div>
+            </div>
+
+            <div
+              v-else-if="searchQuery.trim() && searchResults.length === 0"
+              class="nav-search-results"
+            >
+              <div class="nav-dropdown-empty">
+                No users found
+              </div>
+            </div>
+
+            <div v-else-if="searchResults.length > 0" class="nav-search-results">
+              <button
+                v-for="user in searchResults"
+                :key="user.id"
+                class="nav-search-result-item"
+                @click="goToUserProfile(user)"
+              >
+                {{ displayUserName(user) }}
+              </button>
+            </div>
           </div>
         </div>
 

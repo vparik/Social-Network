@@ -43,6 +43,10 @@ window.ChatBox = {
       ) {
         this.messages = window.MockChat.getMessages(this.user.id);
 
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
+
         if (
           event.type === "message_received" &&
           !this.minimized &&
@@ -79,10 +83,21 @@ window.ChatBox = {
 
       try {
         this.messages = await window.MockChat.loadConversation(this.user.id);
+
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
       } catch (err) {
         console.error("failed to load messages", err);
         this.messages = [];
       }
+    },
+
+    scrollToBottom() {
+      const box = this.$refs.messagesBox;
+      if (!box) return;
+
+      box.scrollTop = box.scrollHeight;
     },
 
     sendMessage() {
@@ -137,7 +152,11 @@ window.ChatBox = {
         <button class="chat-close-btn" @click="closeBox">✕</button>
       </div>
 
-      <div v-if="!minimized" class="chat-box-messages">
+      <div
+        v-if="!minimized"
+        ref="messagesBox"
+        class="chat-box-messages"
+      >
         <div
           v-for="message in messages"
           :key="message.id"

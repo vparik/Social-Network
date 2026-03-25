@@ -72,21 +72,21 @@ const App = {
   methods: {
     bindRealtimeFeed() {
       if (this._unsubscribeRealtimeFeed) return;
-
+    
       this._unsubscribeRealtimeFeed = window.WS.subscribe((event) => {
         switch (event.type) {
           case "post_created":
             if (!event.data || !event.data.id) return;
             window.Events.emit(window.Events.EVENT.POSTS_CREATED, event.data);
             break;
-
+        
           case "post_deleted":
             if (!event.data || !event.data.postId) return;
             window.Events.emit(window.Events.EVENT.POSTS_DELETED, {
               postId: event.data.postId
             });
             break;
-
+          
           case "comment_created":
             if (!event.data || !event.data.postId || !event.data.comment) return;
             window.Events.emit(window.Events.EVENT.COMMENTS_CREATED, {
@@ -94,6 +94,10 @@ const App = {
               comment: event.data.comment
             });
             break;
+          
+          case "relationship_changed":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.PROFILE_FOLLOW_CHANGED, event.data);            break;
         }
       });
     },
@@ -174,7 +178,7 @@ const App = {
 
   beforeUnmount() {
     document.removeEventListener("click", this.handleDocumentClick, true);
-  
+
     if (this._unsubscribeRealtimeFeed) {
       this._unsubscribeRealtimeFeed();
       this._unsubscribeRealtimeFeed = null;

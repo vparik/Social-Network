@@ -37,10 +37,12 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/follow/status", goauth.Protected(handlers.FollowStatus))
 	s.mux.HandleFunc("GET /api/followers", goauth.Protected(handlers.GetFollowers))
 	s.mux.HandleFunc("GET /api/following", goauth.Protected(handlers.GetFollowing))
-
-	// ---------------- CHAT ----------------
+	s.mux.HandleFunc("GET /api/users/search", goauth.Protected(handlers.SearchUsers))
+	// ---------------- CHAT ------------------
 	s.mux.HandleFunc("GET /api/chat/users", goauth.Protected(chat.GetChatUsers))
 	s.mux.HandleFunc("GET /api/messages", goauth.Protected(chat.GetConversation))
+
+	// ---------------- WS --------------------
 	s.mux.HandleFunc("GET /ws", goauth.Protected(ws.WS))
 	// ---------------- STATIC ----------------
 

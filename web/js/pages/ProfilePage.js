@@ -39,24 +39,23 @@ window.ProfilePage = {
       }
     );
 
-    this.unsubscribeRelationshipChanged = window.MockChat.subscribe((event) => {
-      if (event.type !== "relationship_changed") return;
-      if (!this.profile || !this.profile.id) return;
-
-      const data = event.data;
-      if (!data) return;
-
-      const touchesCurrentProfile =
-        data.actorId === this.profile.id || data.targetId === this.profile.id;
-
-      if (!touchesCurrentProfile) return;
-
-      this.refreshProfile();
-
-      if (!this.isOwnProfile) {
-        this.loadFollowStatus();
+    this.unsubscribeRelationshipChanged = window.Events.on(
+      window.Events.EVENT.PROFILE_FOLLOW_CHANGED,
+      async (data) => {
+        if (!this.profile || !this.profile.id || !data) return;
+      
+        const touchesCurrentProfile =
+          data.actorId === this.profile.id || data.targetId === this.profile.id;
+      
+        if (!touchesCurrentProfile) return;
+      
+        await this.refreshProfile();
+      
+        if (!this.isOwnProfile) {
+          await this.loadFollowStatus();
+        }
       }
-    });
+    );
 
     try {
       let me = window.Events.state.auth.currentUser;
@@ -194,11 +193,6 @@ window.ProfilePage = {
           this.refreshProfile(),
           this.loadFollowStatus()
         ]);
-
-        window.Events.emit(window.Events.EVENT.PROFILE_FOLLOW_CHANGED, {
-          profileId: this.profile.id,
-          isFollowing: this.isFollowing
-        });
       } catch (err) {
         console.error("failed to toggle follow:", err);
       } finally {
