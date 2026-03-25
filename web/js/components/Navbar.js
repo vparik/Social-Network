@@ -21,6 +21,8 @@ window.Navbar = {
       notifications: [],
       unreadNotificationsCount: 0,
       notificationsLoading: false,
+      selectedFollowRequest: null,
+      followRequestActionLoading: false,
       unsubscribeChat: null,
       unsubscribeNotifications: null
     };
@@ -62,7 +64,6 @@ window.Navbar = {
 
         const data = await res.json();
         const user = data.user;
-
         if (!user) return;
 
         window.currentUser = user;
@@ -135,10 +136,91 @@ window.Navbar = {
       switch (item.type) {
         case "follow":
           return `${actorName} followed you`;
+        case "follow_request":
+          return `${actorName} requested to follow you`;
+        case "follow_request_accepted":
+          return `${actorName} accepted your follow request`;
+        case "follow_request_rejected":
+          return `${actorName} declined your follow request`;
         case "comment":
           return `${actorName} commented on your post`;
         default:
           return `${actorName} sent a notification`;
+      }
+    },
+
+    isFollowRequestNotification(item) {
+      return !!item && item.type === "follow_request";
+    },
+
+    openFollowRequestPanel(item) {
+      if (!this.isFollowRequestNotification(item)) return;
+      this.selectedFollowRequest = item;
+    },
+
+    closeFollowRequestPanel() {
+      this.selectedFollowRequest = null;
+      this.followRequestActionLoading = false;
+    },
+
+    removeNotificationById(notificationID) {
+      if (!notificationID) return;
+      this.notifications = this.notifications.filter(item => item.id !== notificationID);
+    },
+
+    async acceptFollowRequest() {
+      const item = this.selectedFollowRequest;
+      if (!item || !item.actorId || this.followRequestActionLoading) return;
+
+      this.followRequestActionLoading = true;
+
+      try {
+        const res = await fetch(`/api/follow/accept?id=${item.actorId}`, {
+          method: "POST",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          console.error("failed to accept follow request");
+          return;
+        }
+
+        this.removeNotificationById(item.id);
+        this.closeFollowRequestPanel();
+      } catch (err) {
+        console.error("failed to accept follow request", err);
+      } finally {
+        this.followRequestActionLoading = false;
+      }
+    },
+
+    async rejectFollowRequest() {
+      const item = this.selectedFollowRequest;
+      if (!item || !item.actorId || this.followRequestActionLoading) return;
+
+      this.followRequestActionLoading = true;
+
+      try {
+        const res = await fetch(`/api/follow/request?id=${item.actorId}`, {
+          method: "DELETE",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          console.error("failed to reject follow request");
+          return;
+        }
+
+        this.removeNotificationById(item.id);
+        this.closeFollowRequestPanel();
+      } catch (err) {
+        console.error("failed to reject follow request", err);
+      } finally {
+        this.followRequestActionLoading = false;
       }
     },
 
@@ -254,12 +336,15 @@ window.Navbar = {
 
       this.isNotificationsOpen = willOpen;
 
-      if (this.isNotificationsOpen) {
-        await this.loadNotifications();
+      if (!this.isNotificationsOpen) {
+        this.closeFollowRequestPanel();
+        return;
+      }
 
-        if (this.unreadNotificationsCount > 0) {
-          await this.markNotificationsRead();
-        }
+      await this.loadNotifications();
+
+      if (this.unreadNotificationsCount > 0) {
+        await this.markNotificationsRead();
       }
     },
 
@@ -316,6 +401,7 @@ window.Navbar = {
       if (!navbar.contains(event.target)) {
         this.isNotificationsOpen = false;
         this.isSettingsOpen = false;
+        this.closeFollowRequestPanel();
       }
 
       if (
@@ -329,6 +415,10 @@ window.Navbar = {
 
     handleEscape(event) {
       if (event.key === "Escape") {
+        if (this.selectedFollowRequest) {
+          this.closeFollowRequestPanel();
+        }
+
         if (this.isCreatePostOpen) {
           this.isCreatePostOpen = false;
         }
@@ -372,21 +462,21 @@ window.Navbar = {
           await this.loadNotifications();
           return;
         }
-      
+
         if (data.notification) {
           const exists = this.notifications.some(item => item.id === data.notification.id);
           if (!exists) {
             this.notifications.unshift(data.notification);
           }
         }
-      
+
         if (typeof data.unreadCount === "number") {
           this.unreadNotificationsCount = data.unreadCount;
         } else {
           await this.loadNotifications();
           return;
         }
-      
+
         if (!data.notification && this.isNotificationsOpen) {
           this.notifications = this.notifications.map(item => ({
             ...item,
@@ -459,24 +549,18 @@ window.Navbar = {
             <button class="nav-search-go" @click="submitSearch">Go</button>
 
             <div v-if="searchLoading" class="nav-search-results">
-              <div class="nav-dropdown-empty">
-                Searching...
-              </div>
+              <div class="nav-dropdown-empty">Searching...</div>
             </div>
 
             <div v-else-if="searchError" class="nav-search-results">
-              <div class="nav-dropdown-empty">
-                {{ searchError }}
-              </div>
+              <div class="nav-dropdown-empty">{{ searchError }}</div>
             </div>
 
             <div
               v-else-if="searchQuery.trim() && searchResults.length === 0"
               class="nav-search-results"
             >
-              <div class="nav-dropdown-empty">
-                No users found
-              </div>
+              <div class="nav-dropdown-empty">No users found</div>
             </div>
 
             <div v-else-if="searchResults.length > 0" class="nav-search-results">
@@ -509,10 +593,7 @@ window.Navbar = {
               <path d="M13.73 21a2 2 0 01-3.46 0"></path>
             </svg>
 
-            <span
-              v-if="unreadNotificationsCount > 0"
-              class="nav-chat-badge"
-            >
+            <span v-if="unreadNotificationsCount > 0" class="nav-chat-badge">
               {{ unreadNotificationsCount }}
             </span>
           </button>
@@ -528,13 +609,40 @@ window.Navbar = {
               No notifications yet
             </div>
 
-            <div v-else>
-              <div
+            <template v-else>
+              <button
                 v-for="item in notifications"
                 :key="item.id"
-                class="nav-dropdown-item"
+                class="nav-dropdown-item nav-notification-item"
+                @click="isFollowRequestNotification(item) && openFollowRequestPanel(item)"
               >
                 {{ notificationText(item) }}
+              </button>
+            </template>
+
+            <div v-if="selectedFollowRequest" class="nav-follow-request-panel">
+              <div class="nav-dropdown-title">Follow Request</div>
+
+              <div class="nav-follow-request-text">
+                {{ displayUserName(selectedFollowRequest) }} wants to follow you.
+              </div>
+
+              <div class="nav-follow-request-actions">
+                <button
+                  class="nav-follow-request-accept"
+                  :disabled="followRequestActionLoading"
+                  @click="acceptFollowRequest"
+                >
+                  Accept
+                </button>
+
+                <button
+                  class="nav-follow-request-decline"
+                  :disabled="followRequestActionLoading"
+                  @click="rejectFollowRequest"
+                >
+                  Decline
+                </button>
               </div>
             </div>
           </div>
@@ -550,10 +658,7 @@ window.Navbar = {
             <path d="M21 15a4 4 0 01-4 4H7l-4 4V7a4 4 0 014-4h10a4 4 0 014 4z"></path>
           </svg>
 
-          <span
-            v-if="unreadChatCount > 0"
-            class="nav-chat-badge"
-          >
+          <span v-if="unreadChatCount > 0" class="nav-chat-badge">
             {{ unreadChatCount }}
           </span>
         </button>

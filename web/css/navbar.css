@@ -840,3 +840,33 @@
   color: #fff;
   line-height: 1;
 }
+
+.nav-notification-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-follow-request-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.nav-follow-request-text {
+  margin-bottom: 10px;
+}
+
+.nav-follow-request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-follow-request-accept,
+.nav-follow-request-decline {
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+}

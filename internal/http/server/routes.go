@@ -38,6 +38,10 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/follow/status", goauth.Protected(handlers.FollowStatus))
 	s.mux.HandleFunc("GET /api/followers", goauth.Protected(handlers.GetFollowers))
 	s.mux.HandleFunc("GET /api/following", goauth.Protected(handlers.GetFollowing))
+	s.mux.HandleFunc("POST /api/follow/accept", goauth.ProtectedCsrfActive(handlers.AcceptFollowRequest))
+	s.mux.HandleFunc("DELETE /api/follow/request", goauth.ProtectedCsrfActive(handlers.RejectFollowRequest))
+	s.mux.HandleFunc("GET /api/follow/requests", goauth.Protected(handlers.GetFollowRequests))
+
 	s.mux.HandleFunc("GET /api/users/search", goauth.Protected(handlers.SearchUsers))
 	s.mux.HandleFunc("GET /api/notifications", goauth.Protected(handlers.GetNotifications))
 	s.mux.HandleFunc("POST /api/notifications/read-all", goauth.ProtectedCsrfActive(handlers.MarkAllNotificationsRead))
