@@ -51,5 +51,10 @@ new follow db table
 new profile ui
 new clickable on dashboard
 
+25/3/2026
+fix searchbar to loads u in the user 
+modal for check that u want to delete the comment
+fix ui for modal which check that u want to delete the post
+
 check privacy mock plan
 https://excalidraw.com/#json=y8obq_ZI8_RTYzx3zY2jX,BKJlKNtko3uh3WNOB_jP1Q
