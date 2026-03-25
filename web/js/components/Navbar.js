@@ -18,7 +18,11 @@ window.Navbar = {
       searchDebounce: null,
       currentUserName: "",
       unreadChatCount: 0,
-      unsubscribeChat: null
+      notifications: [],
+      unreadNotificationsCount: 0,
+      notificationsLoading: false,
+      unsubscribeChat: null,
+      unsubscribeNotifications: null
     };
   },
 
@@ -68,6 +72,73 @@ window.Navbar = {
           `${user.firstName || ""} ${user.lastName || ""}`.trim();
       } catch (err) {
         console.warn("Failed to load current user data:", err);
+      }
+    },
+
+    async loadNotifications() {
+      this.notificationsLoading = true;
+
+      try {
+        const res = await fetch("/api/notifications", {
+          method: "GET",
+          credentials: "include"
+        });
+
+        if (!res.ok) {
+          this.notifications = [];
+          this.unreadNotificationsCount = 0;
+          return;
+        }
+
+        const data = await res.json();
+        this.notifications = Array.isArray(data.notifications)
+          ? data.notifications
+          : [];
+        this.unreadNotificationsCount = Number(data.unreadCount || 0);
+      } catch (err) {
+        console.error("failed to load notifications", err);
+        this.notifications = [];
+        this.unreadNotificationsCount = 0;
+      } finally {
+        this.notificationsLoading = false;
+      }
+    },
+
+    async markNotificationsRead() {
+      try {
+        const res = await fetch("/api/notifications/read-all", {
+          method: "POST",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) return;
+
+        this.notifications = this.notifications.map(item => ({
+          ...item,
+          isRead: true
+        }));
+        this.unreadNotificationsCount = 0;
+      } catch (err) {
+        console.error("failed to mark notifications read", err);
+      }
+    },
+
+    notificationText(item) {
+      if (!item) return "";
+
+      const actorName = item.nickname
+        ? "@" + item.nickname
+        : `${item.firstName || ""} ${item.lastName || ""}`.trim() || "Someone";
+
+      switch (item.type) {
+        case "follow":
+          return `${actorName} followed you`;
+        case "comment":
+          return `${actorName} commented on your post`;
+        default:
+          return `${actorName} sent a notification`;
       }
     },
 
@@ -175,13 +246,21 @@ window.Navbar = {
       return fullName || "User";
     },
 
-    toggleNotifications() {
+    async toggleNotifications() {
       const willOpen = !this.isNotificationsOpen;
 
       this.closeNavbarPanels();
       window.Events.chat.closeSidebar();
 
       this.isNotificationsOpen = willOpen;
+
+      if (this.isNotificationsOpen) {
+        await this.loadNotifications();
+
+        if (this.unreadNotificationsCount > 0) {
+          await this.markNotificationsRead();
+        }
+      }
     },
 
     toggleSettings() {
@@ -270,6 +349,7 @@ window.Navbar = {
     document.addEventListener("keyup", this.handleEscape);
 
     this.loadCurrentUser();
+    this.loadNotifications();
     this.unreadChatCount = window.MockChat.getTotalUnreadCount();
 
     this.unsubscribeChat = window.MockChat.subscribe((event) => {
@@ -284,6 +364,37 @@ window.Navbar = {
         this.unreadChatCount = window.MockChat.getTotalUnreadCount();
       }
     });
+
+    this.unsubscribeNotifications = window.Events.on(
+      window.Events.EVENT.NOTIFICATIONS_UPDATED,
+      async (data) => {
+        if (!data) {
+          await this.loadNotifications();
+          return;
+        }
+      
+        if (data.notification) {
+          const exists = this.notifications.some(item => item.id === data.notification.id);
+          if (!exists) {
+            this.notifications.unshift(data.notification);
+          }
+        }
+      
+        if (typeof data.unreadCount === "number") {
+          this.unreadNotificationsCount = data.unreadCount;
+        } else {
+          await this.loadNotifications();
+          return;
+        }
+      
+        if (!data.notification && this.isNotificationsOpen) {
+          this.notifications = this.notifications.map(item => ({
+            ...item,
+            isRead: true
+          }));
+        }
+      }
+    );
   },
 
   beforeUnmount() {
@@ -298,6 +409,11 @@ window.Navbar = {
     if (this.unsubscribeChat) {
       this.unsubscribeChat();
       this.unsubscribeChat = null;
+    }
+
+    if (this.unsubscribeNotifications) {
+      this.unsubscribeNotifications();
+      this.unsubscribeNotifications = null;
     }
   },
 
@@ -392,12 +508,34 @@ window.Navbar = {
               <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path>
               <path d="M13.73 21a2 2 0 01-3.46 0"></path>
             </svg>
+
+            <span
+              v-if="unreadNotificationsCount > 0"
+              class="nav-chat-badge"
+            >
+              {{ unreadNotificationsCount }}
+            </span>
           </button>
 
           <div v-if="isNotificationsOpen" class="nav-dropdown">
             <div class="nav-dropdown-title">Notifications</div>
-            <div class="nav-dropdown-empty">
+
+            <div v-if="notificationsLoading" class="nav-dropdown-empty">
+              Loading...
+            </div>
+
+            <div v-else-if="notifications.length === 0" class="nav-dropdown-empty">
               No notifications yet
+            </div>
+
+            <div v-else>
+              <div
+                v-for="item in notifications"
+                :key="item.id"
+                class="nav-dropdown-item"
+              >
+                {{ notificationText(item) }}
+              </div>
             </div>
           </div>
         </div>

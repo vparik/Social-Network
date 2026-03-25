@@ -39,6 +39,8 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/followers", goauth.Protected(handlers.GetFollowers))
 	s.mux.HandleFunc("GET /api/following", goauth.Protected(handlers.GetFollowing))
 	s.mux.HandleFunc("GET /api/users/search", goauth.Protected(handlers.SearchUsers))
+	s.mux.HandleFunc("GET /api/notifications", goauth.Protected(handlers.GetNotifications))
+	s.mux.HandleFunc("POST /api/notifications/read-all", goauth.ProtectedCsrfActive(handlers.MarkAllNotificationsRead))
 	// ---------------- CHAT ------------------
 	s.mux.HandleFunc("GET /api/chat/users", goauth.Protected(chat.GetChatUsers))
 	s.mux.HandleFunc("GET /api/messages", goauth.Protected(chat.GetConversation))

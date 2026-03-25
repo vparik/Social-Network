@@ -46,6 +46,15 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to create comment", http.StatusInternalServerError)
 		return
 	}
+	if post, err := store.GetPostByID(postID); err == nil && post.UserID != userID {
+		if err := store.CreateNotification(post.UserID, userID, "comment", &postID); err == nil {
+			if n, err := store.GetLatestNotification(post.UserID); err == nil {
+				if unread, err := store.CountUnreadNotifications(post.UserID); err == nil {
+					ws.NotifyNotificationCreated(post.UserID, n, unread)
+				}
+			}
+		}
+	}
 
 	ws.NotifyCommentCreated(comment)
 	w.Header().Set("Content-Type", "application/json")

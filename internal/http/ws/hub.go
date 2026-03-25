@@ -1,7 +1,7 @@
-// Package chat manages active websocket chat connections.
+// Package ws manages active websocket connections.
 //
 // The hub keeps track of which authenticated users are currently connected
-// to the chat websocket so the server can:
+// to the websocket so the server can:
 //   - route private messages to online users
 //   - check online presence
 //   - broadcast presence changes to other connected users

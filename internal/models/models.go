@@ -80,3 +80,17 @@ type RelationshipChangedPayload struct {
 	Entity   string `json:"entity"` // "follow"
 	Scope    string `json:"scope"`  // "relationship"
 }
+
+type Notification struct {
+	ID         int    `json:"id"`
+	UserID     int    `json:"userId"`
+	ActorID    int    `json:"actorId"`
+	Type       string `json:"type"`
+	EntityID   *int   `json:"entityId,omitempty"`
+	IsRead     bool   `json:"isRead"`
+	CreatedAt  int64  `json:"createdAt"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
+}

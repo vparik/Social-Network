@@ -67,6 +67,8 @@ window.Events = (function () {
     PROFILE_FOLLOW_CHANGED: "profile:follow-changed",
     PROFILE_PRIVACY_CHANGED: "profile:privacy-changed",
 
+    NOTIFICATIONS_UPDATED: "notifications:updated",
+    
     AUTH_USER_READY: "auth:user-ready",
     AUTH_LOGOUT: "auth:logout"
   });

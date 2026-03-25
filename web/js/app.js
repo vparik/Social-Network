@@ -75,6 +75,11 @@ const App = {
     
       this._unsubscribeRealtimeFeed = window.WS.subscribe((event) => {
         switch (event.type) {
+          case "notification_created":
+          case "notifications_read":
+            window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, event.data || {});
+            break;
+          
           case "post_created":
             if (!event.data || !event.data.id) return;
             window.Events.emit(window.Events.EVENT.POSTS_CREATED, event.data);

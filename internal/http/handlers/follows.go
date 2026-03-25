@@ -32,6 +32,13 @@ func Follow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := store.CreateNotification(targetID, payload.UserID, "follow", nil); err == nil {
+		if n, err := store.GetLatestNotification(targetID); err == nil {
+			if unread, err := store.CountUnreadNotifications(targetID); err == nil {
+				ws.NotifyNotificationCreated(targetID, n, unread)
+			}
+		}
+	}
 	affectedUserIDs, err := store.GetAffectedRelationshipUserIDs(payload.UserID, targetID)
 	if err == nil {
 		ws.NotifyRelationshipChanged(affectedUserIDs, payload.UserID, targetID, "follow")
