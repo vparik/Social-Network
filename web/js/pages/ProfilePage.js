@@ -10,6 +10,8 @@ window.ProfilePage = {
       showPosts: false,
       isOwnProfile: false,
       isFollowing: false,
+      isRequested: false,
+      hasIncomingRequest: false,
       canViewContent: false,
       followLoading: false,
       privacyLoading: false,
@@ -26,7 +28,7 @@ window.ProfilePage = {
       async (data) => {
         if (!this.profile || !this.profile.id || !data) return;
         if (data.userId !== this.profile.id) return;
-      
+
         await this.refreshProfile();
         await this.loadProfilePosts();
       }
@@ -104,6 +106,9 @@ window.ProfilePage = {
         this.profile = me;
         this.isOwnProfile = true;
         this.canViewContent = true;
+        this.isFollowing = false;
+        this.isRequested = false;
+        this.hasIncomingRequest = false;
       }
 
       await this.loadProfilePosts();
@@ -119,7 +124,7 @@ window.ProfilePage = {
       this.unsubscribePrivacyChanged();
       this.unsubscribePrivacyChanged = null;
     }
-    
+
     if (this.unsubscribePostCreated) {
       this.unsubscribePostCreated();
       this.unsubscribePostCreated = null;
@@ -150,6 +155,9 @@ window.ProfilePage = {
       this.profile = data.user;
       this.isOwnProfile = !!data.isOwnProfile;
       this.canViewContent = !!data.canViewContent;
+      this.isFollowing = !!data.relationship?.following;
+      this.isRequested = !!data.relationship?.requested;
+      this.hasIncomingRequest = !!data.relationship?.incomingRequest;
 
       return true;
     },
@@ -240,7 +248,9 @@ window.ProfilePage = {
 
         if (res.ok) {
           const data = await res.json();
-          this.isFollowing = data.following;
+          this.isFollowing = !!data.following;
+          this.isRequested = !!data.requested;
+          this.hasIncomingRequest = !!data.incomingRequest;
         }
       } catch (err) {
         console.error("failed to load follow status:", err);
@@ -253,7 +263,7 @@ window.ProfilePage = {
       this.followLoading = true;
 
       try {
-        const method = this.isFollowing ? "DELETE" : "POST";
+        const method = (this.isFollowing || this.isRequested) ? "DELETE" : "POST";
 
         const res = await fetch(`/api/follow?id=${this.profile.id}`, {
           method,
@@ -274,6 +284,66 @@ window.ProfilePage = {
         await this.loadProfilePosts();
       } catch (err) {
         console.error("failed to toggle follow:", err);
+      } finally {
+        this.followLoading = false;
+      }
+    },
+
+    async acceptIncomingRequest() {
+      if (this.followLoading || !this.profile || !this.profile.id) return;
+
+      this.followLoading = true;
+
+      try {
+        const res = await fetch(`/api/follow/accept?id=${this.profile.id}`, {
+          method: "POST",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          return;
+        }
+
+        await Promise.all([
+          this.refreshProfile(),
+          this.loadFollowStatus()
+        ]);
+
+        await this.loadProfilePosts();
+      } catch (err) {
+        console.error("failed to accept follow request:", err);
+      } finally {
+        this.followLoading = false;
+      }
+    },
+
+    async rejectIncomingRequest() {
+      if (this.followLoading || !this.profile || !this.profile.id) return;
+
+      this.followLoading = true;
+
+      try {
+        const res = await fetch(`/api/follow/request?id=${this.profile.id}`, {
+          method: "DELETE",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          return;
+        }
+
+        await Promise.all([
+          this.refreshProfile(),
+          this.loadFollowStatus()
+        ]);
+
+        await this.loadProfilePosts();
+      } catch (err) {
+        console.error("failed to reject follow request:", err);
       } finally {
         this.followLoading = false;
       }
@@ -363,15 +433,35 @@ window.ProfilePage = {
               {{ profile.isPublic ? 'Make Private' : 'Make Public' }}
             </button>
 
-            <button
-              v-if="!isOwnProfile"
-              class="follow-btn"
-              :class="{ following: isFollowing }"
-              :disabled="followLoading"
-              @click="toggleFollow"
-            >
-              {{ isFollowing ? 'Unfollow' : 'Follow' }}
-            </button>
+            <template v-if="!isOwnProfile">
+              <div v-if="hasIncomingRequest" class="profile-follow-actions">
+                <button
+                  class="follow-btn"
+                  :disabled="followLoading"
+                  @click="acceptIncomingRequest"
+                >
+                  Accept
+                </button>
+
+                <button
+                  class="follow-btn following"
+                  :disabled="followLoading"
+                  @click="rejectIncomingRequest"
+                >
+                  Decline
+                </button>
+              </div>
+
+              <button
+                v-else
+                class="follow-btn"
+                :class="{ following: isFollowing || isRequested }"
+                :disabled="followLoading"
+                @click="toggleFollow"
+              >
+                {{ isFollowing ? 'Unfollow' : isRequested ? 'Requested' : 'Follow' }}
+              </button>
+            </template>
           </div>
         </div>
 

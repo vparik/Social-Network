@@ -207,9 +207,17 @@ func FollowStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	incomingRequest, err := store.HasFollowRequest(targetID, payload.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
 	json.NewEncoder(w).Encode(map[string]bool{
-		"following": following,
-		"requested": requested,
+		"following":       following,
+		"requested":       requested,
+		"incomingRequest": incomingRequest,
 	})
 }
 

@@ -27,24 +27,47 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isOwnProfile := user.ID == payload.UserID
-	canViewContent := false
 
-	if isOwnProfile || user.IsPublic {
-		canViewContent = true
-	} else {
+	relationship := map[string]bool{
+		"following":       false,
+		"requested":       false,
+		"incomingRequest": false,
+	}
+
+	if !isOwnProfile {
 		following, err := store.IsFollowing(payload.UserID, user.ID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(`{"error":"internal_error"}`))
 			return
 		}
-		canViewContent = following
+
+		requested, err := store.HasFollowRequest(payload.UserID, user.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error":"internal_error"}`))
+			return
+		}
+
+		incomingRequest, err := store.HasFollowRequest(user.ID, payload.UserID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error":"internal_error"}`))
+			return
+		}
+
+		relationship["following"] = following
+		relationship["requested"] = requested
+		relationship["incomingRequest"] = incomingRequest
 	}
+
+	canViewContent := isOwnProfile || user.IsPublic || relationship["following"]
 
 	json.NewEncoder(w).Encode(map[string]any{
 		"user":           user,
 		"isOwnProfile":   isOwnProfile,
 		"canViewContent": canViewContent,
+		"relationship":   relationship,
 	})
 }
 
