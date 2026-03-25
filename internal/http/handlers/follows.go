@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"socialnet/internal/database/store"
-	"socialnet/internal/http/chat"
-	"socialnet/internal/models"
+	"socialnet/internal/http/ws"
 	"strconv"
 
 	"github.com/Des1red/goauthlib/goauth"
@@ -35,16 +34,7 @@ func Follow(w http.ResponseWriter, r *http.Request) {
 
 	affectedUserIDs, err := store.GetAffectedRelationshipUserIDs(payload.UserID, targetID)
 	if err == nil {
-		chat.Manager.SendToMany(affectedUserIDs, models.ChatEvent{
-			Type: "relationship_changed",
-			Data: models.RelationshipChangedPayload{
-				ActorID:  payload.UserID,
-				TargetID: targetID,
-				Action:   "follow",
-				Entity:   "follow",
-				Scope:    "relationship",
-			},
-		})
+		ws.NotifyRelationshipChanged(affectedUserIDs, payload.UserID, targetID, "follow")
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -72,18 +62,7 @@ func Unfollow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(affectedUserIDs) > 0 {
-		chat.Manager.SendToMany(affectedUserIDs, models.ChatEvent{
-			Type: "relationship_changed",
-			Data: models.RelationshipChangedPayload{
-				ActorID:  payload.UserID,
-				TargetID: targetID,
-				Action:   "unfollow",
-				Entity:   "follow",
-				Scope:    "relationship",
-			},
-		})
-	}
+	ws.NotifyRelationshipChanged(affectedUserIDs, payload.UserID, targetID, "unfollow")
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"ok":true}`))

@@ -5,6 +5,6 @@
 //   - remove disconnected users
 //   - look up online users
 //   - broadcast presence changes
-package chat
+package ws
 
 var Manager = NewHub()

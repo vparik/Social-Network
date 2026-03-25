@@ -10,16 +10,57 @@ import (
 // CreatePost inserts a new post into the database.
 // Called by the CreatePost handler (POST /api/posts).
 // privacy must be one of: "public", "selected", "private"
-func CreatePost(user_id int, title, content, privacy string) error {
-	_, err := database.DB.Exec(
+// CreatePost inserts a new post into the database and returns the full created post.
+func CreatePost(userID int, title, content, privacy string) (*models.Post, error) {
+	result, err := database.DB.Exec(
 		`INSERT INTO posts (user_id, title, content, privacy)
 		 VALUES (?, ?, ?, ?)`,
-		user_id,
+		userID,
 		title,
 		content,
 		privacy,
 	)
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	postID64, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return GetPostByID(int(postID64))
+}
+
+func GetPostByID(postID int) (*models.Post, error) {
+	row := database.DB.QueryRow(
+		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at,
+		        u.first_name, u.last_name, COALESCE(u.nickname, '')
+		 FROM posts p
+		 JOIN users u ON p.user_id = u.id
+		 WHERE p.id = ?`,
+		postID,
+	)
+
+	p := &models.Post{}
+	if err := row.Scan(
+		&p.ID,
+		&p.UserID,
+		&p.Title,
+		&p.Content,
+		&p.Privacy,
+		&p.CreatedAt,
+		&p.FirstName,
+		&p.LastName,
+		&p.Nickname,
+	); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("post_not_found")
+		}
+		return nil, err
+	}
+
+	return p, nil
 }
 
 // GetPosts returns all public posts ordered by newest first.

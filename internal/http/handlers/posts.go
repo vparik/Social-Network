@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"socialnet/internal/database/store"
+	"socialnet/internal/http/ws"
 	"socialnet/internal/models"
 	"strconv"
 
@@ -14,17 +15,14 @@ import (
 // Expects a JSON body: { "title": "", "content": "", "privacy": "" }
 // privacy must be: "public" | "selected" (followers only) | "private" (chosen followers)
 func CreatePost(w http.ResponseWriter, r *http.Request) {
-	// -- Method check --
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// -- Get the authenticated user's ID from the JWT context --
 	payload := goauth.FromContext(r.Context())
 	userID := payload.UserID
 
-	// -- Decode JSON request body --
 	var body struct {
 		Title   string `json:"title"`
 		Content string `json:"content"`
@@ -36,7 +34,6 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// -- Validation --
 	if body.Title == "" {
 		http.Error(w, "title is required", http.StatusBadRequest)
 		return
@@ -45,21 +42,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "content is required", http.StatusBadRequest)
 		return
 	}
-	// -- Insert post into DB --
-	if err := store.CreatePost(userID, body.Title, body.Content, body.Privacy); err != nil {
+
+	post, err := store.CreatePost(userID, body.Title, body.Content, body.Privacy)
+	if err != nil {
 		http.Error(w, "failed to create post", http.StatusInternalServerError)
 		return
 	}
 
-	// -- Return the created post data --
+	ws.NotifyPostCreated(post)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]any{
-		"user_id": userID,
-		"title":   body.Title,
-		"content": body.Content,
-		"privacy": body.Privacy,
-	})
+	json.NewEncoder(w).Encode(post)
 }
 
 // GetPosts handles GET /api/posts.
@@ -115,5 +108,6 @@ func DeletePost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	ws.NotifyPostDeleted(userID, postID)
 	w.WriteHeader(http.StatusNoContent)
 }

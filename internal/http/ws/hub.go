@@ -10,7 +10,7 @@
 //   - one active websocket connection per user
 //   - a new connection for the same user replaces the old one
 //   - presence is derived from the current in-memory connections
-package chat
+package ws
 
 import (
 	"socialnet/internal/models"

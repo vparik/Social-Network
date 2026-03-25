@@ -74,49 +74,50 @@ window.CreatePost = {
       return window.extractCsrfToken();
     },
 
-    async handleCreatePost() {
-      const title = this.postTitle.trim();
-      const content = this.postDescription.trim();
-
-      if (!title || !content) {
-        alert("Title and content are required.");
+  async handleCreatePost() {
+    const title = this.postTitle.trim();
+    const content = this.postDescription.trim();
+  
+    if (!title || !content) {
+      alert("Title and content are required.");
+      return;
+    }
+  
+    if (this.submitting) return;
+    this.submitting = true;
+  
+    try {
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": this.extractCsrfToken()
+        },
+        body: JSON.stringify({
+          title,
+          content,
+          privacy: this.postVisibility
+        })
+      });
+    
+      if (!res.ok) {
+        const err = await res.text();
+        alert("Failed to create post: " + err);
         return;
       }
-
-      if (this.submitting) return;
-      this.submitting = true;
-
-      try {
-        const res = await fetch("/api/posts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": this.extractCsrfToken()
-          },
-          body: JSON.stringify({
-            title,
-            content,
-            privacy: this.postVisibility
-          })
-        });
-
-        if (!res.ok) {
-          const err = await res.text();
-          alert("Failed to create post: " + err);
-          return;
-        }
-
-        const createdPost = await res.json();
-
-        this.$emit("post-created", createdPost);
-        this.close();
-      } catch (err) {
-        console.error(err);
-        alert("Network error.");
-      } finally {
-        this.submitting = false;
-      }
+    
+      const createdPost = await res.json();
+    
+      window.Events.emit(window.Events.EVENT.POSTS_CREATED, createdPost);
+      this.$emit("post-created", createdPost);
+      this.close();
+    } catch (err) {
+      console.error(err);
+      alert("Network error.");
+    } finally {
+      this.submitting = false;
     }
+  }
   },
 
   template: `

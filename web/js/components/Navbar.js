@@ -167,7 +167,6 @@ window.Navbar = {
 
     handlePostCreated(post) {
       this.isCreatePostOpen = false;
-      window.Events.emit(window.Events.EVENT.POSTS_CREATED, post);
     }
   },
 

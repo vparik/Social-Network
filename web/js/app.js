@@ -44,6 +44,7 @@ const App = {
   },
 
   async mounted() {
+    this.bindRealtimePosts();
     await this.bootstrapAuth();
     await this.ensureChatInit();
     document.addEventListener("click", this.handleDocumentClick, true);
@@ -65,6 +66,25 @@ const App = {
   },
 
   methods: {
+    bindRealtimePosts() {
+      if (this._unsubscribeRealtimePosts) return;
+
+      this._unsubscribeRealtimePosts = window.WS.subscribe((event) => {
+        switch (event.type) {
+          case "post_created":
+            if (!event.data || !event.data.id) return;
+            window.Events.emit(window.Events.EVENT.POSTS_CREATED, event.data);
+            break;
+
+          case "post_deleted":
+            if (!event.data || !event.data.postId) return;
+            window.Events.emit(window.Events.EVENT.POSTS_DELETED, {
+              postId: event.data.postId
+            });
+            break;
+        }
+      });
+    },
     async bootstrapAuth() {
       if (this.isPublicRoute) return;
       if (this.authState.status !== "unknown") return;
@@ -128,6 +148,10 @@ const App = {
 
   beforeUnmount() {
     document.removeEventListener("click", this.handleDocumentClick, true);
+    if (this._unsubscribeRealtimePosts) {
+      this._unsubscribeRealtimePosts();
+      this._unsubscribeRealtimePosts = null;
+    }
   },
 
   template: `

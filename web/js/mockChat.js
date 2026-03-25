@@ -1,29 +1,12 @@
-// MockChat is the client-side chat service used by the UI.
-//
-// this is now the real chat transport/state layer for:
-// - websocket connection management
-// - presence updates
-// - local user cache
-// - conversation cache
-// - message send/read events
-//
-// It acts as the shared bridge between backend chat endpoints and the
-// frontend chat components.
 window.MockChat = (function () {
-  let socket = null;
-  let connected = false;
   let listeners = [];
   let conversations = {};
   let users = [];
   let currentUserId = null;
+  let realtimeBound = false;
 
   function notify(event) {
     listeners.forEach(fn => fn(event));
-  }
-
-  function getWsUrl() {
-    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    return `${proto}//${window.location.host}/ws/chat`;
   }
 
   function normalizeMessage(message) {
@@ -111,21 +94,155 @@ window.MockChat = (function () {
     return [...users];
   }
 
+  function bindRealtime() {
+    if (realtimeBound) return;
+    realtimeBound = true;
+
+    window.WS.subscribe((event) => {
+      switch (event.type) {
+        case "ws_open": {
+          notify({ type: "ws_open" });
+          break;
+        }
+
+        case "ws_close": {
+          notify({ type: "ws_close" });
+          break;
+        }
+
+        case "ws_error": {
+          notify({ type: "ws_error" });
+          break;
+        }
+
+        case "relationship_changed": {
+          notify({
+            type: "relationship_changed",
+            data: event.data
+          });
+          break;
+        }
+
+        case "presence": {
+          const data = event.data || {};
+
+          users = users.map(user => {
+            if (user.id === data.userId) {
+              return { ...user, online: data.online };
+            }
+            return user;
+          });
+
+          notify({
+            type: "presence",
+            userId: data.userId,
+            online: data.online
+          });
+          break;
+        }
+
+        case "presence_snapshot": {
+          const data = event.data || {};
+          const onlineSet = new Set(data.userIds || []);
+
+          users = users.map(user => ({
+            ...user,
+            online: onlineSet.has(user.id)
+          }));
+
+          notify({
+            type: "presence_snapshot",
+            userIds: data.userIds || []
+          });
+          break;
+        }
+
+        case "message_sent":
+        case "message_received": {
+          const result = upsertMessage(event.data);
+
+          if (
+            event.type === "message_received" &&
+            result.message &&
+            !result.message.fromMe &&
+            !isChatOpenWith(result.otherUserId)
+          ) {
+            incrementUnread(result.otherUserId);
+          }
+
+          notify({
+            type: event.type,
+            userId: result.otherUserId,
+            message: result.message
+          });
+          break;
+        }
+
+        case "message_status": {
+          const status = event.data || {};
+
+          Object.keys(conversations).forEach(userId => {
+            const list = conversations[userId];
+            const found = list.find(m => m.id === status.messageId);
+            if (!found) return;
+
+            if (status.status === "received" && !found.receivedAt) {
+              found.receivedAt = Math.floor(Date.now() / 1000);
+            }
+
+            if (status.status === "read" && !found.readAt) {
+              found.readAt = Math.floor(Date.now() / 1000);
+            }
+          });
+
+          notify({
+            type: "message_status",
+            data: status
+          });
+          break;
+        }
+
+        case "conversation_read": {
+          const data = event.data || {};
+          const userId = data.userId;
+
+          if (conversations[userId]) {
+            conversations[userId] = conversations[userId].map(msg => {
+              if (data.messageIds.includes(msg.id)) {
+                return { ...msg, readAt: data.readAt };
+              }
+              return msg;
+            });
+          }
+
+          notify({
+            type: "conversation_read",
+            userId,
+            data
+          });
+          break;
+        }
+      }
+    });
+  }
+
   async function init() {
+    bindRealtime();
+
     if (!currentUserId) {
       await fetchCurrentUser();
     }
 
     await fetchUsers();
 
-    if (connected) {
+    if (window.WS.isConnected()) {
       return;
     }
 
     await new Promise((resolve, reject) => {
-      connect();
+      window.WS.connect();
 
-      if (socket && socket.readyState === WebSocket.OPEN) {
+      if (window.WS.isConnected()) {
         resolve();
         return;
       }
@@ -155,154 +272,6 @@ window.MockChat = (function () {
         reject(new Error("ws_open_timeout"));
       }, 5000);
     });
-  }
-
-  function connect() {
-    if (
-      socket &&
-      (socket.readyState === WebSocket.OPEN ||
-        socket.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-
-    socket = new WebSocket(getWsUrl());
-
-    socket.onopen = function () {
-      connected = true;
-      notify({ type: "ws_open" });
-    };
-
-    socket.onclose = function () {
-      connected = false;
-      socket = null;
-      notify({ type: "ws_close" });
-    };
-
-    socket.onerror = function () {
-      notify({ type: "ws_error" });
-    };
-
-    socket.onmessage = function (event) {
-      let payload;
-
-      try {
-        payload = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
-      if (!payload || !payload.type) return;
-
-      switch (payload.type) {
-        case "relationship_changed": {
-          notify({
-            type: "relationship_changed",
-            data: payload.data
-          });
-          break;
-        }
-        case "presence": {
-          const data = payload.data;
-
-          users = users.map(user => {
-            if (user.id === data.userId) {
-              return { ...user, online: data.online };
-            }
-            return user;
-          });
-
-          notify({
-            type: "presence",
-            userId: data.userId,
-            online: data.online
-          });
-          break;
-        }
-
-        case "presence_snapshot": {
-          const data = payload.data;
-          const onlineSet = new Set(data.userIds || []);
-
-          users = users.map(user => ({
-            ...user,
-            online: onlineSet.has(user.id)
-          }));
-
-          notify({
-            type: "presence_snapshot",
-            userIds: data.userIds || []
-          });
-          break;
-        }
-
-        case "message_sent":
-        case "message_received": {
-          const result = upsertMessage(payload.data);
-
-          if (
-            payload.type === "message_received" &&
-            result.message &&
-            !result.message.fromMe &&
-            !isChatOpenWith(result.otherUserId)
-          ) {
-            incrementUnread(result.otherUserId);
-          }
-
-          notify({
-            type: payload.type,
-            userId: result.otherUserId,
-            message: result.message
-          });
-          break;
-        }
-
-        case "message_status": {
-          const status = payload.data;
-
-          Object.keys(conversations).forEach(userId => {
-            const list = conversations[userId];
-            const found = list.find(m => m.id === status.messageId);
-            if (!found) return;
-
-            if (status.status === "received" && !found.receivedAt) {
-              found.receivedAt = Math.floor(Date.now() / 1000);
-            }
-
-            if (status.status === "read" && !found.readAt) {
-              found.readAt = Math.floor(Date.now() / 1000);
-            }
-          });
-
-          notify({
-            type: "message_status",
-            data: status
-          });
-          break;
-        }
-
-        case "conversation_read": {
-          const data = payload.data;
-          const userId = data.userId;
-
-          if (conversations[userId]) {
-            conversations[userId] = conversations[userId].map(msg => {
-              if (data.messageIds.includes(msg.id)) {
-                return { ...msg, readAt: data.readAt };
-              }
-              return msg;
-            });
-          }
-
-          notify({
-            type: "conversation_read",
-            userId,
-            data
-          });
-          break;
-        }
-      }
-    };
   }
 
   async function loadConversation(userId) {
@@ -351,30 +320,20 @@ window.MockChat = (function () {
   }
 
   function sendMessage(userId, text) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      throw new Error("ws_not_connected");
-    }
-
-    socket.send(JSON.stringify({
-      type: "send_message",
-      data: {
-        receiverId: userId,
-        content: text
-      }
-    }));
+    window.WS.send("send_message", {
+      receiverId: userId,
+      content: text
+    });
   }
 
   function markRead(messageId) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
+    if (!window.WS.isConnected()) {
       return;
     }
 
-    socket.send(JSON.stringify({
-      type: "mark_read",
-      data: {
-        messageId
-      }
-    }));
+    window.WS.send("mark_read", {
+      messageId
+    });
   }
 
   function isChatOpenWith(userId) {
@@ -424,26 +383,19 @@ window.MockChat = (function () {
   }
 
   function isConnected() {
-    return connected;
+    return window.WS.isConnected();
   }
 
   function getCurrentUserId() {
     return currentUserId;
   }
 
+  function connect() {
+    window.WS.connect();
+  }
+
   function disconnect() {
-    if (!socket) {
-      connected = false;
-      return;
-    }
-
-    const current = socket;
-    socket = null;
-    connected = false;
-
-    try {
-      current.close();
-    } catch {}
+    window.WS.disconnect();
   }
 
   return {

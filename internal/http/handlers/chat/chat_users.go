@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"socialnet/internal/database/store"
-	"socialnet/internal/http/chat"
+	"socialnet/internal/http/ws"
 
 	"github.com/Des1red/goauthlib/goauth"
 )
@@ -55,7 +55,7 @@ func GetChatUsers(w http.ResponseWriter, r *http.Request) {
 			name = "User"
 		}
 
-		_, online := chat.Manager.Get(u.ID)
+		_, online := ws.Manager.Get(u.ID)
 
 		unreadCount, err := store.CountUnreadFromUser(payload.UserID, u.ID)
 		if err != nil {

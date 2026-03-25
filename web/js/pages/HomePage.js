@@ -99,8 +99,6 @@ window.HomePage = {
           return;
         }
 
-        this.posts = this.posts.filter(existing => existing.id !== post.id);
-
         window.Events.emit(window.Events.EVENT.POSTS_DELETED, {
           postId: post.id
         });

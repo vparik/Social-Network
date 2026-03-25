@@ -17,8 +17,7 @@ import (
 	"strconv"
 
 	"socialnet/internal/database/store"
-	"socialnet/internal/http/chat"
-	"socialnet/internal/models"
+	"socialnet/internal/http/ws"
 
 	"github.com/Des1red/goauthlib/goauth"
 )
@@ -68,16 +67,7 @@ func GetConversation(w http.ResponseWriter, r *http.Request) {
 
 	// notify original sender if they are online
 	if len(unreadIDs) > 0 {
-		if senderConn, ok := chat.Manager.Get(otherUserID); ok {
-			_ = senderConn.WriteJSON(models.ChatEvent{
-				Type: "conversation_read",
-				Data: models.ConversationReadPayload{
-					UserID:     payload.UserID,
-					MessageIDs: unreadIDs,
-					ReadAt:     readAt,
-				},
-			})
-		}
+		ws.NotifyConversationRead(otherUserID, payload.UserID, unreadIDs, readAt)
 	}
 
 	messages, err := store.GetConversation(payload.UserID, otherUserID)
