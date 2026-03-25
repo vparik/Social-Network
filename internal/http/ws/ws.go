@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var chatUpgrader = websocket.Upgrader{
+var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
@@ -21,7 +21,7 @@ func WS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := chatUpgrader.Upgrade(w, r, nil)
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("ws upgrade error:", err)
 		return
