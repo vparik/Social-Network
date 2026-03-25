@@ -353,6 +353,19 @@ window.ProfilePage = {
       this.showPosts = !this.showPosts;
     },
 
+    privacyLabel(value) {
+      switch (value) {
+        case "public":
+          return "Public";
+        case "selected":
+          return "Followers only";
+        case "private":
+          return "Private";
+        default:
+          return "Unknown";
+      }
+    },
+
     isOwnPost(post) {
       const me = window.Events.state.auth.currentUser;
       return !!me && post.userId === me.id;
@@ -520,7 +533,7 @@ window.ProfilePage = {
               </div>
 
               <div class="feed-post-footer">
-                <div class="feed-post-meta">{{ post.privacy }}</div>
+                <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
                 <CommentSection :post-id="post.id" />
               </div>
             </div>

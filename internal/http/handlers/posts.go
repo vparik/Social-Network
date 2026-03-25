@@ -43,6 +43,17 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if body.Privacy == "" {
+		body.Privacy = "public"
+	}
+
+	switch body.Privacy {
+	case "public", "selected", "private":
+	default:
+		http.Error(w, "invalid privacy", http.StatusBadRequest)
+		return
+	}
+
 	post, err := store.CreatePost(userID, body.Title, body.Content, body.Privacy)
 	if err != nil {
 		http.Error(w, "failed to create post", http.StatusInternalServerError)

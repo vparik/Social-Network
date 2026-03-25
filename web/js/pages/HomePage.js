@@ -87,6 +87,19 @@ window.HomePage = {
       }
     },
 
+    privacyLabel(value) {
+      switch (value) {
+        case "public":
+          return "Public";
+        case "selected":
+          return "Followers only";
+        case "private":
+          return "Private";
+        default:
+          return "Unknown";
+      }
+    },
+
     isOwnPost(post) {
       return window.currentUser && post.userId === window.currentUser.id;
     },
@@ -186,7 +199,7 @@ window.HomePage = {
               </div>
 
               <div class="feed-post-footer">
-                <div class="feed-post-meta">{{ post.privacy }}</div>
+                <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
                 <CommentSection :post-id="post.id" />
               </div>
             </div>

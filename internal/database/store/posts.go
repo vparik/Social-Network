@@ -76,15 +76,32 @@ func GetPosts(viewerID int) ([]*models.Post, error) {
 		 FROM posts p
 		 JOIN users u ON p.user_id = u.id
 		 WHERE
-		   u.is_public = 1
-		   OR p.user_id = ?
-		   OR EXISTS (
-		     SELECT 1
-		     FROM follows f
-		     WHERE f.follower_id = ?
-		       AND f.following_id = p.user_id
+		   p.user_id = ?
+		   OR (
+		     (
+		       u.is_public = 1
+		       OR EXISTS (
+		         SELECT 1
+		         FROM follows f
+		         WHERE f.follower_id = ?
+		           AND f.following_id = p.user_id
+		       )
+		     )
+		     AND (
+		       p.privacy = 'public'
+		       OR (
+		         p.privacy = 'selected'
+		         AND EXISTS (
+		           SELECT 1
+		           FROM follows f2
+		           WHERE f2.follower_id = ?
+		             AND f2.following_id = p.user_id
+		         )
+		       )
+		     )
 		   )
 		 ORDER BY p.created_at DESC`,
+		viewerID,
 		viewerID,
 		viewerID,
 	)
@@ -111,6 +128,11 @@ func GetPosts(viewerID int) ([]*models.Post, error) {
 		}
 		posts = append(posts, p)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return posts, nil
 }
 
