@@ -139,7 +139,7 @@ button {
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--gold-500), var(--gold-600));
+  background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-950) 60%);
   color: #fff;
   font-weight: 600;
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
