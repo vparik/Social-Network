@@ -85,3 +85,37 @@ func GetComments(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(comments)
 }
+
+func DeleteComment(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	payload := goauth.FromContext(r.Context())
+	userID := payload.UserID
+
+	commentIDRaw := r.PathValue("id")
+	commentID, err := strconv.Atoi(commentIDRaw)
+	if err != nil {
+		http.Error(w, "invalid comment id", http.StatusBadRequest)
+		return
+	}
+
+	err = store.DeleteComment(commentID, userID)
+	if err != nil {
+		switch err.Error() {
+		case "comment_not_found":
+			http.Error(w, "comment not found", http.StatusNotFound)
+			return
+		case "forbidden":
+			http.Error(w, "you can only delete your own comments", http.StatusForbidden)
+			return
+		default:
+			http.Error(w, "failed to delete comment", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

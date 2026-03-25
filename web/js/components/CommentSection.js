@@ -110,7 +110,32 @@ window.CommentSection = {
       } finally {
         this.submittingComment = false;
       }
-    }
+    },
+
+    isOwnComment(comment) {
+      return window.currentUser && comment.userId === window.currentUser.id;
+    },
+
+    async deleteComment(comment) {
+      if (!comment || !comment.id) return;
+
+      try {
+        const res = await fetch(`/api/comments/${comment.id}`,{
+          method: "DELETE",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          }
+        });
+
+        if (!res.ok) {
+          return;
+        }
+
+        this.comments = this.comments.filter(existing => existing.id !== comment.id);
+      } catch (err) {
+        console.error("Failed to delete comment:", err);
+      }
+      }
   },
 
   template: `
@@ -125,9 +150,22 @@ window.CommentSection = {
         </div>
 
         <div v-for="comment in comments" :key="comment.id" class="feed-comment">
-          <span class="feed-comment-author">
-            {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
-          </span>
+          <div class="feed-comment-top">
+            <span class="feed-comment-author">
+              {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
+            </span>
+
+            <button
+              v-if="isOwnComment(comment)"
+              class="feed-delete-icon-btn"
+              @click="deleteComment(comment)"
+              title="Delete comment"
+              aria-label="Delete comment"
+            >
+             🗑️
+            </button>
+          </div>
+          
           <span class="feed-comment-content">{{ comment.content }}</span>
         </div>
 

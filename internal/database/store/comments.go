@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"socialnet/internal/database"
 	"socialnet/internal/models"
 )
@@ -61,4 +62,26 @@ func GetComments(postID int) ([]*models.Comment, error) {
 		comments = append(comments, c)
 	}
 	return comments, nil
+}
+
+func DeleteComment(commentID, userID int) error {
+	var ownerID int
+
+	err := database.DB.QueryRow(
+		`SELECT user_id FROM comments WHERE id = ?`,
+		commentID,
+	).Scan(&ownerID)
+	if err != nil {
+		return errors.New("comment_not_found")
+	}
+
+	if ownerID != userID {
+		return errors.New("forbidden")
+	}
+
+	_, err = database.DB.Exec(
+		`DELETE FROM comments WHERE id = ?`,
+		commentID,
+	)
+	return err
 }

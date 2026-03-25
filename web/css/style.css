@@ -513,3 +513,26 @@ form {
     font-size: 14px;
   }
 }
+
+.feed-delete-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.feed-delete-icon-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(226, 85, 85, 0.22);
+}
+
+.feed-delete-icon-btn:active {
+  transform: translateY(0);
+}

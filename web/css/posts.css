@@ -235,23 +235,3 @@
   display: flex;
   
 }
-
-.feed-post-delete-btn {
-  /* position: absolute; */
-  top: 14px;
-  right: 14px;
-  padding: 7px 11px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--coral-500), var(--coral-600));
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  z-index: 2;
-}
-
-.feed-post-delete-btn:hover {
-  filter: brightness(1.03);
-  box-shadow: 0 10px 20px rgba(226, 85, 85, 0.22);
-}

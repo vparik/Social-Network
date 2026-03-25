@@ -505,7 +505,7 @@ window.ProfilePage = {
                       @click="deletePost(post)"
                       title="Delete post"
                     >
-                      Delete
+                      🗑️
                     </button>
                   </div>
                 </div>

@@ -172,7 +172,7 @@ window.HomePage = {
                     @click="deletePost(post)"
                     title="Delete post"
                   >
-                    Delete
+                    🗑️
                   </button>
                 </div>
               </div>
