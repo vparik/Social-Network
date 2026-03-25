@@ -20,3 +20,18 @@ func NotifyCommentCreated(comment *models.Comment) {
 		},
 	})
 }
+
+func NotifyCommentDeleted(postID, commentID, actorUserID int) {
+	userIDs := onlineUserIDsExcept(actorUserID)
+	if len(userIDs) == 0 {
+		return
+	}
+
+	Manager.SendToMany(userIDs, models.ChatEvent{
+		Type: "comment_deleted",
+		Data: map[string]int{
+			"postId":    postID,
+			"commentId": commentID,
+		},
+	})
+}

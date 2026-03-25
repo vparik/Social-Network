@@ -102,7 +102,7 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = store.DeleteComment(commentID, userID)
+	postID, err := store.DeleteComment(commentID, userID)
 	if err != nil {
 		switch err.Error() {
 		case "comment_not_found":
@@ -117,5 +117,6 @@ func DeleteComment(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	ws.NotifyCommentDeleted(postID, commentID, userID)
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -99,7 +99,13 @@ const App = {
               comment: event.data.comment
             });
             break;
-          
+          case "comment_deleted":
+            if (!event.data || !event.data.postId || !event.data.commentId) return;
+            window.Events.emit(window.Events.EVENT.COMMENTS_DELETED, {
+              postId: event.data.postId,
+              commentId: event.data.commentId
+            });
+            break;
           case "relationship_changed":
             if (!event.data) return;
             window.Events.emit(window.Events.EVENT.PROFILE_FOLLOW_CHANGED, event.data);           

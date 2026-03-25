@@ -64,24 +64,29 @@ func GetComments(postID int) ([]*models.Comment, error) {
 	return comments, nil
 }
 
-func DeleteComment(commentID, userID int) error {
+func DeleteComment(commentID, userID int) (int, error) {
 	var ownerID int
+	var postID int
 
 	err := database.DB.QueryRow(
-		`SELECT user_id FROM comments WHERE id = ?`,
+		`SELECT user_id, post_id FROM comments WHERE id = ?`,
 		commentID,
-	).Scan(&ownerID)
+	).Scan(&ownerID, &postID)
 	if err != nil {
-		return errors.New("comment_not_found")
+		return 0, errors.New("comment_not_found")
 	}
 
 	if ownerID != userID {
-		return errors.New("forbidden")
+		return 0, errors.New("forbidden")
 	}
 
 	_, err = database.DB.Exec(
 		`DELETE FROM comments WHERE id = ?`,
 		commentID,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+
+	return postID, nil
 }

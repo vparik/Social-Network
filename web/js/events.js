@@ -63,6 +63,7 @@ window.Events = (function () {
     POSTS_DELETED: "posts:deleted",
 
     COMMENTS_CREATED: "comments:created",
+    COMMENTS_DELETED: "comments:deleted",
 
     PROFILE_FOLLOW_CHANGED: "profile:follow-changed",
     PROFILE_PRIVACY_CHANGED: "profile:privacy-changed",

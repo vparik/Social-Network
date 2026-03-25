@@ -16,7 +16,8 @@ window.CommentSection = {
       loaded: false,
       loadingComments: false,
       submittingComment: false,
-      unsubscribeCommentsCreated: null
+      unsubscribeCommentsCreated: null,
+      unsubscribeCommentsDeleted: null
     };
   },
 
@@ -34,6 +35,17 @@ window.CommentSection = {
           this.loaded = true;
         }
       );
+
+      this.unsubscribeCommentsDeleted = window.Events.on(
+        window.Events.EVENT.COMMENTS_DELETED,
+        ({ postId, commentId }) => {
+          if (postId !== this.postId || !commentId) return;
+
+          this.comments = this.comments.filter(
+            existing => existing.id !== commentId
+          );
+        }
+      );
     }
   },
 
@@ -41,6 +53,11 @@ window.CommentSection = {
     if (this.unsubscribeCommentsCreated) {
       this.unsubscribeCommentsCreated();
       this.unsubscribeCommentsCreated = null;
+    }
+
+    if (this.unsubscribeCommentsDeleted) {
+      this.unsubscribeCommentsDeleted();
+      this.unsubscribeCommentsDeleted = null;
     }
   },
 
@@ -120,7 +137,7 @@ window.CommentSection = {
       if (!comment || !comment.id) return;
 
       try {
-        const res = await fetch(`/api/comments/${comment.id}`,{
+        const res = await fetch(`/api/comments/${comment.id}`, {
           method: "DELETE",
           headers: {
             "X-CSRF-Token": window.extractCsrfToken()
@@ -131,11 +148,16 @@ window.CommentSection = {
           return;
         }
 
-        this.comments = this.comments.filter(existing => existing.id !== comment.id);
+        if (window.Events) {
+          window.Events.emit(window.Events.EVENT.COMMENTS_DELETED, {
+            postId: this.postId,
+            commentId: comment.id
+          });
+        }
       } catch (err) {
         console.error("Failed to delete comment:", err);
       }
-      }
+    }
   },
 
   template: `
@@ -165,7 +187,7 @@ window.CommentSection = {
              🗑️
             </button>
           </div>
-          
+
           <span class="feed-comment-content">{{ comment.content }}</span>
         </div>
 
