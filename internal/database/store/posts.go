@@ -98,9 +98,19 @@ func GetPosts(viewerID int) ([]*models.Post, error) {
 		             AND f2.following_id = p.user_id
 		         )
 		       )
+		       OR (
+		         p.privacy = 'private'
+		         AND EXISTS (
+		           SELECT 1
+		           FROM post_allowed_users pau
+		           WHERE pau.post_id = p.id
+		             AND pau.user_id = ?
+		         )
+		       )
 		     )
 		   )
 		 ORDER BY p.created_at DESC`,
+		viewerID,
 		viewerID,
 		viewerID,
 		viewerID,
@@ -176,4 +186,58 @@ func DeletePost(postID int, userID int) error {
 
 	_, err = database.DB.Exec(`DELETE FROM posts WHERE id = ?`, postID)
 	return err
+}
+
+func AddAllowedUsersToPost(postID int, userIDs []int) error {
+	seen := make(map[int]bool)
+
+	for _, userID := range userIDs {
+		if userID <= 0 {
+			continue
+		}
+		if seen[userID] {
+			continue
+		}
+		seen[userID] = true
+
+		_, err := database.DB.Exec(
+			`INSERT INTO post_allowed_users (post_id, user_id)
+			 VALUES (?, ?)`,
+			postID,
+			userID,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetAllowedUserIDsForPost(postID int) ([]int, error) {
+	rows, err := database.DB.Query(
+		`SELECT user_id
+		 FROM post_allowed_users
+		 WHERE post_id = ?`,
+		postID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var userIDs []int
+	for rows.Next() {
+		var userID int
+		if err := rows.Scan(&userID); err != nil {
+			return nil, err
+		}
+		userIDs = append(userIDs, userID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return userIDs, nil
 }

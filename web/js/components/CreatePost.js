@@ -11,7 +11,12 @@ window.CreatePost = {
       postVisibility: "public",
       postTitle: "",
       postDescription: "",
-      submitting: false
+      submitting: false,
+
+      followersLoading: false,
+      followersError: "",
+      followers: [],
+      selectedAllowedUserIds: []
     };
   },
 
@@ -40,7 +45,7 @@ window.CreatePost = {
         case "selected":
           return "Visible to your followers only.";
         case "private":
-          return "Currently visible only to you. Chosen-follower access will be added later.";
+          return "Visible only to you and the followers you choose.";
         default:
           return "";
       }
@@ -48,8 +53,17 @@ window.CreatePost = {
   },
 
   methods: {
-    selectVisibility(value) {
+    async selectVisibility(value) {
       this.postVisibility = value;
+
+      if (value !== "private") {
+        this.selectedAllowedUserIds = [];
+        return;
+      }
+
+      if (!this.followers.length && !this.followersLoading) {
+        await this.loadFollowers();
+      }
     },
 
     toggleMode() {
@@ -80,11 +94,64 @@ window.CreatePost = {
       this.postTitle = "";
       this.postDescription = "";
       this.postVisibility = "public";
+      this.followersError = "";
+      this.selectedAllowedUserIds = [];
       this.$emit("close");
     },
 
     extractCsrfToken() {
       return window.extractCsrfToken();
+    },
+
+    async loadFollowers() {
+      this.followersLoading = true;
+      this.followersError = "";
+
+      try {
+        const res = await fetch("/api/followers", {
+          method: "GET"
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          this.followersError = err || "Failed to load followers.";
+          this.followers = [];
+          return;
+        }
+
+        const data = await res.json();
+        this.followers = Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error(err);
+        this.followersError = "Network error while loading followers.";
+        this.followers = [];
+      } finally {
+        this.followersLoading = false;
+      }
+    },
+
+    toggleAllowedUser(userId) {
+      if (this.submitting) return;
+
+      if (this.selectedAllowedUserIds.includes(userId)) {
+        this.selectedAllowedUserIds = this.selectedAllowedUserIds.filter(id => id !== userId);
+        return;
+      }
+
+      this.selectedAllowedUserIds = [...this.selectedAllowedUserIds, userId];
+    },
+
+    isUserSelected(userId) {
+      return this.selectedAllowedUserIds.includes(userId);
+    },
+
+    displayFollowerName(user) {
+      const nickname = (user.nickname || "").trim();
+      const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+
+      if (nickname) return nickname;
+      if (fullName) return fullName;
+      return `User #${user.id}`;
     },
 
     async handleCreatePost() {
@@ -96,21 +163,32 @@ window.CreatePost = {
         return;
       }
 
+      if (this.postVisibility === "private" && this.selectedAllowedUserIds.length === 0) {
+        alert("Select at least one follower for a private post.");
+        return;
+      }
+
       if (this.submitting) return;
       this.submitting = true;
 
       try {
+        const payload = {
+          title,
+          content,
+          privacy: this.postVisibility
+        };
+
+        if (this.postVisibility === "private") {
+          payload.allowedUserIds = this.selectedAllowedUserIds;
+        }
+
         const res = await fetch("/api/posts", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-CSRF-Token": this.extractCsrfToken()
           },
-          body: JSON.stringify({
-            title,
-            content,
-            privacy: this.postVisibility
-          })
+          body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
@@ -314,16 +392,43 @@ window.CreatePost = {
       >
         <template v-if="!isEventMode">
           <div class="create-post-sidebar-section">
-            <div class="create-post-sidebar-title">Private post</div>
-            <div class="create-post-sidebar-empty">
-              This post will currently be visible only to you.
+            <div class="create-post-sidebar-title">Private post access</div>
+
+            <div v-if="followersLoading" class="create-post-sidebar-empty">
+              Loading followers...
+            </div>
+
+            <div v-else-if="followersError" class="create-post-sidebar-empty">
+              {{ followersError }}
+            </div>
+
+            <div v-else-if="!followers.length" class="create-post-sidebar-empty">
+              You do not have any followers to select yet.
+            </div>
+
+            <div v-else class="create-post-user-list">
+              <button
+                v-for="user in followers"
+                :key="user.id"
+                type="button"
+                class="create-post-user-option"
+                :class="{ 'is-selected': isUserSelected(user.id) }"
+                @click="toggleAllowedUser(user.id)"
+              >
+                <span class="create-post-user-option__name">
+                  {{ displayFollowerName(user) }}
+                </span>
+              </button>
             </div>
           </div>
 
           <div class="create-post-sidebar-section">
-            <div class="create-post-sidebar-title">Coming later</div>
-            <div class="create-post-sidebar-empty">
-              Chosen follower selection for private posts will be added later.
+            <div class="create-post-sidebar-title">Selected</div>
+            <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
+              No followers selected yet.
+            </div>
+            <div v-else class="create-post-sidebar-empty">
+              {{ selectedAllowedUserIds.length }} follower(s) selected.
             </div>
           </div>
         </template>

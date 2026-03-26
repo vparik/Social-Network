@@ -12,8 +12,13 @@ import (
 )
 
 // CreatePost handles POST /api/posts.
-// Expects a JSON body: { "title": "", "content": "", "privacy": "" }
-// privacy must be: "public" | "selected" (followers only) | "private" (chosen followers)
+// Expects a JSON body:
+// { "title": "", "content": "", "privacy": "", "allowedUserIds": [] }
+//
+// privacy must be:
+//   - "public"
+//   - "selected" (followers only)
+//   - "private"  (explicitly chosen users)
 func CreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -24,9 +29,10 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	userID := payload.UserID
 
 	var body struct {
-		Title   string `json:"title"`
-		Content string `json:"content"`
-		Privacy string `json:"privacy"`
+		Title          string `json:"title"`
+		Content        string `json:"content"`
+		Privacy        string `json:"privacy"`
+		AllowedUserIDs []int  `json:"allowedUserIds"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -54,10 +60,41 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if body.Privacy != "private" && len(body.AllowedUserIDs) > 0 {
+		http.Error(w, "allowed users are only valid for private posts", http.StatusBadRequest)
+		return
+	}
+
 	post, err := store.CreatePost(userID, body.Title, body.Content, body.Privacy)
 	if err != nil {
 		http.Error(w, "failed to create post", http.StatusInternalServerError)
 		return
+	}
+
+	if body.Privacy == "private" {
+		var filtered []int
+		seen := make(map[int]bool)
+
+		for _, allowedUserID := range body.AllowedUserIDs {
+			if allowedUserID <= 0 {
+				continue
+			}
+			if allowedUserID == userID {
+				continue
+			}
+			if seen[allowedUserID] {
+				continue
+			}
+			seen[allowedUserID] = true
+			filtered = append(filtered, allowedUserID)
+		}
+
+		if len(filtered) > 0 {
+			if err := store.AddAllowedUsersToPost(post.ID, filtered); err != nil {
+				http.Error(w, "failed to save allowed users", http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 
 	ws.NotifyPostCreated(post)
@@ -67,7 +104,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPosts handles GET /api/posts.
-// Returns all public posts ordered by newest first, to feed the home page.
+// Returns all visible posts ordered by newest first.
 func GetPosts(w http.ResponseWriter, r *http.Request) {
 	payload := goauth.FromContext(r.Context())
 
@@ -86,7 +123,6 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeletePost handles DELETE /api/posts/{id}.
-// TODO: implement ownership check before deleting
 func DeletePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

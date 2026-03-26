@@ -5,47 +5,68 @@ import (
 	"socialnet/internal/models"
 )
 
-// NotifyPostCreated sends a notification about a newly created post to the users who should be able to view it.
+// NotifyPostCreated sends a post_created event only to users who are allowed
+// to see the new post.
 func NotifyPostCreated(post *models.Post) {
 	if post == nil {
 		return
 	}
 
+	seen := make(map[int]bool)
 	var allowedUserIDs []int
+
+	addUser := func(userID int) {
+		if userID <= 0 {
+			return
+		}
+		if seen[userID] {
+			return
+		}
+		seen[userID] = true
+		allowedUserIDs = append(allowedUserIDs, userID)
+	}
 
 	switch post.Privacy {
 	case "public":
-		// All users can see public posts
-		allowedUserIDs = Manager.OnlineUserIDs()
+		for _, userID := range Manager.OnlineUserIDs() {
+			addUser(userID)
+		}
+
 	case "selected":
-		// Only users who follow the post creator can see "followers only" posts
-		followingUserIDs, err := store.GetFollowing(post.UserID)
+		// selected = followers only
+		addUser(post.UserID)
+
+		followers, err := store.GetFollowers(post.UserID)
 		if err != nil {
 			return
 		}
-		// Collect user IDs of followers
-		for _, user := range followingUserIDs {
-			allowedUserIDs = append(allowedUserIDs, user.ID)
+		for _, user := range followers {
+			addUser(user.ID)
 		}
+
 	case "private":
-		// Only the post creator and their chosen followers can see private posts
-		followersUserIDs, err := store.GetFollowers(post.UserID)
+		// private = creator + explicitly allowed users
+		addUser(post.UserID)
+
+		userIDs, err := store.GetAllowedUserIDsForPost(post.ID)
 		if err != nil {
 			return
 		}
-		// Add the post creator and their followers
-		allowedUserIDs = append(allowedUserIDs, post.UserID)
-		for _, user := range followersUserIDs {
-			allowedUserIDs = append(allowedUserIDs, user.ID)
+		for _, userID := range userIDs {
+			addUser(userID)
 		}
 	}
 
-	// Send the notification to the users that are allowed to see the post
+	if len(allowedUserIDs) == 0 {
+		return
+	}
+
 	Manager.SendToMany(allowedUserIDs, models.ChatEvent{
 		Type: "post_created",
 		Data: post,
 	})
 }
+
 func NotifyPostDeleted(actorUserID, postID int) {
 	userIDs := onlineUserIDsExcept(actorUserID)
 	if len(userIDs) == 0 {
