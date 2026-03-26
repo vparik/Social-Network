@@ -175,6 +175,16 @@ window.CommentSection = {
     async deleteComment(comment) {
       if (!comment || !comment.id) return;
 
+      const confirmed = await window.AppConfirm.open({
+        title: "Delete comment",
+        message: "Are you sure you want to delete this comment?",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        danger: true
+      });
+
+      if (!confirmed) return;
+
       try {
         const res = await fetch(`/api/comments/${comment.id}`, {
           method: "DELETE",
@@ -184,6 +194,8 @@ window.CommentSection = {
         });
 
         if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to delete comment: " + err);
           return;
         }
 
@@ -195,6 +207,7 @@ window.CommentSection = {
         }
       } catch (err) {
         console.error("Failed to delete comment:", err);
+        alert("Network error.");
       }
     }
   },
@@ -224,7 +237,7 @@ window.CommentSection = {
             <button
               v-if="isOwnComment(comment)"
               class="feed-delete-icon-btn"
-              @click="deleteComment(comment)"
+              @click.stop="deleteComment(comment)"
               title="Delete comment"
               aria-label="Delete comment"
             >

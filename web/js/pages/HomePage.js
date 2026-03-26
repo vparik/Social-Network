@@ -160,9 +160,13 @@ window.HomePage = {
     },
 
     async deletePost(post) {
-      const confirmed = window.confirm(
-        `Are you sure that you want to delete the post "${post.title}" ?`
-      );
+      const confirmed = await window.AppConfirm.open({
+        title: "Delete post",
+        message: `Are you sure you want to delete the post "${post.title}"?`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        danger: true
+      });
 
       if (!confirmed) return;
 
