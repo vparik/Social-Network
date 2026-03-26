@@ -200,12 +200,12 @@ window.CommentSection = {
   },
 
   template: `
-    <div class="feed-post-comments-box">
-      <div class="feed-post-comments-title" @click="toggle">
+    <div class="feed-post-comments-box" @click="toggle">
+      <div class="feed-post-comments-title">
         Comments {{ isOpen ? '▲' : '▼' }}
       </div>
 
-      <div v-if="isOpen">
+      <div v-if="isOpen" @click.stop>
         <div v-if="comments.length === 0" class="feed-post-comments-empty">
           No comments yet.
         </div>
