@@ -297,9 +297,9 @@ window.ProfilePage = {
 
     async acceptIncomingRequest() {
       if (this.followLoading || !this.profile || !this.profile.id) return;
-
+    
       this.followLoading = true;
-
+    
       try {
         const res = await fetch(`/api/follow/accept?id=${this.profile.id}`, {
           method: "POST",
@@ -307,16 +307,20 @@ window.ProfilePage = {
             "X-CSRF-Token": window.extractCsrfToken()
           }
         });
-
+      
         if (!res.ok) {
           return;
         }
-
+      
+        window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, {
+          removeFollowRequestActorId: this.profile.id
+        });
+      
         await Promise.all([
           this.refreshProfile(),
           this.loadFollowStatus()
         ]);
-
+      
         await this.loadProfilePosts();
       } catch (err) {
         console.error("failed to accept follow request:", err);
@@ -324,12 +328,12 @@ window.ProfilePage = {
         this.followLoading = false;
       }
     },
-
+    
     async rejectIncomingRequest() {
       if (this.followLoading || !this.profile || !this.profile.id) return;
-
+    
       this.followLoading = true;
-
+    
       try {
         const res = await fetch(`/api/follow/request?id=${this.profile.id}`, {
           method: "DELETE",
@@ -337,16 +341,20 @@ window.ProfilePage = {
             "X-CSRF-Token": window.extractCsrfToken()
           }
         });
-
+      
         if (!res.ok) {
           return;
         }
-
+      
+        window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, {
+          removeFollowRequestActorId: this.profile.id
+        });
+      
         await Promise.all([
           this.refreshProfile(),
           this.loadFollowStatus()
         ]);
-
+      
         await this.loadProfilePosts();
       } catch (err) {
         console.error("failed to reject follow request:", err);
@@ -354,7 +362,6 @@ window.ProfilePage = {
         this.followLoading = false;
       }
     },
-
     async openSocialList(type) {
       if (!this.profile || !this.profile.id) return;
         

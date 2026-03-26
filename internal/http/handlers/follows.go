@@ -170,6 +170,8 @@ func Unfollow(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		_ = store.DeleteFollowRequestNotification(targetID, payload.UserID)
+
 		ws.NotifyRelationshipChanged([]int{payload.UserID, targetID}, payload.UserID, targetID, "follow_request_cancelled")
 
 		w.WriteHeader(http.StatusOK)
@@ -339,6 +341,8 @@ func AcceptFollowRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_ = store.DeleteFollowRequestNotification(payload.UserID, requesterID)
+
 	if err := store.CreateNotification(requesterID, payload.UserID, "follow_request_accepted", nil); err == nil {
 		if n, err := store.GetLatestNotification(requesterID); err == nil {
 			if unread, err := store.CountUnreadNotifications(requesterID); err == nil {
@@ -393,6 +397,8 @@ func RejectFollowRequest(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"error":"internal_error"}`))
 		return
 	}
+
+	_ = store.DeleteFollowRequestNotification(payload.UserID, requesterID)
 
 	ws.NotifyRelationshipChanged([]int{requesterID, payload.UserID}, requesterID, payload.UserID, "follow_request_rejected")
 

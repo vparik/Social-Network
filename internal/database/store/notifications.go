@@ -169,3 +169,15 @@ func MarkAllNotificationsRead(userID int) error {
 	)
 	return err
 }
+
+func DeleteFollowRequestNotification(userID, actorID int) error {
+	_, err := database.DB.Exec(
+		`DELETE FROM notifications
+		 WHERE user_id = ?
+		   AND actor_id = ?
+		   AND type = 'follow_request'`,
+		userID,
+		actorID,
+	)
+	return err
+}

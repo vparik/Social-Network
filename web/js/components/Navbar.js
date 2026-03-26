@@ -200,6 +200,23 @@ window.Navbar = {
       this.followRequestActionLoading = false;
     },
 
+    removeFollowRequestNotificationByActorId(actorId) {
+      if (!actorId) return;
+
+      const before = this.notifications.length;
+
+      this.notifications = this.notifications.filter(item => {
+        return !(item.type === "follow_request" && item.actorId === actorId);
+      });
+    
+      if (this.selectedFollowRequest && this.selectedFollowRequest.actorId === actorId) {
+        this.closeFollowRequestPanel();
+      }
+    
+      if (this.notifications.length < before && this.unreadNotificationsCount > 0) {
+        this.unreadNotificationsCount -= 1;
+      }
+    },
     removeNotificationById(notificationID) {
       if (!notificationID) return;
       this.notifications = this.notifications.filter(item => item.id !== notificationID);
@@ -500,6 +517,11 @@ window.Navbar = {
           return;
         }
 
+        if (data.removeFollowRequestActorId) {
+          this.removeFollowRequestNotificationByActorId(data.removeFollowRequestActorId);
+          return;
+        }
+        
         if (data.notification) {
           const exists = this.notifications.some(item => item.id === data.notification.id);
           if (!exists) {
