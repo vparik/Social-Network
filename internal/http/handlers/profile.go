@@ -142,3 +142,20 @@ func SetProfilePrivacy(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
+
+func canViewProfileContent(viewerID int, user *models.User) (bool, error) {
+	if viewerID == user.ID {
+		return true, nil
+	}
+
+	if user.IsPublic {
+		return true, nil
+	}
+
+	following, err := store.IsFollowing(viewerID, user.ID)
+	if err != nil {
+		return false, err
+	}
+
+	return following, nil
+}

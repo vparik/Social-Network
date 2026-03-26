@@ -19,6 +19,12 @@ window.ProfilePage = {
       unsubscribePostDeleted: null,
       unsubscribeRelationshipChanged: null,
       unsubscribePrivacyChanged: null,
+      showSocialList: false,
+      socialListType: "",
+      socialListTitle: "",
+      socialUsers: [],
+      socialLoading: false,
+      socialError: null,
     };
   },
 
@@ -349,6 +355,54 @@ window.ProfilePage = {
       }
     },
 
+    async openSocialList(type) {
+      if (!this.profile || !this.profile.id) return;
+        
+      this.showSocialList = true;
+      this.socialListType = type;
+      this.socialListTitle = type === "followers" ? "Followers" : "Following";
+      this.socialUsers = [];
+      this.socialError = null;
+      this.socialLoading = true;
+        
+      try {
+        const res = await fetch(`/api/${type}?id=${this.profile.id}`, {
+          method: "GET"
+        });
+      
+        if (!res.ok) {
+          if (res.status === 403) {
+            this.socialError = "You are not allowed to view this list.";
+          } else {
+            this.socialError = "Failed to load users.";
+          }
+          return;
+        }
+      
+        const data = await res.json();
+        this.socialUsers = Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error(`failed to load ${type}:`, err);
+        this.socialError = "Network error.";
+      } finally {
+        this.socialLoading = false;
+      }
+    },
+
+    closeSocialList() {
+      this.showSocialList = false;
+      this.socialListType = "";
+      this.socialListTitle = "";
+      this.socialUsers = [];
+      this.socialError = null;
+      this.socialLoading = false;
+    },
+
+    goToUserProfile(userId) {
+      this.closeSocialList();
+      window.history.pushState({}, "", `/profile?id=${userId}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    },
     togglePosts() {
       this.showPosts = !this.showPosts;
     },
@@ -402,144 +456,215 @@ window.ProfilePage = {
     }
   },
 
-  template: `
-    <div>
-      <div v-if="loading" class="container">Loading...</div>
-      <div v-else-if="error" class="container error">{{ error }}</div>
+template: `
+  <div>
+    <div v-if="loading" class="container">Loading...</div>
+    <div v-else-if="error" class="container error">{{ error }}</div>
 
-      <div v-else class="container">
-        <div class="profile-header">
-          <img
-            v-if="profile.avatarPath"
-            :src="profile.avatarPath"
-            class="profile-avatar"
-            alt="Avatar"
-          />
+    <div v-else class="container">
+      <div class="profile-header">
+        <img
+          v-if="profile.avatarPath"
+          :src="profile.avatarPath"
+          class="profile-avatar"
+          alt="Avatar"
+        />
 
-          <div v-else class="profile-avatar-placeholder">
-            {{ profile.firstName[0] }}{{ profile.lastName[0] }}
+        <div v-else class="profile-avatar-placeholder">
+          {{ profile.firstName[0] }}{{ profile.lastName[0] }}
+        </div>
+
+        <div class="profile-info">
+          <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
+          <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
+
+          <p v-if="canViewContent && profile.aboutMe" class="profile-about">
+            {{ profile.aboutMe }}
+          </p>
+
+          <div class="profile-stats">
+            <button
+              type="button"
+              class="profile-stat profile-stat-btn"
+              @click="openSocialList('followers')"
+            >
+              <strong>{{ profile.followersCount }}</strong> Followers
+            </button>
+
+            <button
+              type="button"
+              class="profile-stat profile-stat-btn"
+              @click="openSocialList('following')"
+            >
+              <strong>{{ profile.followingCount }}</strong> Following
+            </button>
           </div>
 
-          <div class="profile-info">
-            <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
-            <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
+          <button
+            v-if="isOwnProfile"
+            class="follow-btn"
+            :disabled="privacyLoading"
+            @click="togglePrivacy"
+          >
+            {{ profile.isPublic ? 'Make Private' : 'Make Public' }}
+          </button>
 
-            <p v-if="canViewContent && profile.aboutMe" class="profile-about">
-              {{ profile.aboutMe }}
-            </p>
+          <template v-if="!isOwnProfile">
+            <div v-if="hasIncomingRequest" class="profile-follow-actions">
+              <button
+                class="follow-btn"
+                :disabled="followLoading"
+                @click="acceptIncomingRequest"
+              >
+                Accept
+              </button>
 
-            <div class="profile-stats">
-              <span class="profile-stat">
-                <strong>{{ profile.followersCount }}</strong> Followers
-              </span>
-              <span class="profile-stat">
-                <strong>{{ profile.followingCount }}</strong> Following
-              </span>
+              <button
+                class="follow-btn following"
+                :disabled="followLoading"
+                @click="rejectIncomingRequest"
+              >
+                Decline
+              </button>
             </div>
 
             <button
-              v-if="isOwnProfile"
+              v-else
               class="follow-btn"
-              :disabled="privacyLoading"
-              @click="togglePrivacy"
+              :class="{ following: isFollowing || isRequested }"
+              :disabled="followLoading"
+              @click="toggleFollow"
             >
-              {{ profile.isPublic ? 'Make Private' : 'Make Public' }}
+              {{ isFollowing ? 'Unfollow' : isRequested ? 'Requested' : 'Follow' }}
             </button>
-
-            <template v-if="!isOwnProfile">
-              <div v-if="hasIncomingRequest" class="profile-follow-actions">
-                <button
-                  class="follow-btn"
-                  :disabled="followLoading"
-                  @click="acceptIncomingRequest"
-                >
-                  Accept
-                </button>
-
-                <button
-                  class="follow-btn following"
-                  :disabled="followLoading"
-                  @click="rejectIncomingRequest"
-                >
-                  Decline
-                </button>
-              </div>
-
-              <button
-                v-else
-                class="follow-btn"
-                :class="{ following: isFollowing || isRequested }"
-                :disabled="followLoading"
-                @click="toggleFollow"
-              >
-                {{ isFollowing ? 'Unfollow' : isRequested ? 'Requested' : 'Follow' }}
-              </button>
-            </template>
-          </div>
+          </template>
         </div>
+      </div>
 
-        <div
-          v-if="!canViewContent && !isOwnProfile"
-          class="feed-empty"
+      <div
+        v-if="!canViewContent && !isOwnProfile"
+        class="feed-empty"
+      >
+        This account is private. Follow to see posts and profile details.
+      </div>
+
+      <section v-else class="profile-posts-section">
+        <h2
+          class="profile-posts-heading"
+          @click="posts.length > 0 && togglePosts()"
         >
-          This account is private. Follow to see posts and profile details.
+          Posts
+        </h2>
+
+        <div v-if="posts.length === 0" class="feed-empty">
+          This user has not posted anything yet.
         </div>
 
-        <section v-else class="profile-posts-section">
-          <h2
-            class="profile-posts-heading"
-            @click="posts.length > 0 && togglePosts()"
+        <div v-else-if="showPosts">
+          <div
+            v-for="post in posts"
+            :key="post.id"
+            class="feed-post-card profile-post-card"
           >
-            Posts
-          </h2>
+            <div class="profile-post-header">
+              <h3 class="feed-post-title">{{ post.title }}</h3>
 
-          <div v-if="posts.length === 0" class="feed-empty">
-            This user has not posted anything yet.
-          </div>
-
-          <div v-else-if="showPosts">
-            <div
-              v-for="post in posts"
-              :key="post.id"
-              class="feed-post-card profile-post-card"
-            >
-              <div class="profile-post-header">
-                <h3 class="feed-post-title">{{ post.title }}</h3>
-
-                <div class="feed-post-user-block">
-                  <div class="feed-post-user-info">
-                    <div class="feed-post-date">
-                      {{ new Date(post.createdAt * 1000).toLocaleString() }}
-                    </div>
-
-                    <button
-                      v-if="isOwnPost(post)"
-                      class="feed-post-delete-btn"
-                      @click="deletePost(post)"
-                      title="Delete post"
-                    >
-                      🗑️
-                    </button>
+              <div class="feed-post-user-block">
+                <div class="feed-post-user-info">
+                  <div class="feed-post-date">
+                    {{ new Date(post.createdAt * 1000).toLocaleString() }}
                   </div>
+
+                  <button
+                    v-if="isOwnPost(post)"
+                    class="feed-post-delete-btn"
+                    @click="deletePost(post)"
+                    title="Delete post"
+                  >
+                    🗑️
+                  </button>
                 </div>
-              </div>
-
-              <div class="feed-post-body">
-                <p class="feed-post-content">{{ post.content }}</p>
-
-                <div v-if="post.imageUrl" class="feed-post-image-wrap">
-                  <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
-                </div>
-              </div>
-
-              <div class="feed-post-footer">
-                <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
-                <CommentSection :post-id="post.id" />
               </div>
             </div>
+
+            <div class="feed-post-body">
+              <p class="feed-post-content">{{ post.content }}</p>
+
+              <div v-if="post.imageUrl" class="feed-post-image-wrap">
+                <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
+              </div>
+            </div>
+
+            <div class="feed-post-footer">
+              <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
+              <CommentSection :post-id="post.id" />
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
+    </div>
+
+    <div
+      v-if="showSocialList"
+      class="social-list-overlay"
+      @click.self="closeSocialList"
+    >
+      <div class="social-list-modal">
+        <div class="social-list-header">
+          <h2>{{ socialListTitle }}</h2>
+          <button
+            type="button"
+            class="social-list-close-btn"
+            @click="closeSocialList"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div v-if="socialLoading" class="feed-empty">
+          Loading...
+        </div>
+
+        <div v-else-if="socialError" class="feed-empty">
+          {{ socialError }}
+        </div>
+
+        <div v-else-if="socialUsers.length === 0" class="feed-empty">
+          No users found.
+        </div>
+
+        <div v-else class="social-list-users">
+          <button
+            v-for="user in socialUsers"
+            :key="user.id"
+            type="button"
+            class="social-list-user"
+            @click="goToUserProfile(user.id)"
+          >
+            <img
+              v-if="user.avatarPath"
+              :src="user.avatarPath"
+              class="social-list-user-avatar"
+              alt="Avatar"
+            />
+
+            <div v-else class="social-list-user-avatar-placeholder">
+              {{ user.firstName[0] }}{{ user.lastName[0] }}
+            </div>
+
+            <div class="social-list-user-info">
+              <div class="social-list-user-name">
+                {{ user.firstName }} {{ user.lastName }}
+              </div>
+
+              <div v-if="user.nickname" class="social-list-user-nickname">
+                @{{ user.nickname }}
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
-  `
+  </div>
+`
 };

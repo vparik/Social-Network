@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"socialnet/internal/database/store"
 	"socialnet/internal/http/ws"
+	"socialnet/internal/models"
 	"strconv"
 
 	"github.com/Des1red/goauthlib/goauth"
@@ -225,8 +226,28 @@ func FollowStatus(w http.ResponseWriter, r *http.Request) {
 func GetFollowers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	payload := goauth.FromContext(r.Context())
+
 	targetID, ok := resolveTargetUserID(w, r)
 	if !ok {
+		return
+	}
+
+	user, ok := fetchUser(w, targetID)
+	if !ok {
+		return
+	}
+
+	allowed, err := canViewProfileContent(payload.UserID, user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
+	if !allowed {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"error":"forbidden"}`))
 		return
 	}
 
@@ -237,6 +258,10 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if users == nil {
+		users = []models.User{}
+	}
+
 	json.NewEncoder(w).Encode(users)
 }
 
@@ -244,8 +269,28 @@ func GetFollowers(w http.ResponseWriter, r *http.Request) {
 func GetFollowing(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	payload := goauth.FromContext(r.Context())
+
 	targetID, ok := resolveTargetUserID(w, r)
 	if !ok {
+		return
+	}
+
+	user, ok := fetchUser(w, targetID)
+	if !ok {
+		return
+	}
+
+	allowed, err := canViewProfileContent(payload.UserID, user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
+	if !allowed {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"error":"forbidden"}`))
 		return
 	}
 
@@ -254,6 +299,10 @@ func GetFollowing(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error":"internal_error"}`))
 		return
+	}
+
+	if users == nil {
+		users = []models.User{}
 	}
 
 	json.NewEncoder(w).Encode(users)
