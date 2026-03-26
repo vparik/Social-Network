@@ -87,6 +87,8 @@ type Notification struct {
 	ActorID    int    `json:"actorId"`
 	Type       string `json:"type"`
 	EntityID   *int   `json:"entityId,omitempty"`
+	PostID     *int   `json:"postId,omitempty"`
+	CommentID  *int   `json:"commentId,omitempty"`
 	IsRead     bool   `json:"isRead"`
 	CreatedAt  int64  `json:"createdAt"`
 	FirstName  string `json:"firstName"`

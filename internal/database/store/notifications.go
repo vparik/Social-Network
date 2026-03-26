@@ -20,9 +20,12 @@ func GetLatestNotification(userID int) (*models.Notification, error) {
 	row := database.DB.QueryRow(
 		`SELECT
 			n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
-			u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, '')
+			u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, ''),
+			c.post_id
 		 FROM notifications n
 		 JOIN users u ON u.id = n.actor_id
+		 LEFT JOIN comments c
+		   ON n.type = 'comment' AND c.id = n.entity_id
 		 WHERE n.user_id = ?
 		 ORDER BY n.created_at DESC, n.id DESC
 		 LIMIT 1`,
@@ -31,6 +34,7 @@ func GetLatestNotification(userID int) (*models.Notification, error) {
 
 	n := &models.Notification{}
 	var entityID sql.NullInt64
+	var postID sql.NullInt64
 	var isReadInt int
 
 	if err := row.Scan(
@@ -45,6 +49,7 @@ func GetLatestNotification(userID int) (*models.Notification, error) {
 		&n.LastName,
 		&n.Nickname,
 		&n.AvatarPath,
+		&postID,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("notification_not_found")
@@ -53,9 +58,20 @@ func GetLatestNotification(userID int) (*models.Notification, error) {
 	}
 
 	n.IsRead = isReadInt == 1
+
 	if entityID.Valid {
 		v := int(entityID.Int64)
 		n.EntityID = &v
+
+		if n.Type == "comment" {
+			commentID := v
+			n.CommentID = &commentID
+		}
+	}
+
+	if postID.Valid {
+		v := int(postID.Int64)
+		n.PostID = &v
 	}
 
 	return n, nil
@@ -74,9 +90,12 @@ func GetNotifications(userID int) ([]*models.Notification, int, error) {
 	rows, err := database.DB.Query(
 		`SELECT
 			n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
-			u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, '')
+			u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, ''),
+			c.post_id
 		 FROM notifications n
 		 JOIN users u ON u.id = n.actor_id
+		 LEFT JOIN comments c
+		   ON n.type = 'comment' AND c.id = n.entity_id
 		 WHERE n.user_id = ?
 		 ORDER BY n.created_at DESC, n.id DESC
 		 LIMIT 50`,
@@ -91,6 +110,7 @@ func GetNotifications(userID int) ([]*models.Notification, int, error) {
 	for rows.Next() {
 		n := &models.Notification{}
 		var entityID sql.NullInt64
+		var postID sql.NullInt64
 		var isReadInt int
 
 		if err := rows.Scan(
@@ -105,14 +125,26 @@ func GetNotifications(userID int) ([]*models.Notification, int, error) {
 			&n.LastName,
 			&n.Nickname,
 			&n.AvatarPath,
+			&postID,
 		); err != nil {
 			return nil, 0, err
 		}
 
 		n.IsRead = isReadInt == 1
+
 		if entityID.Valid {
 			v := int(entityID.Int64)
 			n.EntityID = &v
+
+			if n.Type == "comment" {
+				commentID := v
+				n.CommentID = &commentID
+			}
+		}
+
+		if postID.Valid {
+			v := int(postID.Int64)
+			n.PostID = &v
 		}
 
 		items = append(items, n)

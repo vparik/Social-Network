@@ -17,7 +17,8 @@ window.CommentSection = {
       loadingComments: false,
       submittingComment: false,
       unsubscribeCommentsCreated: null,
-      unsubscribeCommentsDeleted: null
+      unsubscribeCommentsDeleted: null,
+      unsubscribeFocusRequest: null
     };
   },
 
@@ -46,6 +47,39 @@ window.CommentSection = {
           );
         }
       );
+
+      this.unsubscribeFocusRequest = window.Events.on(
+        "comments:focus-request",
+        async ({ postId, commentId }) => {
+          if (postId !== this.postId) return;
+
+          if (!this.isOpen) {
+            this.isOpen = true;
+          }
+
+          if (!this.loaded) {
+            await this.loadComments();
+          }
+
+          this.$nextTick(() => {
+            if (!commentId) return;
+
+            const el = document.getElementById(`comment-${commentId}`);
+            if (!el) return;
+
+            el.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+
+            el.classList.add("comment-focus-highlight");
+
+            setTimeout(() => {
+              el.classList.remove("comment-focus-highlight");
+            }, 2000);
+          });
+        }
+      );
     }
   },
 
@@ -58,6 +92,11 @@ window.CommentSection = {
     if (this.unsubscribeCommentsDeleted) {
       this.unsubscribeCommentsDeleted();
       this.unsubscribeCommentsDeleted = null;
+    }
+
+    if (this.unsubscribeFocusRequest) {
+      this.unsubscribeFocusRequest();
+      this.unsubscribeFocusRequest = null;
     }
   },
 
@@ -171,7 +210,12 @@ window.CommentSection = {
           No comments yet.
         </div>
 
-        <div v-for="comment in comments" :key="comment.id" class="feed-comment">
+        <div
+          v-for="comment in comments"
+          :key="comment.id"
+          :id="'comment-' + comment.id"
+          class="feed-comment"
+        >
           <div class="feed-comment-top">
             <span class="feed-comment-author">
               {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}

@@ -229,6 +229,7 @@ const App = {
       v-else
       :is="CurrentComponent"
       :key="routeKey"
+      :route-query="routeState.query"
     ></component>
 
     <template v-if="showNavbar">

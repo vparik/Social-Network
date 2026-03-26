@@ -47,8 +47,11 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if post, err := store.GetPostByID(postID); err == nil && post.UserID != userID {
-		if err := store.CreateNotification(post.UserID, userID, "comment", &postID); err == nil {
+		if err := store.CreateNotification(post.UserID, userID, "comment", &comment.ID); err == nil {
 			if n, err := store.GetLatestNotification(post.UserID); err == nil {
+				n.PostID = &postID
+				n.CommentID = &comment.ID
+
 				if unread, err := store.CountUnreadNotifications(post.UserID); err == nil {
 					ws.NotifyNotificationCreated(post.UserID, n, unread)
 				}

@@ -1,6 +1,13 @@
 window.HomePage = {
   name: "HomePage",
 
+  props: {
+    routeQuery: {
+      type: String,
+      default: ""
+    }
+  },
+
   data() {
     return {
       loading: true,
@@ -12,16 +19,36 @@ window.HomePage = {
     };
   },
 
+  computed: {
+    focusedPostId() {
+      const params = new URLSearchParams(this.routeQuery || "");
+      const value = parseInt(params.get("postId"), 10);
+      return Number.isInteger(value) && value > 0 ? value : null;
+    },
+
+    focusedCommentId() {
+      const params = new URLSearchParams(this.routeQuery || "");
+      const value = parseInt(params.get("commentId"), 10);
+      return Number.isInteger(value) && value > 0 ? value : null;
+    }
+  },
+
   async mounted() {
     this.unsubscribePostCreated = window.Events.on(
       window.Events.EVENT.POSTS_CREATED,
       (post) => {
         if (!post || !post.id) return;
 
+        if (this.focusedPostId && post.id !== this.focusedPostId) return;
+
         const exists = this.posts.some(existing => existing.id === post.id);
         if (exists) return;
 
         this.posts.unshift(post);
+
+        if (this.focusedPostId === post.id) {
+          this.requestCommentFocus();
+        }
       }
     );
 
@@ -58,6 +85,16 @@ window.HomePage = {
     }
   },
 
+  watch: {
+    routeQuery: {
+      immediate: false,
+      async handler() {
+        if (this.loading) return;
+        await this.loadPosts();
+      }
+    }
+  },
+
   beforeUnmount() {
     if (this.unsubscribePostCreated) {
       this.unsubscribePostCreated();
@@ -81,10 +118,28 @@ window.HomePage = {
         const res = await fetch("/api/posts", { method: "GET" });
         if (!res.ok) return;
 
-        this.posts = await res.json();
+        let posts = await res.json();
+
+        if (this.focusedPostId) {
+          posts = posts.filter(post => post.id === this.focusedPostId);
+        }
+
+        this.posts = posts;
+        this.requestCommentFocus();
       } catch (err) {
         console.error("Failed to load posts:", err);
       }
+    },
+
+    requestCommentFocus() {
+      if (!this.focusedPostId) return;
+
+      this.$nextTick(() => {
+        window.Events.emit("comments:focus-request", {
+          postId: this.focusedPostId,
+          commentId: this.focusedCommentId
+        });
+      });
     },
 
     privacyLabel(value) {

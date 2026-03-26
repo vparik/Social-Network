@@ -153,6 +153,43 @@ window.Navbar = {
       return !!item && item.type === "follow_request";
     },
 
+    canOpenNotificationProfile(item) {
+      if (!item || !item.actorId) return false;
+    
+      switch (item.type) {
+        case "follow":
+        case "follow_request_accepted":
+          return true;
+        default:
+          return false;
+      }
+    },
+
+    canOpenNotificationComment(item) {
+      return !!item && item.type === "comment" && !!item.postId && !!item.commentId;
+    },
+
+    handleNotificationClick(item) {
+      if (!item) return;
+    
+      if (this.isFollowRequestNotification(item)) {
+        this.openFollowRequestPanel(item);
+        return;
+      }
+    
+      this.isNotificationsOpen = false;
+      this.closeFollowRequestPanel();
+    
+      if (this.canOpenNotificationComment(item)) {
+        Router.push(`/?postId=${item.postId}#comment-${item.commentId}`);
+        return;
+      }
+    
+      if (this.canOpenNotificationProfile(item)) {
+        Router.push(`/profile?id=${item.actorId}`);
+      }
+    },
+
     openFollowRequestPanel(item) {
       if (!this.isFollowRequestNotification(item)) return;
       this.selectedFollowRequest = item;
@@ -614,7 +651,7 @@ window.Navbar = {
                 v-for="item in notifications"
                 :key="item.id"
                 class="nav-dropdown-item nav-notification-item"
-                @click="isFollowRequestNotification(item) && openFollowRequestPanel(item)"
+                @click="handleNotificationClick(item)"
               >
                 {{ notificationText(item) }}
               </button>
