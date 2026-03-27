@@ -507,15 +507,6 @@ template: `
             </button>
           </div>
 
-          <button
-            v-if="isOwnProfile"
-            class="follow-btn"
-            :disabled="privacyLoading"
-            @click="togglePrivacy"
-          >
-            {{ profile.isPublic ? 'Make Private' : 'Make Public' }}
-          </button>
-
           <template v-if="!isOwnProfile">
             <div v-if="hasIncomingRequest" class="profile-follow-actions">
               <button
@@ -545,6 +536,20 @@ template: `
               {{ isFollowing ? 'Unfollow' : isRequested ? 'Requested' : 'Follow' }}
             </button>
           </template>
+        </div>
+
+        <div
+          v-if="isOwnProfile"
+          class="privacy-toggle"
+          :class="{ 'is-private': !profile.isPublic, 'is-loading': privacyLoading }"
+          @click="!privacyLoading && togglePrivacy()"
+          role="switch"
+          :aria-checked="!profile.isPublic"
+          tabindex="0"
+          @keydown.enter.space.prevent="!privacyLoading && togglePrivacy()"
+        >
+          <div class="privacy-toggle__fill"></div>
+          <span class="privacy-toggle__label">{{ profile.isPublic ? 'public' : 'private' }}</span>
         </div>
       </div>
 

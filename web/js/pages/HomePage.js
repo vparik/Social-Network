@@ -204,7 +204,7 @@ window.HomePage = {
             No posts yet. Be the first to post!
           </div>
 
-          <div v-for="post in posts" :key="post.id">
+          <div v-for="post in posts" :key="post.id" class="feed-post-card">
             <div class="feed-post-header">
               <div class="feed-post-user-block">
                 <div class="feed-post-avatar">
@@ -220,43 +220,32 @@ window.HomePage = {
                     {{ post.nickname ? '@' + post.nickname : post.firstName + ' ' + post.lastName }}
                   </a>
 
-                  <div class="feed-post-date"> • </div>
-
-                  <div class="feed-post-date">
-                    {{ new Date(post.createdAt * 1000).toLocaleString() }}
-                  </div>
+                  <span class="feed-post-date"> • {{ new Date(post.createdAt * 1000).toLocaleString() }}</span>
                 </div>
+              </div>
+
+              <button
+                v-if="isOwnPost(post)"
+                class="feed-post-delete-btn"
+                @click="deletePost(post)"
+                title="Delete post"
+              >
+                🗑️
+              </button>
+            </div>
+
+            <div class="feed-post-body">
+              <h3 class="feed-post-title">{{ post.title }}</h3>
+              <p class="feed-post-content">{{ post.content }}</p>
+
+              <div v-if="post.imageUrl" class="feed-post-image-wrap">
+                <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
               </div>
             </div>
 
-            <div class="feed-post-card">
-              <div class="profile-post-header">
-                <h3 class="feed-post-title">{{ post.title }}</h3>
-
-                <div class="feed-post-user-info">
-                  <button
-                    v-if="isOwnPost(post)"
-                    class="feed-post-delete-btn"
-                    @click="deletePost(post)"
-                    title="Delete post"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-
-              <div class="feed-post-body">
-                <p class="feed-post-content">{{ post.content }}</p>
-
-                <div v-if="post.imageUrl" class="feed-post-image-wrap">
-                  <img :src="post.imageUrl" alt="Post image" class="feed-post-image" />
-                </div>
-              </div>
-
-              <div class="feed-post-footer">
-                <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
-                <CommentSection :post-id="post.id" />
-              </div>
+            <div class="feed-post-footer">
+              <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
+              <CommentSection :post-id="post.id" />
             </div>
           </div>
         </main>
