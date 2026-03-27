@@ -168,13 +168,11 @@
 .feed-post-comments-box {
   padding: 14px;
   border-radius: 18px;
-  background: linear-gradient(180deg, #f8fbff 0%, #f1f6fb 100%);
   border: 1px solid rgba(214, 224, 234, 0.85);
 }
 
 .feed-post-comments-title {
-  margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 0.8rem;
   font-weight: 500;
   color: var(--navy-900);
 }
@@ -209,6 +207,27 @@
 
 .profile-post-card {
   margin-bottom: 22px;
+}
+
+/* ============================= */
+/* Delete Button                 */
+/* ============================= */
+
+.feed-post-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  /* border: 2px solid rgba(220, 80, 70, 0.45); */
+  color: var(--coral-dark);
+  padding: 4px 6px;
+  cursor: pointer;
+  /* transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease; */
+}
+
+
+.feed-post-delete-btn .material-symbols-outlined {
+  font-size: 25px;
 }
 
 .profile-post-header {

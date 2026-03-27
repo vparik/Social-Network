@@ -220,7 +220,7 @@ window.CommentSection = {
   template: `
     <div class="feed-post-comments-box" @click="toggle">
       <div class="feed-post-comments-title">
-        Comments {{ isOpen ? '▲' : '▼' }}
+        Comments
       </div>
 
       <div v-if="isOpen" @click.stop>
@@ -254,6 +254,16 @@ window.CommentSection = {
                🗑️
               </button>
             </div>
+            <button
+              v-if="isOwnComment(comment)"
+              class="comment-delete-btn"
+              @click.stop="deleteComment(comment)"
+              title="Delete comment"
+              aria-label="Delete comment"
+            >
+              <span class="material-symbols-outlined">delete_forever</span>
+            </button>
+          </div>
 
             <span class="feed-comment-content">{{ comment.content }}</span>
           </div>
