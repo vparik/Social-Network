@@ -605,8 +605,6 @@ window.Navbar = {
               placeholder="Search users..."
               class="nav-search-input"
             />
-            <button class="nav-search-go" @click="submitSearch">Go</button>
-
             <div v-if="searchLoading" class="nav-search-results">
               <div class="nav-dropdown-empty">Searching...</div>
             </div>

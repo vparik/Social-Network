@@ -270,8 +270,6 @@
 .profile-stat-btn:hover {
   transform: none;
   border-color: rgba(46, 196, 182, 0.38);
-  /* background: rgba(216, 247, 243, 0.96); */
-  /* box-shadow: 4px 4px 0 rgba(6, 24, 38, 0.08); */
 }
 
 .social-list-overlay {
@@ -290,7 +288,7 @@
   width: min(560px, 100%);
   max-height: 78vh;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 8px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 250, 255, 0.97) 100%);
   border: 1px solid rgba(214, 224, 234, 0.92);
   box-shadow: 0 24px 60px rgba(6, 24, 38, 0.28);
@@ -315,7 +313,6 @@
 
 .social-list-close-btn {
   appearance: none;
-  border: 1px solid rgba(214, 224, 234, 0.9);
   background: rgba(255, 255, 255, 0.92);
   color: var(--navy-900);
   width: 38px;
@@ -345,13 +342,11 @@
   appearance: none;
   width: 100%;
   border: 1px solid rgba(214, 224, 234, 0.88);
-  background: rgba(255, 255, 255, 0.92);
+  background: transparent;
   border-radius: 14px;
-  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  text-align: left;
+  gap: 8px;
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
@@ -365,8 +360,8 @@
 
 .social-list-user-avatar,
 .social-list-user-avatar-placeholder {
-  width: 52px;
-  height: 52px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
@@ -384,11 +379,11 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .social-list-user-name {
-  color: var(--navy-900);
+  font-family: inherit;
+  color: var(--text);
   font-weight: 700;
   line-height: 1.25;
 }

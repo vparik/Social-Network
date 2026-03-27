@@ -19,9 +19,8 @@
   padding: 12px 14px;
   margin-top: 10px;
   border-radius: 14px;
-  background: #ffffff;
+  background: transparent;
   border: 1px solid rgba(214, 224, 234, 0.9);
-  box-shadow: 0 8px 18px rgba(9, 30, 66, 0.06);
 }
 
 .feed-comment-author {
@@ -60,25 +59,24 @@
 }
 
 .feed-comment-input:focus {
-  border-color: rgba(46, 196, 182, 0.75);
-  box-shadow: 0 0 0 4px rgba(46, 196, 182, 0.12);
+  border-color: var(--border-tonal);
 }
 
 .feed-comment-submit {
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 13px;
-  font-weight: 800;
-  color: #fff;
-  background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+  font-weight: 500;
+  color: var(--text);
+  background: var(--teal-soft);
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  transition: transform 0.18s ease, opacity 0.18s ease;
 }
 
 .feed-comment-submit:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(46, 196, 182, 0.2);
+  border: 1px solid var(--border-tonal);
+  transform: none;
 }
 
 .feed-comment-submit:disabled {
