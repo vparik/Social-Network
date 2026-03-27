@@ -597,7 +597,7 @@ template: `
                     @click="deletePost(post)"
                     title="Delete post"
                   >
-                    🗑️
+                    <span class="material-symbols-outlined">delete_forever</span>
                   </button>
                 </div>
               </div>
