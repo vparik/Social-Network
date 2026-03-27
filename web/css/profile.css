@@ -25,7 +25,7 @@
 .profile-avatar-placeholder {
   width: 110px;
   height: 110px;
-  border: 4px solid rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.92);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -35,9 +35,59 @@
   overflow: hidden;
   background: linear-gradient(135deg, var(--navy-850), var(--teal-500));
   color: white;
-  box-shadow: 0 16px 34px rgba(6, 24, 38, 0.22);
+  box-shadow: none;
   position: relative;
   z-index: 1;
+}
+
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.avatar-clickable {
+  cursor: default;
+}
+
+.avatar-overlay {
+  z-index: 3;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.avatar-clickable:hover .avatar-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.avatar-action-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.avatar-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.avatar-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .profile-info {

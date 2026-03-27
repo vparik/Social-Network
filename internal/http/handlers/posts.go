@@ -32,6 +32,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		Title          string `json:"title"`
 		Content        string `json:"content"`
 		Privacy        string `json:"privacy"`
+		ImageURL       string `json:"imageUrl"`
 		AllowedUserIDs []int  `json:"allowedUserIds"`
 	}
 
@@ -65,7 +66,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := store.CreatePost(userID, body.Title, body.Content, body.Privacy)
+	post, err := store.CreatePost(userID, body.Title, body.Content, body.Privacy, body.ImageURL)
 	if err != nil {
 		http.Error(w, "failed to create post", http.StatusInternalServerError)
 		return

@@ -12,7 +12,9 @@ window.CreatePost = {
       postTitle: "",
       postDescription: "",
       submitting: false,
-
+      imageUrl: null,
+      imagePreview: null,
+      imageUploading: false,
       followersLoading: false,
       followersError: "",
       followers: [],
@@ -94,6 +96,8 @@ window.CreatePost = {
       this.postTitle = "";
       this.postDescription = "";
       this.postVisibility = "public";
+      this.imageUrl = null;
+      this.imagePreview = null;
       this.followersError = "";
       this.selectedAllowedUserIds = [];
       this.$emit("close");
@@ -154,6 +158,46 @@ window.CreatePost = {
       return `User #${user.id}`;
     },
 
+    async handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => { this.imagePreview = e.target.result; };
+      reader.readAsDataURL(file);
+      this.imageUploading = true;
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload/image", {
+          method: "POST",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() },
+          body: fd
+        });
+        if (!res.ok) {
+          const msg = await res.text();
+          alert("Image upload failed: " + msg);
+          this.imagePreview = null;
+          this.$refs.imageInput.value = "";
+          return;
+        }
+        const data = await res.json();
+        this.imageUrl = data.url;
+      } catch (err) {
+        alert("Image upload failed. Please try again.");
+        console.error(err);
+        this.imagePreview = null;
+        this.$refs.imageInput.value = "";
+      } finally {
+        this.imageUploading = false;
+      }
+    },
+
+    removeImage() {
+      this.imageUrl = null;
+      this.imagePreview = null;
+      this.$refs.imageInput.value = "";
+    },
+
     async handleCreatePost() {
       const title = this.postTitle.trim();
       const content = this.postDescription.trim();
@@ -175,7 +219,8 @@ window.CreatePost = {
         const payload = {
           title,
           content,
-          privacy: this.postVisibility
+          privacy: this.postVisibility,
+          imageUrl: this.imageUrl || ""
         };
 
         if (this.postVisibility === "private") {
@@ -239,68 +284,65 @@ window.CreatePost = {
 
         <template v-if="!isEventMode">
           <div class="create-post-visibility">
-            <span class="create-post-visibility-label">
-              Select visibility:
-            </span>
+          
+            <select
+              class="create-post-visibility-select"
+              :value="postVisibility"
+              :disabled="submitting"
+              @change="selectVisibility($event.target.value)"
+            >
+              <option value="public">Public</option>
+              <option value="selected">Followers</option>
+              <option value="private">Private</option>
+            </select>
 
-            <div class="create-post-visibility-actions">
-              <button
-                type="button"
-                class="create-post-visibility-btn"
-                :class="{ 'is-active': postVisibility === 'public' }"
-                @click="selectVisibility('public')"
-              >
-                Public
-              </button>
-
-              <button
-                type="button"
-                class="create-post-visibility-btn"
-                :class="{ 'is-active': postVisibility === 'selected' }"
-                @click="selectVisibility('selected')"
-              >
-                Followers
-              </button>
-
-              <button
-                type="button"
-                class="create-post-visibility-btn"
-                :class="{ 'is-active': postVisibility === 'private' }"
-                @click="selectVisibility('private')"
-              >
-                Private
-              </button>
-            </div>
-
-            <div class="create-post-visibility-help">
+            <span class="create-post-visibility-help">
               {{ visibilityHelpText }}
-            </div>
+            </span>
           </div>
 
           <div class="create-post-form">
-            <label class="create-post-label">Title</label>
-            <input
+            <textarea
               v-model="postTitle"
-              type="text"
               class="create-post-input"
+              placeholder="Title..."
               :disabled="submitting"
             />
 
-            <label class="create-post-label">Description</label>
+            
             <div class="create-post-textarea-wrap">
               <textarea
                 v-model="postDescription"
                 class="create-post-textarea"
+                placeholder="Description..."
                 :disabled="submitting"
               ></textarea>
 
               <button
                 type="button"
                 class="create-post-image-btn"
-                :disabled="submitting"
+                :disabled="submitting || imageUploading"
+                @click="$refs.imageInput.click()"
               >
-                Img
+                <span class="material-symbols-outlined">photo</span>
               </button>
+              <input
+                type="file"
+                ref="imageInput"
+                accept="image/*"
+                style="display:none"
+                @change="handleImageSelect"
+              />
+            </div>
+
+            <div v-if="imagePreview" class="post-image-preview">
+              <img :src="imagePreview" alt="preview" />
+              <button
+                type="button"
+                class="remove-image-btn"
+                @click="removeImage"
+                :disabled="submitting"
+              >&times;</button>
             </div>
           </div>
 

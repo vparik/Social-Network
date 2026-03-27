@@ -212,7 +212,13 @@ window.HomePage = {
             <div class="feed-post-header">
               <div class="feed-post-user-block">
                 <div class="feed-post-avatar">
-                  {{ post.firstName ? post.firstName.charAt(0) : "U" }}
+                  <img
+                    v-if="post.avatarPath"
+                    :src="post.avatarPath"
+                    alt="avatar"
+                    class="feed-post-avatar-img"
+                  />
+                  <span v-else>{{ post.firstName ? post.firstName.charAt(0) : "U" }}</span>
                 </div>
 
                 <div class="feed-post-user-info">
