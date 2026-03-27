@@ -13,11 +13,12 @@
   --teal-600: #22a89c;
   --teal-soft: #d8f7f3;
 
-  --coral-500: #ff6b6b;
+  --coral-500: #ff6b6bd0;
   --coral-600: #e25555;
 
   --bg: #f4f7fb;
   --bg-alt: #eaf0f6;
+  --bg-tonal: #d8f7f3f5;
   --surface: #ffffff;
   --surface-soft: #f8fbff;
   --surface-muted: #eef3f9;
@@ -25,9 +26,11 @@
   --text: #1b2a38;
   --text-soft: #5f7080;
   --text-inverse: #f8fbff;
+  --text-inverse-2: #acbfd1;
 
-  --border: #d6e0ea;
+  --border: rgba(6, 24, 38, 0.28);
   --border-strong: #bfd0df;
+  --border-tonal: #2ec4b661;
 
   --shadow-sm: 0 8px 20px rgba(9, 30, 52, 0.06);
   --shadow-md: 0 16px 40px rgba(9, 30, 52, 0.10);
@@ -54,9 +57,9 @@ html {
 
 body {
   margin: 0;
-  font-family: Inter, Arial, sans-serif;
-  background:
-    radial-gradient(circle at 20% 20%, var(--navy-800) 0%, var(--navy-950) 60%);
+  font-family: "Rubik", sans-serif;
+  background: var(--bg);
+    /* radial-gradient(circle at 20% 20%, var(--navy-800) 0%, var(--navy-950) 60%); */
   color: var(--text);
   background-attachment: fixed;
   position: relative;
