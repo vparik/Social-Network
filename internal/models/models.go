@@ -31,15 +31,17 @@ type Follow struct {
 }
 
 type Post struct {
-	ID        int    `json:"id"`
-	UserID    int    `json:"userId"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	Privacy   string `json:"privacy"`
-	CreatedAt int64  `json:"createdAt"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Nickname  string `json:"nickname"`
+	ID         int    `json:"id"`
+	UserID     int    `json:"userId"`
+	Title      string `json:"title"`
+	Content    string `json:"content"`
+	Privacy    string `json:"privacy"`
+	ImageURL   string `json:"imageUrl"`
+	CreatedAt  int64  `json:"createdAt"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
 }
 
 type Comment struct {

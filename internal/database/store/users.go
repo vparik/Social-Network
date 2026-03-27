@@ -100,6 +100,15 @@ func GetUserByID(id int) (*models.User, error) {
 	return &u, nil
 }
 
+func UpdateAvatarPath(userID int, path string) error {
+	_, err := database.DB.Exec(
+		`UPDATE users SET avatar_path = ? WHERE id = ?`,
+		path,
+		userID,
+	)
+	return err
+}
+
 func SetUserPrivacy(userID int, isPublic bool) error {
 	value := 0
 	if isPublic {

@@ -1,6 +1,6 @@
 module socialnet
 
-go 1.24.9
+go 1.25.0
 
 require (
 	github.com/Des1red/goauthlib v1.2.5 // direct
@@ -8,6 +8,8 @@ require (
 )
 
 require golang.org/x/crypto v0.48.0
+
+require golang.org/x/image v0.38.0 // indirect
 
 require github.com/gorilla/websocket v1.5.3 // direct
 

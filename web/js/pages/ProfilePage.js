@@ -19,6 +19,7 @@ window.ProfilePage = {
       unsubscribePostDeleted: null,
       unsubscribeRelationshipChanged: null,
       unsubscribePrivacyChanged: null,
+      avatarUploading: false,
       showSocialList: false,
       socialListType: "",
       socialListTitle: "",
@@ -464,6 +465,57 @@ window.ProfilePage = {
         console.error("Failed to delete post:", err);
         alert("Network error.");
       }
+    },
+
+    async uploadAvatar(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      this.avatarUploading = true;
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload/avatar", {
+          method: "POST",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() },
+          body: fd
+        });
+        if (!res.ok) {
+          const msg = await res.text();
+          alert("Avatar upload failed: " + msg);
+          return;
+        }
+        const data = await res.json();
+        // Cache-bust so the browser fetches the new file even if the URL is the same.
+        this.profile.avatarPath = data.avatarPath + "?t=" + Date.now();
+      } catch (err) {
+        alert("Avatar upload failed. Please try again.");
+        console.error(err);
+      } finally {
+        this.avatarUploading = false;
+        event.target.value = "";
+      }
+    },
+
+    async removeAvatar() {
+      if (!this.profile.avatarPath || this.avatarUploading) return;
+      this.avatarUploading = true;
+      try {
+        const res = await fetch("/api/upload/avatar", {
+          method: "DELETE",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() }
+        });
+        if (!res.ok) {
+          const msg = await res.text();
+          alert("Failed to remove avatar: " + msg);
+          return;
+        }
+        this.profile.avatarPath = "";
+      } catch (err) {
+        alert("Failed to remove avatar. Please try again.");
+        console.error(err);
+      } finally {
+        this.avatarUploading = false;
+      }
     }
   },
 
@@ -474,15 +526,44 @@ template: `
 
     <div v-else class="container">
       <div class="profile-header">
-        <img
-          v-if="profile.avatarPath"
-          :src="profile.avatarPath"
-          class="profile-avatar"
-          alt="Avatar"
-        />
-
-        <div v-else class="profile-avatar-placeholder">
-          {{ profile.firstName[0] }}{{ profile.lastName[0] }}
+        <div :class="['avatar-wrapper', { 'avatar-clickable': isOwnProfile }]">
+          <img
+            v-if="profile.avatarPath"
+            :src="profile.avatarPath"
+            class="profile-avatar"
+            alt="Avatar"
+          />
+          <div v-else class="profile-avatar-placeholder">
+            {{ profile.firstName[0] }}{{ profile.lastName[0] }}
+          </div>
+          <div v-if="isOwnProfile" class="avatar-overlay">
+            <button
+              type="button"
+              class="avatar-action-btn"
+              :disabled="avatarUploading"
+              @click.stop="$refs.avatarInput.click()"
+              title="Upload new avatar"
+            > <span class="material-symbols-outlined">photo</span>
+            </button>
+            <button
+              v-if="profile.avatarPath"
+              type="button"
+              class="avatar-action-btn avatar-action-btn--delete"
+              :disabled="avatarUploading"
+              @click.stop="removeAvatar"
+              title="Remove avatar"
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <input
+            v-if="isOwnProfile"
+            type="file"
+            ref="avatarInput"
+            accept="image/*"
+            style="display:none"
+            @change="uploadAvatar"
+          />
         </div>
 
         <div class="profile-info">

@@ -12,7 +12,9 @@ window.CreatePost = {
       postTitle: "",
       postDescription: "",
       submitting: false,
-
+      imageUrl: null,
+      imagePreview: null,
+      imageUploading: false,
       followersLoading: false,
       followersError: "",
       followers: [],
@@ -117,6 +119,8 @@ window.CreatePost = {
       this.postTitle = "";
       this.postDescription = "";
       this.postVisibility = "public";
+      this.imageUrl = null;
+      this.imagePreview = null;
       this.followersError = "";
       this.selectedAllowedUserIds = [];
       this.selectedGroupId = null;
@@ -182,86 +186,44 @@ window.CreatePost = {
       return `User #${user.id}`;
     },
 
-    async toggleGroupSidebar() {
-      if (this.submitting) return;
-      this.showGroupSidebar = !this.showGroupSidebar;
-      if (this.showGroupSidebar && !this.groups.length && !this.groupsLoading) {
-        await this.loadGroups();
-      }
-    },
-
-    async loadGroups() {
-      this.groupsLoading = true;
+    async handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => { this.imagePreview = e.target.result; };
+      reader.readAsDataURL(file);
+      this.imageUploading = true;
       try {
-        const res = await fetch("/api/groups");
-        if (res.ok) {
-          const all = await res.json();
-          this.groups = all.filter(g => g.isMember);
-        }
-      } catch (e) {
-        console.error("loadGroups error", e);
-      } finally {
-        this.groupsLoading = false;
-      }
-    },
-
-    selectGroup(group) {
-      this.selectedGroupId = group.id;
-      this.selectedGroupName = group.title;
-      this.showGroupSidebar = false;
-      // Group posts have no privacy concept
-      if (!this.isEventMode) this.postVisibility = "public";
-    },
-
-    clearGroup() {
-      this.selectedGroupId = null;
-      this.selectedGroupName = "";
-    },
-
-    async handleCreateEvent() {
-      const title = this.eventTitle.trim();
-      const content = this.eventContent.trim();
-      const eventAt = this.eventAt;
-
-      if (!title || !eventAt) {
-        alert("Title and date/time are required.");
-        return;
-      }
-
-      if (!this.selectedGroupId) {
-        alert("Please select a group for this event.");
-        return;
-      }
-
-      if (this.submitting) return;
-      this.submitting = true;
-
-      try {
-        const eventAtUnix = Math.floor(new Date(eventAt).getTime() / 1000);
-        const res = await fetch(`/api/groups/${this.selectedGroupId}/events`, {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/upload/image", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-Token": this.extractCsrfToken()
-          },
-          body: JSON.stringify({ title, content, eventAt: eventAtUnix })
+          headers: { "X-CSRF-Token": window.extractCsrfToken() },
+          body: fd
         });
-
         if (!res.ok) {
-          const err = await res.text();
-          alert("Failed to create event: " + err);
+          const msg = await res.text();
+          alert("Image upload failed: " + msg);
+          this.imagePreview = null;
+          this.$refs.imageInput.value = "";
           return;
         }
-
-        this.submitting = false;
-        this.close();
-        return;
+        const data = await res.json();
+        this.imageUrl = data.url;
       } catch (err) {
+        alert("Image upload failed. Please try again.");
         console.error(err);
-        alert("Network error.");
+        this.imagePreview = null;
+        this.$refs.imageInput.value = "";
       } finally {
-        this.submitting = false;
+        this.imageUploading = false;
       }
+    },
+
+    removeImage() {
+      this.imageUrl = null;
+      this.imagePreview = null;
+      this.$refs.imageInput.value = "";
     },
 
     async handleCreatePost() {
@@ -285,7 +247,8 @@ window.CreatePost = {
         const payload = {
           title,
           content,
-          privacy: this.postVisibility
+          privacy: this.postVisibility,
+          imageUrl: this.imageUrl || ""
         };
 
         if (this.postVisibility === "private") {
@@ -357,105 +320,65 @@ window.CreatePost = {
 
         <template v-if="!isEventMode">
           <div class="create-post-visibility">
-            <span class="create-post-visibility-label">
-              Select visibility:
-            </span>
+          
+            <select
+              class="create-post-visibility-select"
+              :value="postVisibility"
+              :disabled="submitting"
+              @change="selectVisibility($event.target.value)"
+            >
+              <option value="public">Public</option>
+              <option value="selected">Followers</option>
+              <option value="private">Private</option>
+            </select>
 
-            <div class="create-post-visibility-actions">
-              <template v-if="!selectedGroupId">
-                <button
-                  type="button"
-                  class="create-post-visibility-btn"
-                  :class="{ 'is-active': postVisibility === 'public' }"
-                  @click="selectVisibility('public')"
-                >
-                  Public
-                </button>
-
-                <button
-                  type="button"
-                  class="create-post-visibility-btn"
-                  :class="{ 'is-active': postVisibility === 'selected' }"
-                  @click="selectVisibility('selected')"
-                >
-                  Followers
-                </button>
-
-                <button
-                  type="button"
-                  class="create-post-visibility-btn"
-                  :class="{ 'is-active': postVisibility === 'private' }"
-                  @click="selectVisibility('private')"
-                >
-                  Private
-                </button>
-              </template>
-
-              <template v-else>
-                <span style="font-size:0.85rem;color:var(--text-secondary,#b0b3b8)">
-                  Posting to:
-                </span>
-                <span style="font-size:0.85rem;font-weight:600;color:var(--accent,#2374e1)">
-                  {{ selectedGroupName }}
-                </span>
-                <button
-                  type="button"
-                  class="create-post-visibility-btn"
-                  style="padding:2px 8px;font-size:0.78rem"
-                  @click="clearGroup"
-                  :disabled="submitting"
-                >✕ Clear</button>
-              </template>
-
-              <!-- Groups icon button -->
-              <button
-                type="button"
-                class="create-post-visibility-btn"
-                :class="{ 'is-active': showGroupSidebar }"
-                style="margin-left:auto"
-                @click="toggleGroupSidebar"
-                :disabled="submitting"
-                title="Post to a group"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle">
-                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 010 7.75"></path>
-                </svg>
-                Groups
-              </button>
-            </div>
-
-            <div class="create-post-visibility-help" v-if="!selectedGroupId">
+            <span class="create-post-visibility-help">
               {{ visibilityHelpText }}
-            </div>
+            </span>
           </div>
 
           <div class="create-post-form">
-            <label class="create-post-label">Title</label>
-            <input
+            <textarea
               v-model="postTitle"
-              type="text"
               class="create-post-input"
+              placeholder="Title..."
               :disabled="submitting"
             />
 
-            <label class="create-post-label">Description</label>
+            
             <div class="create-post-textarea-wrap">
               <textarea
                 v-model="postDescription"
                 class="create-post-textarea"
+                placeholder="Description..."
                 :disabled="submitting"
               ></textarea>
 
               <button
                 type="button"
                 class="create-post-image-btn"
-                :disabled="submitting"
+                :disabled="submitting || imageUploading"
+                @click="$refs.imageInput.click()"
               >
-                Img
+                <span class="material-symbols-outlined">photo</span>
               </button>
+              <input
+                type="file"
+                ref="imageInput"
+                accept="image/*"
+                style="display:none"
+                @change="handleImageSelect"
+              />
+            </div>
+
+            <div v-if="imagePreview" class="post-image-preview">
+              <img :src="imagePreview" alt="preview" />
+              <button
+                type="button"
+                class="remove-image-btn"
+                @click="removeImage"
+                :disabled="submitting"
+              >&times;</button>
             </div>
           </div>
 

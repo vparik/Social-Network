@@ -11,14 +11,15 @@ import (
 // Called by the CreatePost handler (POST /api/posts).
 // privacy must be one of: "public", "selected", "private"
 // CreatePost inserts a new post into the database and returns the full created post.
-func CreatePost(userID int, title, content, privacy string) (*models.Post, error) {
+func CreatePost(userID int, title, content, privacy, imageURL string) (*models.Post, error) {
 	result, err := database.DB.Exec(
-		`INSERT INTO posts (user_id, title, content, privacy)
-		 VALUES (?, ?, ?, ?)`,
+		`INSERT INTO posts (user_id, title, content, privacy, image_url)
+		 VALUES (?, ?, ?, ?, ?)`,
 		userID,
 		title,
 		content,
 		privacy,
+		imageURL,
 	)
 	if err != nil {
 		return nil, err
@@ -34,8 +35,8 @@ func CreatePost(userID int, title, content, privacy string) (*models.Post, error
 
 func GetPostByID(postID int) (*models.Post, error) {
 	row := database.DB.QueryRow(
-		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at,
-		        u.first_name, u.last_name, COALESCE(u.nickname, '')
+		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, COALESCE(p.image_url, ''), p.created_at,
+		        u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, '')
 		 FROM posts p
 		 JOIN users u ON p.user_id = u.id
 		 WHERE p.id = ?`,
@@ -49,10 +50,12 @@ func GetPostByID(postID int) (*models.Post, error) {
 		&p.Title,
 		&p.Content,
 		&p.Privacy,
+		&p.ImageURL,
 		&p.CreatedAt,
 		&p.FirstName,
 		&p.LastName,
 		&p.Nickname,
+		&p.AvatarPath,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("post_not_found")
@@ -71,8 +74,8 @@ func GetPostByID(postID int) (*models.Post, error) {
 //   - "private" posts where the requesting user is in the creator's chosen-followers list
 func GetPosts(viewerID int) ([]*models.Post, error) {
 	rows, err := database.DB.Query(
-		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, p.created_at,
-		        u.first_name, u.last_name, COALESCE(u.nickname, '')
+		`SELECT p.id, p.user_id, p.title, p.content, p.privacy, COALESCE(p.image_url, ''), p.created_at,
+		        u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, '')
 		 FROM posts p
 		 JOIN users u ON p.user_id = u.id
 		 WHERE
@@ -129,10 +132,12 @@ func GetPosts(viewerID int) ([]*models.Post, error) {
 			&p.Title,
 			&p.Content,
 			&p.Privacy,
+			&p.ImageURL,
 			&p.CreatedAt,
 			&p.FirstName,
 			&p.LastName,
 			&p.Nickname,
+			&p.AvatarPath,
 		); err != nil {
 			return nil, err
 		}
