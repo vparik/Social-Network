@@ -8,6 +8,19 @@ const routes = {
 const publicRoutes = ["/login", "/register"];
 
 const App = {
+  data() {
+    return {
+      confirmState: {
+        isOpen: false,
+        title: "",
+        message: "",
+        confirmText: "Confirm",
+        cancelText: "Cancel",
+        danger: false,
+        resolve: null
+      }
+    };
+  },
   computed: {
     routeState() {
       return window.Events.state.route;
@@ -44,6 +57,10 @@ const App = {
   },
 
   async mounted() {
+    window.AppConfirm = {
+      open: this.openConfirm
+    };
+
     this.bindRealtimeFeed();
     await this.bootstrapAuth();
     await this.ensureRealtimeConnected();
@@ -70,6 +87,44 @@ const App = {
   },
 
   methods: {
+    openConfirm(options = {}) {
+      return new Promise((resolve) => {
+        this.confirmState.isOpen = true;
+        this.confirmState.title = options.title || "Confirm action";
+        this.confirmState.message = options.message || "Are you sure?";
+        this.confirmState.confirmText = options.confirmText || "Confirm";
+        this.confirmState.cancelText = options.cancelText || "Cancel";
+        this.confirmState.danger = !!options.danger;
+        this.confirmState.resolve = resolve;
+      });
+    },
+
+    confirmModalConfirm() {
+      if (this.confirmState.resolve) {
+        this.confirmState.resolve(true);
+      }
+
+      this.resetConfirmState();
+    },
+
+    confirmModalCancel() {
+      if (this.confirmState.resolve) {
+        this.confirmState.resolve(false);
+      }
+
+      this.resetConfirmState();
+    },
+
+    resetConfirmState() {
+      this.confirmState.isOpen = false;
+      this.confirmState.title = "";
+      this.confirmState.message = "";
+      this.confirmState.confirmText = "Confirm";
+      this.confirmState.cancelText = "Cancel";
+      this.confirmState.danger = false;
+      this.confirmState.resolve = null;
+    },
+
     bindRealtimeFeed() {
       if (this._unsubscribeRealtimeFeed) return;
     
@@ -209,6 +264,8 @@ const App = {
       this._unsubscribeRealtimeFeed();
       this._unsubscribeRealtimeFeed = null;
     }
+
+    window.AppConfirm = null;
   },
 
   template: `
@@ -243,6 +300,17 @@ const App = {
         :user="chatState.activeUser"
       />
     </template>
+
+    <ConfirmModal
+      :isOpen="confirmState.isOpen"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :confirmText="confirmState.confirmText"
+      :cancelText="confirmState.cancelText"
+      :danger="confirmState.danger"
+      @confirm="confirmModalConfirm"
+      @cancel="confirmModalCancel"
+    />
   `
 };
 
@@ -252,5 +320,6 @@ app.component("Navbar", Navbar);
 app.component("ChatSidebar", ChatSidebar);
 app.component("ChatBox", ChatBox);
 app.component("CommentSection", CommentSection);
+app.component("ConfirmModal", window.ConfirmModal);
 
 app.mount("#app");
