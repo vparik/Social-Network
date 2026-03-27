@@ -220,7 +220,7 @@ window.CommentSection = {
   template: `
     <div class="feed-post-comments-box" @click="toggle">
       <div class="feed-post-comments-title">
-        Comments
+        {{ !isOpen ? 'Comments' : '' }}
       </div>
 
       <div v-if="isOpen" @click.stop>
@@ -273,7 +273,7 @@ window.CommentSection = {
           <input
             class="feed-comment-input"
             type="text"
-            placeholder="Write a comment..."
+            placeholder="Reply..."
             v-model="commentInput"
             :disabled="submittingComment"
             @keyup.enter="submitComment"
