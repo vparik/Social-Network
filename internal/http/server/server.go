@@ -65,6 +65,7 @@ func loadEnv() {
 }
 
 func InitServer() {
+	goauth.Verbose()
 	// load secret env vars
 	loadEnv()
 

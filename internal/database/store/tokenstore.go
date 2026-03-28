@@ -2,6 +2,8 @@ package store
 
 import (
 	"database/sql"
+	"time"
+
 	"socialnet/internal/database"
 )
 
@@ -26,18 +28,24 @@ func (s *AuthTokenStore) DeleteToken(jti string) error {
 }
 
 func (s *AuthTokenStore) TokenExists(jti string) (bool, error) {
-	var exists string
+	var expiresAt int64
 
 	err := database.DB.QueryRow(
-		`SELECT jti FROM tokens WHERE jti = ? LIMIT 1`,
+		`SELECT expires_at FROM tokens WHERE jti = ? LIMIT 1`,
 		jti,
-	).Scan(&exists)
+	).Scan(&expiresAt)
 
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
+	}
+
+	now := time.Now().Unix()
+	if expiresAt <= now {
+		_, _ = database.DB.Exec(`DELETE FROM tokens WHERE jti = ?`, jti)
+		return false, nil
 	}
 
 	return true, nil
