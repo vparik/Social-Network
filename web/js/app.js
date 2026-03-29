@@ -356,5 +356,6 @@ app.component("ChatSidebar", ChatSidebar);
 app.component("ChatBox", ChatBox);
 app.component("CommentSection", CommentSection);
 app.component("ConfirmModal", window.ConfirmModal);
+app.component("GroupPostCard", window.GroupPostCard);
 
 app.mount("#app");

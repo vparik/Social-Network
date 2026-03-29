@@ -20,7 +20,6 @@ window.GroupPage = {
 
       // forms
       newPost: { title: "", content: "" },
-      newComment: {},       // postId -> text
       newEvent: { title: "", content: "", eventAt: "" },
       newMessage: "",
       inviteUserId: null,
@@ -196,47 +195,6 @@ window.GroupPage = {
       if (!ok) return;
       const csrf = this.csrf();
       await fetch(`/api/groups/${this.groupId}/posts/${post.id}`, {
-        method: "DELETE", headers: { "X-CSRF-Token": csrf }
-      });
-    },
-
-    async loadCommentsForPost(post) {
-      if (post._commentsLoaded) return;
-      const res = await fetch(`/api/groups/${this.groupId}/posts/${post.id}/comments`);
-      if (res.ok) {
-        post._comments = await res.json();
-        post._commentsLoaded = true;
-        post._showComments = true;
-      }
-    },
-
-    async toggleComments(post) {
-      if (!post._commentsLoaded) {
-        await this.loadCommentsForPost(post);
-      } else {
-        post._showComments = !post._showComments;
-      }
-    },
-
-    async createComment(post) {
-      const content = (this.newComment[post.id] || "").trim();
-      if (!content) return;
-      const csrf = this.csrf();
-      const res = await fetch(`/api/groups/${this.groupId}/posts/${post.id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-        body: JSON.stringify({ content })
-      });
-      if (res.ok) {
-        this.newComment[post.id] = "";
-      }
-    },
-
-    async deleteComment(post, comment) {
-      const ok = await window.AppConfirm.open({ title: "Delete comment?", message: "This cannot be undone.", danger: true, confirmText: "Delete" });
-      if (!ok) return;
-      const csrf = this.csrf();
-      await fetch(`/api/groups/${this.groupId}/comments/${comment.id}`, {
         method: "DELETE", headers: { "X-CSRF-Token": csrf }
       });
     },
@@ -443,49 +401,16 @@ window.GroupPage = {
               </button>
             </div>
 
-            <div v-if="posts.length === 0" class="group-empty">No posts yet. Be the first!</div>
+            <div v-if="posts.length === 0" class="feed-empty">No posts yet. Be the first!</div>
 
-            <div v-for="post in posts" :key="post.id" class="group-post">
-              <div class="group-post__author">
-                {{ post.nickname ? '@' + post.nickname : post.firstName + ' ' + post.lastName }}
-              </div>
-              <div v-if="post.title" class="group-post__title">{{ post.title }}</div>
-              <div class="group-post__content">{{ post.content }}</div>
-              <img v-if="post.imageUrl" :src="post.imageUrl" class="group-post__image" alt="post image" />
-              <div class="group-post__meta">
-                <span>{{ formatTime(post.createdAt) }}</span>
-                <div style="display:flex;gap:10px;align-items:center">
-                  <button class="btn btn-secondary" style="font-size:0.8rem;padding:4px 10px" @click="toggleComments(post)">
-                    {{ post._showComments ? 'Hide comments' : 'Comments' }}
-                  </button>
-                  <button v-if="canDeletePost(post)" class="group-post__delete" @click="deletePost(post)">Delete</button>
-                </div>
-              </div>
-
-              <!-- Comments section -->
-              <div v-if="post._showComments" class="group-comments">
-                <div v-if="!post._comments || post._comments.length === 0" style="color:var(--text-secondary,#b0b3b8);font-size:0.82rem;margin-bottom:8px">
-                  No comments yet
-                </div>
-                <div v-for="comment in (post._comments || [])" :key="comment.id" class="group-comment">
-                  <span class="group-comment__author">
-                    {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}:
-                  </span>
-                  <span class="group-comment__content">{{ comment.content }}</span>
-                  <button v-if="canDeleteComment(comment)" class="group-comment__delete" @click="deleteComment(post, comment)">✕</button>
-                </div>
-                <div class="group-comment-form">
-                  <input
-                    v-model="newComment[post.id]"
-                    class="input"
-                    placeholder="Write a comment…"
-                    @keydown.enter.prevent="createComment(post)"
-                    style="flex:1"
-                  />
-                  <button class="btn btn-primary" style="flex-shrink:0" @click="createComment(post)">Send</button>
-                </div>
-              </div>
-            </div>
+            <GroupPostCard
+              v-for="post in posts"
+              :key="post.id"
+              :post="post"
+              :group-id="groupId"
+              :can-delete="canDeletePost(post)"
+              @delete="deletePost"
+            />
           </div>
 
           <!-- EVENTS TAB -->
