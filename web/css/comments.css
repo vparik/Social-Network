@@ -101,6 +101,25 @@
     gap: 10px;
 }
 
+.feed-comments-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.feed-comments-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.feed-comments-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.feed-comments-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .comment-focus-highlight {
   animation: commentFlash 2s ease;
 }

@@ -138,19 +138,21 @@ window.GroupPostCard = {
                 No comments yet.
               </div>
 
-              <div v-for="comment in comments" :key="comment.id" class="feed-comment">
-                <div class="feed-comment-top">
-                  <span class="feed-comment-author">
-                    {{ authorName(comment) }}
-                  </span>
-                  <button
-                    v-if="canDeleteComment(comment)"
-                    class="feed-delete-icon-btn"
-                    @click.stop="deleteComment(comment)"
-                    title="Delete comment"
-                  >🗑️</button>
+              <div v-else class="feed-comments-list">
+                <div v-for="comment in comments" :key="comment.id" class="feed-comment">
+                  <div class="feed-comment-top">
+                    <span class="feed-comment-author">
+                      {{ authorName(comment) }}
+                    </span>
+                    <button
+                      v-if="canDeleteComment(comment)"
+                      class="feed-delete-icon-btn"
+                      @click.stop="deleteComment(comment)"
+                      title="Delete comment"
+                    >🗑️</button>
+                  </div>
+                  <span class="feed-comment-content">{{ comment.content }}</span>
                 </div>
-                <span class="feed-comment-content">{{ comment.content }}</span>
               </div>
 
               <div class="feed-comment-input-row">

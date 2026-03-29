@@ -850,6 +850,11 @@
   cursor: pointer;
 }
 
+.nav-notifications-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
 .nav-follow-request-panel {
   margin-top: 10px;
   padding-top: 10px;

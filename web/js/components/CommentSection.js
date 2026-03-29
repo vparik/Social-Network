@@ -228,33 +228,35 @@ window.CommentSection = {
           No comments yet.
         </div>
 
-        <div
-          v-for="comment in comments"
-          :key="comment.id"
-          :id="'comment-' + comment.id"
-          class="feed-comment"
-        >
-          <div class="feed-comment-top">
-            <button
-              type="button"
-              class="feed-comment-author"
-              @click.stop="navigateToProfile(comment.userId)"
-            >
-              {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
-            </button>
+        <div v-else class="feed-comments-list">
+          <div
+            v-for="comment in comments"
+            :key="comment.id"
+            :id="'comment-' + comment.id"
+            class="feed-comment"
+          >
+            <div class="feed-comment-top">
+              <button
+                type="button"
+                class="feed-comment-author"
+                @click.stop="navigateToProfile(comment.userId)"
+              >
+                {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
+              </button>
 
-            <button
-              v-if="isOwnComment(comment)"
-              class="feed-delete-icon-btn"
-              @click.stop="deleteComment(comment)"
-              title="Delete comment"
-              aria-label="Delete comment"
-            >
-             🗑️
-            </button>
+              <button
+                v-if="isOwnComment(comment)"
+                class="feed-delete-icon-btn"
+                @click.stop="deleteComment(comment)"
+                title="Delete comment"
+                aria-label="Delete comment"
+              >
+               🗑️
+              </button>
+            </div>
+
+            <span class="feed-comment-content">{{ comment.content }}</span>
           </div>
-
-          <span class="feed-comment-content">{{ comment.content }}</span>
         </div>
 
         <div class="feed-comment-input-row">

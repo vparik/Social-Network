@@ -690,7 +690,7 @@ window.Navbar = {
               No notifications yet
             </div>
 
-            <template v-else>
+            <div v-else class="nav-notifications-list">
               <button
                 v-for="item in notifications"
                 :key="item.id"
@@ -699,7 +699,7 @@ window.Navbar = {
               >
                 {{ notificationText(item) }}
               </button>
-            </template>
+            </div>
 
             <div v-if="selectedFollowRequest" class="nav-follow-request-panel">
               <div class="nav-dropdown-title">Follow Request</div>
