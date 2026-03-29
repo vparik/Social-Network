@@ -172,6 +172,11 @@ window.CommentSection = {
       return window.currentUser && comment.userId === window.currentUser.id;
     },
 
+    navigateToProfile(userId) {
+      if (!userId) return;
+      Router.push("/profile?id=" + userId);
+    },
+
     async deleteComment(comment) {
       if (!comment || !comment.id) return;
 
@@ -230,9 +235,13 @@ window.CommentSection = {
           class="feed-comment"
         >
           <div class="feed-comment-top">
-            <span class="feed-comment-author">
+            <button
+              type="button"
+              class="feed-comment-author"
+              @click.stop="navigateToProfile(comment.userId)"
+            >
               {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
-            </span>
+            </button>
 
             <button
               v-if="isOwnComment(comment)"
