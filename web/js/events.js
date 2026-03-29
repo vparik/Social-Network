@@ -71,7 +71,16 @@ window.Events = (function () {
     NOTIFICATIONS_UPDATED: "notifications:updated",
     
     AUTH_USER_READY: "auth:user-ready",
-    AUTH_LOGOUT: "auth:logout"
+    AUTH_LOGOUT: "auth:logout",
+
+    GROUP_POST_CREATED: "group:post-created",
+    GROUP_POST_DELETED: "group:post-deleted",
+    GROUP_COMMENT_CREATED: "group:comment-created",
+    GROUP_COMMENT_DELETED: "group:comment-deleted",
+    GROUP_EVENT_CREATED: "group:event-created",
+    GROUP_EVENT_VOTE_UPDATED: "group:event-vote-updated",
+    GROUP_MESSAGE: "group:message",
+    GROUP_MEMBER_CHANGED: "group:member-changed"
   });
 
   const state = Vue.reactive({

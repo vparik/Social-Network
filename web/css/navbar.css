@@ -241,6 +241,7 @@
   width: 100%;
   max-width: 760px;
   min-height: 520px;
+  max-height: 90vh;
   display: flex;
   gap: 24px;
   background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
@@ -250,7 +251,7 @@
   padding: 28px;
   box-sizing: border-box;
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .create-post-modal--with-sidebar {
@@ -402,7 +403,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .create-post-main > * {
@@ -652,7 +654,6 @@
 .create-event-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
   padding-top: 6px;
 }
 
@@ -741,7 +742,7 @@
 
 .create-event-textarea {
   width: 100%;
-  min-height: 300px;
+  min-height: 120px;
   padding: 22px 22px 72px 22px;
   border: 1px solid var(--border);
   border-radius: 34px;

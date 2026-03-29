@@ -50,6 +50,10 @@ window.Navbar = {
       Router.push("/profile");
     },
 
+    goGroups() {
+      Router.push("/groups");
+    },
+
     goToUserProfile(user) {
       if (!user || !user.id) return;
 
@@ -144,6 +148,14 @@ window.Navbar = {
           return `${actorName} declined your follow request`;
         case "comment":
           return `${actorName} commented on your post`;
+        case "group_invite":
+          return `${actorName} invited you to a group`;
+        case "group_join_request":
+          return `${actorName} requested to join your group`;
+        case "group_join_accepted":
+          return `${actorName} accepted your group join request`;
+        case "group_event":
+          return `${actorName} created a new event in your group`;
         default:
           return `${actorName} sent a notification`;
       }
@@ -634,6 +646,16 @@ window.Navbar = {
             </div>
           </div>
         </div>
+
+        <button class="nav-profile-link" @click="goGroups" title="Groups">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 010 7.75"></path>
+          </svg>
+          <span class="nav-profile-name">Groups</span>
+        </button>
 
         <button class="nav-profile-link" @click="goProfile" title="Profile">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

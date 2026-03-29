@@ -15,7 +15,41 @@ func handleEvent(userID int, conn *websocket.Conn, raw incomingEvent) {
 		handleSendMessage(userID, conn, raw.Data)
 	case "mark_read":
 		handleMarkRead(userID, conn, raw.Data)
+	case "send_group_message":
+		handleSendGroupMessage(userID, raw.Data)
 	}
+}
+
+func handleSendGroupMessage(userID int, data json.RawMessage) {
+	var req sendGroupMessageRequest
+	if err := json.Unmarshal(data, &req); err != nil {
+		return
+	}
+	if req.GroupID == 0 || req.Content == "" {
+		return
+	}
+
+	isMember, err := store.IsGroupMember(req.GroupID, userID)
+	if err != nil || !isMember {
+		return
+	}
+
+	msg, err := store.CreateGroupMessage(req.GroupID, userID, req.Content)
+	if err != nil {
+		log.Println("CreateGroupMessage error:", err)
+		return
+	}
+
+	memberIDs, err := store.GetGroupMemberIDs(req.GroupID)
+	if err != nil {
+		log.Println("GetGroupMemberIDs error:", err)
+		return
+	}
+
+	Manager.SendToMany(memberIDs, models.ChatEvent{
+		Type: "group_message",
+		Data: msg,
+	})
 }
 
 func handleSendMessage(userID int, conn *websocket.Conn, data json.RawMessage) {

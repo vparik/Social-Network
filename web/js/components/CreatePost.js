@@ -16,7 +16,19 @@ window.CreatePost = {
       followersLoading: false,
       followersError: "",
       followers: [],
-      selectedAllowedUserIds: []
+      selectedAllowedUserIds: [],
+
+      // Group destination
+      showGroupSidebar: false,
+      groups: [],
+      groupsLoading: false,
+      selectedGroupId: null,
+      selectedGroupName: "",
+
+      // Event fields
+      eventTitle: "",
+      eventContent: "",
+      eventAt: ""
     };
   },
 
@@ -34,8 +46,15 @@ window.CreatePost = {
     },
 
     showSidebar() {
-      return (!this.isEventMode && this.postVisibility === "private") ||
+      return (!this.isEventMode && (this.postVisibility === "private" || this.showGroupSidebar)) ||
         (this.isEventMode && this.showEventInviteSidebar);
+    },
+
+    postSidebarMode() {
+      if (this.isEventMode) return null;
+      if (this.showGroupSidebar) return "groups";
+      if (this.postVisibility === "private") return "private";
+      return null;
     },
 
     visibilityHelpText() {
@@ -81,9 +100,12 @@ window.CreatePost = {
       }, 520);
     },
 
-    toggleEventInviteSidebar() {
+    async toggleEventInviteSidebar() {
       if (this.submitting) return;
       this.showEventInviteSidebar = !this.showEventInviteSidebar;
+      if (this.showEventInviteSidebar && !this.groups.length && !this.groupsLoading) {
+        await this.loadGroups();
+      }
     },
 
     close() {
@@ -91,11 +113,17 @@ window.CreatePost = {
 
       this.mode = "post";
       this.showEventInviteSidebar = false;
+      this.showGroupSidebar = false;
       this.postTitle = "";
       this.postDescription = "";
       this.postVisibility = "public";
       this.followersError = "";
       this.selectedAllowedUserIds = [];
+      this.selectedGroupId = null;
+      this.selectedGroupName = "";
+      this.eventTitle = "";
+      this.eventContent = "";
+      this.eventAt = "";
       this.$emit("close");
     },
 
@@ -154,6 +182,88 @@ window.CreatePost = {
       return `User #${user.id}`;
     },
 
+    async toggleGroupSidebar() {
+      if (this.submitting) return;
+      this.showGroupSidebar = !this.showGroupSidebar;
+      if (this.showGroupSidebar && !this.groups.length && !this.groupsLoading) {
+        await this.loadGroups();
+      }
+    },
+
+    async loadGroups() {
+      this.groupsLoading = true;
+      try {
+        const res = await fetch("/api/groups");
+        if (res.ok) {
+          const all = await res.json();
+          this.groups = all.filter(g => g.isMember);
+        }
+      } catch (e) {
+        console.error("loadGroups error", e);
+      } finally {
+        this.groupsLoading = false;
+      }
+    },
+
+    selectGroup(group) {
+      this.selectedGroupId = group.id;
+      this.selectedGroupName = group.title;
+      this.showGroupSidebar = false;
+      // Group posts have no privacy concept
+      if (!this.isEventMode) this.postVisibility = "public";
+    },
+
+    clearGroup() {
+      this.selectedGroupId = null;
+      this.selectedGroupName = "";
+    },
+
+    async handleCreateEvent() {
+      const title = this.eventTitle.trim();
+      const content = this.eventContent.trim();
+      const eventAt = this.eventAt;
+
+      if (!title || !eventAt) {
+        alert("Title and date/time are required.");
+        return;
+      }
+
+      if (!this.selectedGroupId) {
+        alert("Please select a group for this event.");
+        return;
+      }
+
+      if (this.submitting) return;
+      this.submitting = true;
+
+      try {
+        const eventAtUnix = Math.floor(new Date(eventAt).getTime() / 1000);
+        const res = await fetch(`/api/groups/${this.selectedGroupId}/events`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": this.extractCsrfToken()
+          },
+          body: JSON.stringify({ title, content, eventAt: eventAtUnix })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to create event: " + err);
+          return;
+        }
+
+        this.submitting = false;
+        this.close();
+        return;
+      } catch (err) {
+        console.error(err);
+        alert("Network error.");
+      } finally {
+        this.submitting = false;
+      }
+    },
+
     async handleCreatePost() {
       const title = this.postTitle.trim();
       const content = this.postDescription.trim();
@@ -182,7 +292,11 @@ window.CreatePost = {
           payload.allowedUserIds = this.selectedAllowedUserIds;
         }
 
-        const res = await fetch("/api/posts", {
+        const url = this.selectedGroupId
+          ? `/api/groups/${this.selectedGroupId}/posts`
+          : "/api/posts";
+
+        const res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -199,9 +313,13 @@ window.CreatePost = {
 
         const createdPost = await res.json();
 
-        window.Events.emit(window.Events.EVENT.POSTS_CREATED, createdPost);
-        this.$emit("post-created", createdPost);
+        if (!this.selectedGroupId) {
+          window.Events.emit(window.Events.EVENT.POSTS_CREATED, createdPost);
+          this.$emit("post-created", createdPost);
+        }
+        this.submitting = false;
         this.close();
+        return;
       } catch (err) {
         console.error(err);
         alert("Network error.");
@@ -244,35 +362,72 @@ window.CreatePost = {
             </span>
 
             <div class="create-post-visibility-actions">
-              <button
-                type="button"
-                class="create-post-visibility-btn"
-                :class="{ 'is-active': postVisibility === 'public' }"
-                @click="selectVisibility('public')"
-              >
-                Public
-              </button>
+              <template v-if="!selectedGroupId">
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  :class="{ 'is-active': postVisibility === 'public' }"
+                  @click="selectVisibility('public')"
+                >
+                  Public
+                </button>
 
-              <button
-                type="button"
-                class="create-post-visibility-btn"
-                :class="{ 'is-active': postVisibility === 'selected' }"
-                @click="selectVisibility('selected')"
-              >
-                Followers
-              </button>
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  :class="{ 'is-active': postVisibility === 'selected' }"
+                  @click="selectVisibility('selected')"
+                >
+                  Followers
+                </button>
 
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  :class="{ 'is-active': postVisibility === 'private' }"
+                  @click="selectVisibility('private')"
+                >
+                  Private
+                </button>
+              </template>
+
+              <template v-else>
+                <span style="font-size:0.85rem;color:var(--text-secondary,#b0b3b8)">
+                  Posting to:
+                </span>
+                <span style="font-size:0.85rem;font-weight:600;color:var(--accent,#2374e1)">
+                  {{ selectedGroupName }}
+                </span>
+                <button
+                  type="button"
+                  class="create-post-visibility-btn"
+                  style="padding:2px 8px;font-size:0.78rem"
+                  @click="clearGroup"
+                  :disabled="submitting"
+                >✕ Clear</button>
+              </template>
+
+              <!-- Groups icon button -->
               <button
                 type="button"
                 class="create-post-visibility-btn"
-                :class="{ 'is-active': postVisibility === 'private' }"
-                @click="selectVisibility('private')"
+                :class="{ 'is-active': showGroupSidebar }"
+                style="margin-left:auto"
+                @click="toggleGroupSidebar"
+                :disabled="submitting"
+                title="Post to a group"
               >
-                Private
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 010 7.75"></path>
+                </svg>
+                Groups
               </button>
             </div>
 
-            <div class="create-post-visibility-help">
+            <div class="create-post-visibility-help" v-if="!selectedGroupId">
               {{ visibilityHelpText }}
             </div>
           </div>
@@ -334,13 +489,20 @@ window.CreatePost = {
               @click="toggleEventInviteSidebar"
               :disabled="submitting"
             >
-              Invite
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 010 7.75"></path>
+              </svg>
+              {{ selectedGroupId ? selectedGroupName : "Select Group" }}
             </button>
           </div>
 
           <div class="create-event-form">
             <label class="create-event-label">Title</label>
             <input
+              v-model="eventTitle"
               type="text"
               class="create-event-input"
               placeholder="Enter event title"
@@ -350,19 +512,20 @@ window.CreatePost = {
             <label class="create-event-label">Description</label>
             <div class="create-event-textarea-wrap">
               <textarea
+                v-model="eventContent"
                 class="create-event-textarea"
                 placeholder="Write something about the event"
                 :disabled="submitting"
               ></textarea>
-
-              <button
-                type="button"
-                class="create-event-image-btn"
-                :disabled="submitting"
-              >
-                Img
-              </button>
             </div>
+
+            <label class="create-event-label">Date &amp; Time</label>
+            <input
+              v-model="eventAt"
+              type="datetime-local"
+              class="create-event-input"
+              :disabled="submitting"
+            />
           </div>
 
           <div class="create-event-footer">
@@ -378,9 +541,10 @@ window.CreatePost = {
             <button
               type="button"
               class="create-event-action-btn create-event-submit-btn"
-              :disabled="submitting"
+              :disabled="submitting || !eventTitle.trim() || !eventAt || !selectedGroupId"
+              @click="handleCreateEvent"
             >
-              Create
+              {{ submitting ? "Creating..." : "Create" }}
             </button>
           </div>
         </div>
@@ -390,61 +554,105 @@ window.CreatePost = {
         v-if="showSidebar"
         class="create-post-sidebar"
       >
+        <!-- Post sidebar: private users OR group picker -->
         <template v-if="!isEventMode">
-          <div class="create-post-sidebar-section">
-            <div class="create-post-sidebar-title">Private post access</div>
+          <template v-if="postSidebarMode === 'groups'">
+            <div class="create-post-sidebar-section">
+              <div class="create-post-sidebar-title">Post to a group</div>
 
-            <div v-if="followersLoading" class="create-post-sidebar-empty">
-              Loading followers...
+              <div v-if="groupsLoading" class="create-post-sidebar-empty">
+                Loading groups...
+              </div>
+              <div v-else-if="!groups.length" class="create-post-sidebar-empty">
+                You are not a member of any group yet.
+              </div>
+              <div v-else class="create-post-user-list">
+                <button
+                  v-for="group in groups"
+                  :key="group.id"
+                  type="button"
+                  class="create-post-user-option"
+                  :class="{ 'is-selected': selectedGroupId === group.id }"
+                  @click="selectGroup(group)"
+                >
+                  <span class="create-post-user-option__name">{{ group.title }}</span>
+                  <span style="font-size:0.75rem;color:var(--text-secondary,#b0b3b8)">
+                    {{ group.memberCount }} members
+                  </span>
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="create-post-sidebar-section">
+              <div class="create-post-sidebar-title">Private post access</div>
+
+              <div v-if="followersLoading" class="create-post-sidebar-empty">
+                Loading followers...
+              </div>
+
+              <div v-else-if="followersError" class="create-post-sidebar-empty">
+                {{ followersError }}
+              </div>
+
+              <div v-else-if="!followers.length" class="create-post-sidebar-empty">
+                You do not have any followers to select yet.
+              </div>
+
+              <div v-else class="create-post-user-list">
+                <button
+                  v-for="user in followers"
+                  :key="user.id"
+                  type="button"
+                  class="create-post-user-option"
+                  :class="{ 'is-selected': isUserSelected(user.id) }"
+                  @click="toggleAllowedUser(user.id)"
+                >
+                  <span class="create-post-user-option__name">
+                    {{ displayFollowerName(user) }}
+                  </span>
+                </button>
+              </div>
             </div>
 
-            <div v-else-if="followersError" class="create-post-sidebar-empty">
-              {{ followersError }}
+            <div class="create-post-sidebar-section">
+              <div class="create-post-sidebar-title">Selected</div>
+              <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
+                No followers selected yet.
+              </div>
+              <div v-else class="create-post-sidebar-empty">
+                {{ selectedAllowedUserIds.length }} follower(s) selected.
+              </div>
             </div>
-
-            <div v-else-if="!followers.length" class="create-post-sidebar-empty">
-              You do not have any followers to select yet.
-            </div>
-
-            <div v-else class="create-post-user-list">
-              <button
-                v-for="user in followers"
-                :key="user.id"
-                type="button"
-                class="create-post-user-option"
-                :class="{ 'is-selected': isUserSelected(user.id) }"
-                @click="toggleAllowedUser(user.id)"
-              >
-                <span class="create-post-user-option__name">
-                  {{ displayFollowerName(user) }}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div class="create-post-sidebar-section">
-            <div class="create-post-sidebar-title">Selected</div>
-            <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
-              No followers selected yet.
-            </div>
-            <div v-else class="create-post-sidebar-empty">
-              {{ selectedAllowedUserIds.length }} follower(s) selected.
-            </div>
-          </div>
+          </template>
         </template>
 
+        <!-- Event sidebar: group picker -->
         <template v-else>
           <div class="create-post-sidebar-section">
-            <div class="create-post-sidebar-title">Invite groups</div>
-            <div class="create-post-sidebar-empty">
-              The groups you can invite to the event will appear here.
-            </div>
-          </div>
+            <div class="create-post-sidebar-title">Select destination group</div>
 
-          <div class="create-post-sidebar-section">
-            <div class="create-post-sidebar-title">Invite users</div>
-            <div class="create-post-sidebar-empty">
-              The users you can invite to the event will appear here.
+            <div v-if="groupsLoading" class="create-post-sidebar-empty">
+              Loading groups...
+            </div>
+            <div v-else-if="!groups.length" class="create-post-sidebar-empty">
+              You are not a member of any group yet.
+            </div>
+            <div v-else class="create-post-user-list">
+              <button
+                v-for="group in groups"
+                :key="group.id"
+                type="button"
+                class="create-post-user-option"
+                :class="{ 'is-selected': selectedGroupId === group.id }"
+                @click="selectGroup(group); showEventInviteSidebar = false"
+              >
+                <span class="create-post-user-option__name">{{ group.title }}</span>
+                <span style="font-size:0.75rem;color:var(--text-secondary,#b0b3b8)">
+                  {{ group.memberCount }} members
+                </span>
+              </button>
             </div>
           </div>
         </template>

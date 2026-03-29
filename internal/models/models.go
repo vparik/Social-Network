@@ -54,13 +54,17 @@ type Comment struct {
 }
 
 type Event struct {
-	ID        int    `json:"id"`
-	UserID    int    `json:"userId"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	Location  string `json:"location"`
-	EventAt   int64  `json:"eventAt"`
-	CreatedAt int64  `json:"createdAt"`
+	ID            int    `json:"id"`
+	GroupID       int    `json:"groupId"`
+	UserID        int    `json:"userId"`
+	Title         string `json:"title"`
+	Content       string `json:"content"`
+	Location      string `json:"location"`
+	EventAt       int64  `json:"eventAt"`
+	CreatedAt     int64  `json:"createdAt"`
+	GoingCount    int    `json:"goingCount"`
+	NotGoingCount int    `json:"notGoingCount"`
+	MyVote        string `json:"myVote"` // "" | "GOING" | "NOT-GOING"
 }
 
 type Message struct {
@@ -71,6 +75,91 @@ type Message struct {
 	SentAt     int64  `json:"sentAt"`
 	ReceivedAt int64  `json:"receivedAt"`
 	ReadAt     int64  `json:"readAt"`
+}
+
+type Group struct {
+	ID          int    `json:"id"`
+	OwnerID     int    `json:"ownerId"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	CreatedAt   int64  `json:"createdAt"`
+	MemberCount int    `json:"memberCount"`
+	IsMember    bool   `json:"isMember"`
+	IsOwner     bool   `json:"isOwner"`
+}
+
+type GroupMember struct {
+	GroupID    int    `json:"groupId"`
+	UserID     int    `json:"userId"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
+	JoinedAt   int64  `json:"joinedAt"`
+}
+
+type GroupRequest struct {
+	ID        int    `json:"id"`
+	GroupID   int    `json:"groupId"`
+	UserID    int    `json:"userId"`
+	Type      string `json:"type"` // "join_request" | "invite"
+	CreatedAt int64  `json:"createdAt"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Nickname  string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
+}
+
+type GroupPost struct {
+	ID        int    `json:"id"`
+	GroupID   int    `json:"groupId"`
+	UserID    int    `json:"userId"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	ImageURL  string `json:"imageUrl"`
+	CreatedAt int64  `json:"createdAt"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Nickname  string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
+}
+
+type GroupComment struct {
+	ID        int    `json:"id"`
+	PostID    int    `json:"postId"`
+	UserID    int    `json:"userId"`
+	Content   string `json:"content"`
+	ImageURL  string `json:"imageUrl"`
+	CreatedAt int64  `json:"createdAt"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Nickname  string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
+}
+
+type GroupEvent struct {
+	ID            int    `json:"id"`
+	GroupID       int    `json:"groupId"`
+	UserID        int    `json:"userId"`
+	Title         string `json:"title"`
+	Description   string `json:"description"`
+	EventAt       int64  `json:"eventAt"`
+	CreatedAt     int64  `json:"createdAt"`
+	GoingCount    int    `json:"goingCount"`
+	NotGoingCount int    `json:"notGoingCount"`
+	MyVote        string `json:"myVote"` // "" | "going" | "not_going"
+}
+
+type GroupMessage struct {
+	ID        int    `json:"id"`
+	GroupID   int    `json:"groupId"`
+	UserID    int    `json:"userId"`
+	Content   string `json:"content"`
+	SentAt    int64  `json:"sentAt"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Nickname  string `json:"nickname"`
+	AvatarPath string `json:"avatarPath"`
 }
 
 type RelationshipChangedPayload struct {

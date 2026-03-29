@@ -2,7 +2,9 @@ const routes = {
   "/register": RegisterPage,
   "/login": LoginPage,
   "/": HomePage,
-  "/profile": ProfilePage
+  "/profile": ProfilePage,
+  "/groups": GroupsPage,
+  "/group": GroupPage
 };
 
 const publicRoutes = ["/login", "/register"];
@@ -167,9 +169,42 @@ const App = {
             break;
           
           case "profile_privacy_changed":
-          if (!event.data) return;
-          window.Events.emit(window.Events.EVENT.PROFILE_PRIVACY_CHANGED, event.data);
-          break;
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.PROFILE_PRIVACY_CHANGED, event.data);
+            break;
+
+          case "group_post_created":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_POST_CREATED, event.data);
+            break;
+          case "group_post_deleted":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_POST_DELETED, event.data);
+            break;
+          case "group_comment_created":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_COMMENT_CREATED, event.data);
+            break;
+          case "group_comment_deleted":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_COMMENT_DELETED, event.data);
+            break;
+          case "group_event_created":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_EVENT_CREATED, event.data);
+            break;
+          case "group_event_vote_updated":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_EVENT_VOTE_UPDATED, event.data);
+            break;
+          case "group_message":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_MESSAGE, event.data);
+            break;
+          case "group_member_changed":
+            if (!event.data) return;
+            window.Events.emit(window.Events.EVENT.GROUP_MEMBER_CHANGED, event.data);
+            break;
         }
       });
     },

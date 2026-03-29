@@ -181,3 +181,20 @@ func DeleteFollowRequestNotification(userID, actorID int) error {
 	)
 	return err
 }
+
+// DeleteGroupNotification removes a group-related notification by type and entity (group) ID.
+// Pass actorID = 0 to match any actor (used for invite cleanup where actor may vary).
+func DeleteGroupNotification(userID, actorID int, notifType string, groupID int) error {
+	if actorID == 0 {
+		_, err := database.DB.Exec(
+			`DELETE FROM notifications WHERE user_id = ? AND type = ? AND entity_id = ?`,
+			userID, notifType, groupID,
+		)
+		return err
+	}
+	_, err := database.DB.Exec(
+		`DELETE FROM notifications WHERE user_id = ? AND actor_id = ? AND type = ? AND entity_id = ?`,
+		userID, actorID, notifType, groupID,
+	)
+	return err
+}
