@@ -21,6 +21,12 @@
 }
 
 
+.profile-avatar {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+}
+
 .profile-avatar,
 .profile-avatar-placeholder {
   width: 110px;
@@ -78,6 +84,7 @@
   padding: 2px 4px;
   border-radius: 4px;
   line-height: 1;
+  color: var(--bg);
   transition: background 0.15s;
 }
 

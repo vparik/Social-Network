@@ -759,7 +759,7 @@ window.Navbar = {
           </button>
 
           <div v-if="isSettingsOpen" class="nav-dropdown settings-dropdown">
-            <button class="nav-dropdown-item" @click="logout">
+            <button class="nav-dropdown-item-logout" @click="logout">
               Logout
             </button>
           </div>

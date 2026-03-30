@@ -16,6 +16,7 @@
   --coral-500: #ff6b6bd0;
   --coral-600: #e25555;
   --coral-dark: #bd4f47d7;
+  --coral-tonal: #e05e5e33;
 
   --bg: #f4f7fb;
   --bg-alt: #c4c8ccb7;
@@ -142,7 +143,6 @@ button {
 
 button:hover {
   transform: translateY(-1px);
-  /* filter: brightness(1.02); */
 }
 
 button:disabled {
