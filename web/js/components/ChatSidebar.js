@@ -80,8 +80,10 @@ window.ChatSidebar = {
   template: `
     <aside class="chat-sidebar" :class="{ open: isOpen }" @click.stop>
       <div class="chat-sidebar-header">
-        <h3>Chats</h3>
-        <button class="chat-close-btn" @click="window.Events.chat.closeSidebar()">✕</button>
+        <span class="chat-sidebar-title">Chats</span>
+        <button class="chat-close-btn" @click="window.Events.chat.closeSidebar()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
 
       <div class="chat-user-list">
@@ -92,24 +94,24 @@ window.ChatSidebar = {
           @click="openConversation(user)"
         >
           <div class="chat-user-avatar">
-            {{ user.name.charAt(0) }}
+            <img
+              v-if="user.avatar"
+              :src="user.avatar"
+              :alt="user.name"
+              class="chat-user-avatar-img"
+            />
+            <span v-else class="chat-user-avatar-initial">{{ user.name.charAt(0) }}</span>
             <span class="chat-user-status" :class="{ online: user.online }"></span>
           </div>
 
           <div class="chat-user-info">
             <div class="chat-user-name-row">
               <div class="chat-user-name">{{ user.name }}</div>
-              <span
-                v-if="user.unreadCount > 0"
-                class="chat-unread-badge"
-              >
+              <span v-if="user.unreadCount > 0" class="chat-unread-badge">
                 {{ user.unreadCount }}
               </span>
             </div>
-
-            <div class="chat-user-presence">
-              {{ user.online ? "Online" : "Offline" }}
-            </div>
+            <div class="chat-user-presence">{{ user.online ? "Online" : "Offline" }}</div>
           </div>
         </button>
       </div>

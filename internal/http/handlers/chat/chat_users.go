@@ -40,6 +40,7 @@ func GetChatUsers(w http.ResponseWriter, r *http.Request) {
 	type chatUser struct {
 		ID          int    `json:"id"`
 		Name        string `json:"name"`
+		Avatar      string `json:"avatar"`
 		Online      bool   `json:"online"`
 		UnreadCount int    `json:"unreadCount"`
 	}
@@ -67,6 +68,7 @@ func GetChatUsers(w http.ResponseWriter, r *http.Request) {
 		out = append(out, chatUser{
 			ID:          u.ID,
 			Name:        name,
+			Avatar:      u.AvatarPath,
 			Online:      online,
 			UnreadCount: unreadCount,
 		})
