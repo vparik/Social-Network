@@ -7,7 +7,7 @@ window.ProfilePage = {
       posts: [],
       loading: true,
       error: null,
-      showPosts: false,
+      showPosts: true,
       isOwnProfile: false,
       isFollowing: false,
       isRequested: false,
@@ -467,13 +467,34 @@ window.ProfilePage = {
       }
     },
 
+    resizeAvatar(file, size = 400) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const canvas = document.createElement("canvas");
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+          const scale = Math.max(size / img.width, size / img.height);
+          const w = img.width * scale;
+          const h = img.height * scale;
+          ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+          canvas.toBlob(resolve, "image/jpeg", 0.88);
+        };
+        img.src = url;
+      });
+    },
+
     async uploadAvatar(event) {
       const file = event.target.files[0];
       if (!file) return;
       this.avatarUploading = true;
       try {
+        const blob = await this.resizeAvatar(file);
         const fd = new FormData();
-        fd.append("file", file);
+        fd.append("file", blob, "avatar.jpg");
         const res = await fetch("/api/upload/avatar", {
           method: "POST",
           headers: { "X-CSRF-Token": window.extractCsrfToken() },
@@ -521,8 +542,10 @@ window.ProfilePage = {
 
 template: `
   <div>
-    <div v-if="loading" class="container">Loading...</div>
-    <div v-else-if="error" class="container error">{{ error }}</div>
+    
+    <div v-if="error" class="container error">{{ error }}</div>
+
+    <div v-else-if="!profile"></div>
 
     <div v-else class="container">
       <div class="profile-header">

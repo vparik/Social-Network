@@ -200,9 +200,7 @@ window.HomePage = {
 
   template: `
     <div>
-      <div v-if="loading" class="container">Loading...</div>
-
-      <div v-else class="page-content">
+      <div class="page-content">
         <main class="feed-page">
           <div v-if="posts.length === 0" class="feed-empty">
             No posts yet. Be the first to post!
