@@ -144,12 +144,26 @@ window.ChatBox = {
 
   template: `
     <div class="chat-box" :class="{ minimized: minimized }">
-      <div class="chat-box-header">
+      <div class="chat-box-header" @click.self="toggleMinimize">
         <div class="chat-box-user">
-          <strong>{{ user.name }}</strong>
+          <div class="chat-box-avatar">
+            <img v-if="user.avatar" :src="user.avatar" :alt="user.name" class="chat-user-avatar-img" />
+            <span v-else class="chat-user-avatar-initial">{{ user.name.charAt(0) }}</span>
+            <span class="chat-user-status" :class="{ online: user.online }"></span>
+          </div>
+          <div class="chat-box-user-info">
+            <strong>{{ user.name }}</strong>
+            <span class="chat-box-presence">{{ user.online ? "Online" : "Offline" }}</span>
+          </div>
         </div>
-        <button class="chat-minimize-btn" @click="toggleMinimize">_</button>
-        <button class="chat-close-btn" @click="closeBox">✕</button>
+        <div class="chat-box-controls">
+          <button class="chat-minimize-btn" @click="toggleMinimize">
+            <span class="material-symbols-outlined">remove</span>
+          </button>
+          <button class="chat-close-btn" @click="closeBox">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
 
       <div
@@ -187,7 +201,9 @@ window.ChatBox = {
           class="chat-box-input"
           @keyup.enter="sendMessage"
         />
-        <button class="chat-send-btn" @click="sendMessage">Send</button>
+        <button class="chat-send-btn" @click="sendMessage">
+          <span class="material-symbols-outlined">send</span>
+        </button>
       </div>
     </div>
   `
