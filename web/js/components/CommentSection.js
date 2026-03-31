@@ -172,11 +172,6 @@ window.CommentSection = {
       return window.currentUser && comment.userId === window.currentUser.id;
     },
 
-    navigateToProfile(userId) {
-      if (!userId) return;
-      Router.push("/profile?id=" + userId);
-    },
-
     async deleteComment(comment) {
       if (!comment || !comment.id) return;
 
@@ -228,32 +223,17 @@ window.CommentSection = {
           No comments yet.
         </div>
 
-        <div v-else class="feed-comments-list">
-          <div
-            v-for="comment in comments"
-            :key="comment.id"
-            :id="'comment-' + comment.id"
-            class="feed-comment"
-          >
-            <div class="feed-comment-top">
-              <button
-                type="button"
-                class="feed-comment-author"
-                @click.stop="navigateToProfile(comment.userId)"
-              >
-                {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
-              </button>
+        <div
+          v-for="comment in comments"
+          :key="comment.id"
+          :id="'comment-' + comment.id"
+          class="feed-comment"
+        >
+          <div class="feed-comment-top">
+            <span class="feed-comment-author">
+              {{ comment.nickname ? '@' + comment.nickname : comment.firstName + ' ' + comment.lastName }}
+            </span>
 
-              <button
-                v-if="isOwnComment(comment)"
-                class="feed-delete-icon-btn"
-                @click.stop="deleteComment(comment)"
-                title="Delete comment"
-                aria-label="Delete comment"
-              >
-               🗑️
-              </button>
-            </div>
             <button
               v-if="isOwnComment(comment)"
               class="comment-delete-btn"
@@ -265,8 +245,7 @@ window.CommentSection = {
             </button>
           </div>
 
-            <span class="feed-comment-content">{{ comment.content }}</span>
-          </div>
+          <span class="feed-comment-content">{{ comment.content }}</span>
         </div>
 
         <div class="feed-comment-input-row">
