@@ -162,6 +162,10 @@ window.GroupPage = {
 
       this.unsubs.push(window.Events.on(window.Events.EVENT.GROUP_MEMBER_CHANGED, (data) => {
         if (data.groupId !== gid) return;
+        if (data.action === "removed" && this.currentUser && data.userId === this.currentUser.id) {
+          window.Router.push("/groups");
+          return;
+        }
         this.loadMembers();
         if (this.isOwner) this.loadJoinRequests();
       }));

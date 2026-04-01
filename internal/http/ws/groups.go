@@ -70,8 +70,13 @@ func NotifyGroupEventVoteUpdated(event *models.Event) {
 }
 
 func NotifyGroupMemberChanged(groupID, userID int, action string) {
-	Manager.SendToMany(groupMemberIDs(groupID), models.ChatEvent{
+	event := models.ChatEvent{
 		Type: "group_member_changed",
 		Data: map[string]any{"groupId": groupID, "userId": userID, "action": action},
-	})
+	}
+	Manager.SendToMany(groupMemberIDs(groupID), event)
+	// Removed users are no longer in the member list, so notify them separately
+	if action == "removed" {
+		Manager.SendToMany([]int{userID}, event)
+	}
 }
