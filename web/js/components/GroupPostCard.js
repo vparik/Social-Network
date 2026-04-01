@@ -54,7 +54,7 @@ window.GroupPostCard = {
     async submitComment() {
       const content = this.newComment.trim();
       if (!content) return;
-      const csrf = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || "";
+      const csrf = window.extractCsrfToken();
       const res = await fetch(`/api/groups/${this.groupId}/posts/${this.post.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
@@ -71,7 +71,7 @@ window.GroupPostCard = {
         confirmText: "Delete"
       });
       if (!ok) return;
-      const csrf = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || "";
+      const csrf = window.extractCsrfToken();
       await fetch(`/api/groups/${this.groupId}/comments/${comment.id}`, {
         method: "DELETE",
         headers: { "X-CSRF-Token": csrf }

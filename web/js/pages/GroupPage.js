@@ -297,7 +297,7 @@ window.GroupPage = {
     },
 
     csrf() {
-      return document.cookie.match(/csrf_token=([^;]+)/)?.[1] || "";
+      return window.extractCsrfToken();
     },
 
     formatTime(ts) {

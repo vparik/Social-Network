@@ -41,7 +41,7 @@ window.GroupsPage = {
       this.creating = true;
       this.error = "";
       try {
-        const csrf = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || "";
+        const csrf = window.extractCsrfToken();
         const res = await fetch("/api/groups", {
           method: "POST",
           headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
@@ -61,7 +61,7 @@ window.GroupsPage = {
     },
 
     async joinGroup(group) {
-      const csrf = document.cookie.match(/csrf_token=([^;]+)/)?.[1] || "";
+      const csrf = window.extractCsrfToken();
       const res = await fetch(`/api/groups/${group.id}/join`, {
         method: "POST",
         headers: { "X-CSRF-Token": csrf }
