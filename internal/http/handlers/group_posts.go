@@ -182,6 +182,17 @@ func CreateGroupComment(w http.ResponseWriter, r *http.Request) {
 
 	ws.NotifyGroupCommentCreated(groupID, comment)
 
+	// Notify the post owner (if they're not the commenter)
+	if post, err := store.GetGroupPostByID(postID); err == nil && post.UserID != payload.UserID {
+		if err := store.CreateNotification(post.UserID, payload.UserID, "group_comment", &groupID); err == nil {
+			if n, err := store.GetLatestNotification(post.UserID); err == nil {
+				if unread, err := store.CountUnreadNotifications(post.UserID); err == nil {
+					ws.NotifyNotificationCreated(post.UserID, n, unread)
+				}
+			}
+		}
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(comment)
 }

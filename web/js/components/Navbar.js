@@ -23,6 +23,8 @@ window.Navbar = {
       notificationsLoading: false,
       selectedFollowRequest: null,
       followRequestActionLoading: false,
+      selectedGroupJoinRequest: null,
+      groupJoinRequestActionLoading: false,
       unsubscribeChat: null,
       unsubscribeNotifications: null
     };
@@ -156,6 +158,8 @@ window.Navbar = {
           return `${actorName} accepted your group join request`;
         case "group_event":
           return `${actorName} created a new event in your group`;
+        case "group_comment":
+          return `${actorName} commented on your group post`;
         default:
           return `${actorName} sent a notification`;
       }
@@ -163,6 +167,10 @@ window.Navbar = {
 
     isFollowRequestNotification(item) {
       return !!item && item.type === "follow_request";
+    },
+
+    isGroupJoinRequestNotification(item) {
+      return !!item && item.type === "group_join_request";
     },
 
     canOpenNotificationProfile(item) {
@@ -183,22 +191,35 @@ window.Navbar = {
 
     handleNotificationClick(item) {
       if (!item) return;
-    
+
       if (this.isFollowRequestNotification(item)) {
+        this.closeGroupJoinRequestPanel();
         this.openFollowRequestPanel(item);
         return;
       }
-    
+
+      if (this.isGroupJoinRequestNotification(item)) {
+        this.closeFollowRequestPanel();
+        this.openGroupJoinRequestPanel(item);
+        return;
+      }
+
       this.isNotificationsOpen = false;
       this.closeFollowRequestPanel();
-    
+      this.closeGroupJoinRequestPanel();
+
       if (this.canOpenNotificationComment(item)) {
         Router.push(`/?postId=${item.postId}#comment-${item.commentId}`);
         return;
       }
-    
+
       if (this.canOpenNotificationProfile(item)) {
         Router.push(`/profile?id=${item.actorId}`);
+        return;
+      }
+
+      if (item.entityId && ["group_join_accepted", "group_event", "group_invite", "group_comment"].includes(item.type)) {
+        Router.push(`/group?id=${item.entityId}`);
       }
     },
 
@@ -210,6 +231,16 @@ window.Navbar = {
     closeFollowRequestPanel() {
       this.selectedFollowRequest = null;
       this.followRequestActionLoading = false;
+    },
+
+    openGroupJoinRequestPanel(item) {
+      if (!this.isGroupJoinRequestNotification(item)) return;
+      this.selectedGroupJoinRequest = item;
+    },
+
+    closeGroupJoinRequestPanel() {
+      this.selectedGroupJoinRequest = null;
+      this.groupJoinRequestActionLoading = false;
     },
 
     removeFollowRequestNotificationByActorId(actorId) {
@@ -287,6 +318,46 @@ window.Navbar = {
         console.error("failed to reject follow request", err);
       } finally {
         this.followRequestActionLoading = false;
+      }
+    },
+
+    async acceptGroupJoinRequest() {
+      const item = this.selectedGroupJoinRequest;
+      if (!item || !item.actorId || !item.entityId || this.groupJoinRequestActionLoading) return;
+
+      this.groupJoinRequestActionLoading = true;
+      try {
+        const res = await fetch(`/api/groups/${item.entityId}/requests/${item.actorId}/accept`, {
+          method: "POST",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() }
+        });
+        if (!res.ok) { console.error("failed to accept group join request"); return; }
+        this.removeNotificationById(item.id);
+        this.closeGroupJoinRequestPanel();
+      } catch (err) {
+        console.error("failed to accept group join request", err);
+      } finally {
+        this.groupJoinRequestActionLoading = false;
+      }
+    },
+
+    async declineGroupJoinRequest() {
+      const item = this.selectedGroupJoinRequest;
+      if (!item || !item.actorId || !item.entityId || this.groupJoinRequestActionLoading) return;
+
+      this.groupJoinRequestActionLoading = true;
+      try {
+        const res = await fetch(`/api/groups/${item.entityId}/requests/${item.actorId}`, {
+          method: "DELETE",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() }
+        });
+        if (!res.ok) { console.error("failed to decline group join request"); return; }
+        this.removeNotificationById(item.id);
+        this.closeGroupJoinRequestPanel();
+      } catch (err) {
+        console.error("failed to decline group join request", err);
+      } finally {
+        this.groupJoinRequestActionLoading = false;
       }
     },
 
@@ -719,6 +790,32 @@ window.Navbar = {
                   class="nav-follow-request-decline"
                   :disabled="followRequestActionLoading"
                   @click="rejectFollowRequest"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+
+            <div v-if="selectedGroupJoinRequest" class="nav-follow-request-panel">
+              <div class="nav-dropdown-title">Group Join Request</div>
+
+              <div class="nav-follow-request-text">
+                {{ displayUserName(selectedGroupJoinRequest) }} wants to join your group.
+              </div>
+
+              <div class="nav-follow-request-actions">
+                <button
+                  class="nav-follow-request-accept"
+                  :disabled="groupJoinRequestActionLoading"
+                  @click="acceptGroupJoinRequest"
+                >
+                  Accept
+                </button>
+
+                <button
+                  class="nav-follow-request-decline"
+                  :disabled="groupJoinRequestActionLoading"
+                  @click="declineGroupJoinRequest"
                 >
                   Decline
                 </button>
