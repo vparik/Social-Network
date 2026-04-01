@@ -8,6 +8,8 @@ window.ProfilePage = {
       loading: true,
       error: null,
       showPosts: true,
+      showGroups: true,
+      profileGroups: [],
       isOwnProfile: false,
       isFollowing: false,
       isRequested: false,
@@ -119,6 +121,7 @@ window.ProfilePage = {
       }
 
       await this.loadProfilePosts();
+      await this.loadProfileGroups();
       this.loading = false;
     } catch (err) {
       this.error = "Network error.";
@@ -413,6 +416,36 @@ window.ProfilePage = {
     },
     togglePosts() {
       this.showPosts = !this.showPosts;
+    },
+
+    toggleGroups() {
+      this.showGroups = !this.showGroups;
+    },
+
+    async loadProfileGroups() {
+      if (!this.profile) {
+        this.profileGroups = [];
+        return;
+      }
+      try {
+        const res = await fetch(`/api/profile/groups?id=${this.profile.id}`);
+        if (!res.ok) {
+          this.profileGroups = [];
+          return;
+        }
+        const data = await res.json();
+        this.profileGroups = Array.isArray(data) ? data : [];
+      } catch {
+        this.profileGroups = [];
+      }
+    },
+
+    openGroup(id) {
+      window.Router.push("/group?id=" + id);
+    },
+
+    memberLabel(group) {
+      return group.memberCount === 1 ? "1 member" : `${group.memberCount} members`;
     },
 
     privacyLabel(value) {
@@ -718,6 +751,37 @@ template: `
             <div class="feed-post-footer">
               <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
               <CommentSection :post-id="post.id" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-posts-section">
+        <h2
+          class="profile-posts-heading"
+          @click="profileGroups.length > 0 && toggleGroups()"
+        >
+          Groups
+        </h2>
+
+        <div v-if="profileGroups.length === 0" class="feed-empty">
+          This user is not a member of any group.
+        </div>
+
+        <div v-else-if="showGroups" class="groups-grid">
+          <div
+            v-for="group in profileGroups"
+            :key="group.id"
+            class="group-card"
+          >
+            <h3 class="group-card__title">{{ group.title }}</h3>
+            <p class="group-card__desc">{{ group.description || "No description" }}</p>
+            <span class="group-card__meta">{{ memberLabel(group) }}</span>
+            <div class="group-card__actions">
+              <button
+                class="btn btn-primary"
+                @click="openGroup(group.id)"
+              >View</button>
             </div>
           </div>
         </div>

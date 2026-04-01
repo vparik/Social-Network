@@ -45,6 +45,10 @@ window.LoginPage = {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("No account found with these credentials");
+          }
+
           let message = "Login failed";
 
           try {

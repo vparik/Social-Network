@@ -32,6 +32,7 @@ func (s *Server) registerRoutes() {
 
 	s.mux.HandleFunc("GET /api/home", goauth.Protected(handlers.Home))
 	s.mux.HandleFunc("GET /api/profile", goauth.Protected(handlers.GetProfile))
+	s.mux.HandleFunc("GET /api/profile/groups", goauth.Protected(handlers.GetProfileGroups))
 	s.mux.HandleFunc("POST /api/profile/privacy", goauth.ProtectedCsrfActive(handlers.SetProfilePrivacy))
 
 	s.mux.HandleFunc("POST /api/follow", goauth.ProtectedCsrfActive(handlers.Follow))

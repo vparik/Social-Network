@@ -396,6 +396,27 @@ func DeclineGroupJoinRequest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"ok":true}`))
 }
 
+// GET /api/profile/groups?id=X
+func GetProfileGroups(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	targetID, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || targetID == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error":"invalid_user_id"}`))
+		return
+	}
+
+	groups, err := store.GetUserGroups(targetID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(groups)
+}
+
 // GET /api/groups/invites
 func GetMyGroupInvites(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
