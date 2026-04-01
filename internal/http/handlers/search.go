@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"socialnet/internal/database/store"
+	"socialnet/internal/memory"
 	"socialnet/internal/models"
 	"strings"
 
@@ -24,11 +24,7 @@ func SearchUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := store.SearchUsers(query, payload.UserID)
-	if err != nil {
-		http.Error(w, "failed to search users", http.StatusInternalServerError)
-		return
-	}
+	users := memory.SearchUsers(query, payload.UserID)
 
 	if users == nil {
 		users = []*models.User{}

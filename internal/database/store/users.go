@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"socialnet/internal/database"
+	"socialnet/internal/memory"
 	"socialnet/internal/models"
 )
 
 func CreateUser(email, passwordHash, role, firstName, lastName, dateOfBirth, avatarPath, nickname, aboutMe string) error {
-	_, err := database.DB.Exec(
+	result, err := database.DB.Exec(
 		`INSERT INTO users (email, password_hash, role, first_name, last_name, date_of_birth, avatar_path, nickname, about_me)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		email,
@@ -21,7 +22,18 @@ func CreateUser(email, passwordHash, role, firstName, lastName, dateOfBirth, ava
 		nickname,
 		aboutMe,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	memory.AddToUserMemory(int(id), firstName, lastName, nickname)
+
+	return nil
 }
 
 func GetUserByEmail(email string) (*models.User, error) {
@@ -121,4 +133,34 @@ func SetUserPrivacy(userID int, isPublic bool) error {
 		userID,
 	)
 	return err
+}
+
+func LoadAllUsers() ([]models.UserMemoryRow, error) {
+	rows, err := database.DB.Query(
+		`SELECT id, first_name, last_name, COALESCE(nickname, '')
+		 FROM users
+		 ORDER BY first_name ASC, last_name ASC`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.UserMemoryRow
+
+	for rows.Next() {
+		var user models.UserMemoryRow
+
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Nickname); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
