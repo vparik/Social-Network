@@ -45,8 +45,11 @@ window.LoginPage = {
         });
 
         if (!response.ok) {
-          let message = "Login failed";
+          if (response.status === 401) {
+            throw new Error("No account found with these credentials");
+          }
 
+          let message = "Login failed";
           try {
             const data = await response.json();
             message = data.error || message;
@@ -81,8 +84,7 @@ window.LoginPage = {
             <div class="auth-brand">Social Network</div>
 
             <h1 class="auth-hero-title">
-              Connect, share,<br />
-              and belong.
+              Connect, share, belong.
             </h1>
 
             <p class="auth-hero-text">

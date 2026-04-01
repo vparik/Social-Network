@@ -70,8 +70,7 @@ window.RegisterPage = {
             <div class="auth-brand">Social Network</div>
 
             <h1 class="auth-hero-title">
-              Connect, share,<br />
-              and belong.
+              Connect, share, belong.
             </h1>
 
             <p class="auth-hero-text">
