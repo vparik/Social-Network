@@ -291,6 +291,19 @@
   max-width: 760px;
 }
 
+.create-post-inline-wrap {
+  display: block;
+}
+
+.create-post-modal--inline {
+  min-height: unset;
+  max-height: unset;
+  max-width: 100%;
+  box-shadow: none;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
 
 .create-post-main {
   flex: 1;

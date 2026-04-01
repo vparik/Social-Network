@@ -1,7 +1,13 @@
 window.CreatePost = {
   name: "CreatePost",
 
-  emits: ["close", "post-created"],
+  emits: ["close", "post-created", "event-created"],
+
+  props: {
+    groupId: { type: Number, default: 0 },
+    inline: { type: Boolean, default: false },
+    initialMode: { type: String, default: "post" }
+  },
 
   data() {
     return {
@@ -22,9 +28,15 @@ window.CreatePost = {
       descriptionError: false,
       eventTitle: "",
       eventDescription: "",
+      eventAt: "",
       eventTitleError: false,
-      eventDescriptionError: false
+      eventDescriptionError: false,
+      eventAtError: false
     };
+  },
+
+  mounted() {
+    this.mode = this.initialMode;
   },
 
   computed: {
@@ -34,13 +46,6 @@ window.CreatePost = {
 
     showSidebar() {
       return !this.isEventMode && this.postVisibility === "private";
-    },
-
-    postSidebarMode() {
-      if (this.isEventMode) return null;
-      if (this.showGroupSidebar) return "groups";
-      if (this.postVisibility === "private") return "private";
-      return null;
     },
 
     visibilityHelpText() {
@@ -77,20 +82,15 @@ window.CreatePost = {
       this.showEventInviteSidebar = false;
     },
 
-    async toggleEventInviteSidebar() {
-      if (this.submitting) return;
-      this.showEventInviteSidebar = !this.showEventInviteSidebar;
-      if (this.showEventInviteSidebar && !this.groups.length && !this.groupsLoading) {
-        await this.loadGroups();
-      }
+    handleOverlayClick() {
+      if (!this.inline) this.close();
     },
 
     close() {
       if (this.submitting) return;
 
-      this.mode = "post";
+      this.mode = this.initialMode;
       this.showEventInviteSidebar = false;
-      this.showGroupSidebar = false;
       this.postTitle = "";
       this.postDescription = "";
       this.postVisibility = "public";
@@ -100,9 +100,12 @@ window.CreatePost = {
       this.selectedAllowedUserIds = [];
       this.eventTitle = "";
       this.eventDescription = "";
+      this.eventAt = "";
       this.eventTitleError = false;
       this.eventDescriptionError = false;
-      this.$emit("close");
+      this.eventAtError = false;
+
+      if (!this.inline) this.$emit("close");
     },
 
     extractCsrfToken() {
@@ -114,9 +117,7 @@ window.CreatePost = {
       this.followersError = "";
 
       try {
-        const res = await fetch("/api/followers", {
-          method: "GET"
-        });
+        const res = await fetch("/api/followers", { method: "GET" });
 
         if (!res.ok) {
           const err = await res.text();
@@ -229,8 +230,8 @@ window.CreatePost = {
           payload.allowedUserIds = this.selectedAllowedUserIds;
         }
 
-        const url = this.selectedGroupId
-          ? `/api/groups/${this.selectedGroupId}/posts`
+        const url = this.groupId
+          ? `/api/groups/${this.groupId}/posts`
           : "/api/posts";
 
         const res = await fetch(url, {
@@ -250,13 +251,12 @@ window.CreatePost = {
 
         const createdPost = await res.json();
 
-        if (!this.selectedGroupId) {
+        if (!this.groupId) {
           window.Events.emit(window.Events.EVENT.POSTS_CREATED, createdPost);
-          this.$emit("post-created", createdPost);
         }
-        this.submitting = false;
+
+        this.$emit("post-created", createdPost);
         this.close();
-        return;
       } catch (err) {
         console.error(err);
         alert("Network error.");
@@ -265,29 +265,68 @@ window.CreatePost = {
       }
     },
 
-    handleCreateEvent() {
+    async handleCreateEvent() {
       const title = this.eventTitle.trim();
       const content = this.eventDescription.trim();
 
       this.eventTitleError = !title;
       this.eventDescriptionError = !content;
+      this.eventAtError = !this.eventAt;
 
-      if (!title || !content) return;
+      if (!title || !content || !this.eventAt) return;
+
+      if (!this.groupId) {
+        alert("No group selected for this event.");
+        return;
+      }
+
+      if (this.submitting) return;
+      this.submitting = true;
+
+      try {
+        const eventAt = Math.floor(new Date(this.eventAt).getTime() / 1000);
+        const res = await fetch(`/api/groups/${this.groupId}/events`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": this.extractCsrfToken()
+          },
+          body: JSON.stringify({ title, content, eventAt })
+        });
+
+        if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to create event: " + err);
+          return;
+        }
+
+        const createdEvent = await res.json();
+        this.$emit("event-created", createdEvent);
+        this.close();
+      } catch (err) {
+        console.error(err);
+        alert("Network error.");
+      } finally {
+        this.submitting = false;
+      }
     }
   },
 
   template: `
-  <div class="create-post-overlay" @click.self="close">
+  <div
+    :class="inline ? 'create-post-inline-wrap' : 'create-post-overlay'"
+    @click.self="handleOverlayClick"
+  >
     <div
       class="create-post-modal"
-      :class="{
+      :class="inline ? 'create-post-modal--inline' : {
         'create-post-modal--with-sidebar': showSidebar,
         'create-post-modal--event': isEventMode,
         'create-post-modal--event-invite': isEventMode && showEventInviteSidebar
       }"
     >
       <div class="create-post-main">
-        <div class="create-post-tabs">
+        <div v-if="!inline" class="create-post-tabs">
           <button
             type="button"
             class="create-post-tab"
@@ -303,10 +342,10 @@ window.CreatePost = {
             @click="switchMode('event')"
           >Event</button>
         </div>
+        <p v-else class="group-form__title">{{ isEventMode ? "Create Event" : "Create Post" }}</p>
 
         <template v-if="!isEventMode">
-          <div class="create-post-visibility">
-          
+          <div v-if="!groupId" class="create-post-visibility">
             <select
               class="create-post-visibility-select"
               :value="postVisibility"
@@ -322,50 +361,47 @@ window.CreatePost = {
               {{ visibilityHelpText }}
             </span>
 
-            <div
-        v-if="showSidebar"
-        class="create-post-sidebar"
-      >
-        <div class="create-post-sidebar-section">
-          <div class="create-post-sidebar-title">Who can see this</div>
+            <div v-if="showSidebar" class="create-post-sidebar">
+              <div class="create-post-sidebar-section">
+                <div class="create-post-sidebar-title">Who can see this</div>
 
-          <div v-if="followersLoading" class="create-post-sidebar-empty">
-            Loading followers...
-          </div>
+                <div v-if="followersLoading" class="create-post-sidebar-empty">
+                  Loading followers...
+                </div>
 
-          <div v-else-if="followersError" class="create-post-sidebar-empty">
-            {{ followersError }}
-          </div>
+                <div v-else-if="followersError" class="create-post-sidebar-empty">
+                  {{ followersError }}
+                </div>
 
-          <div v-else-if="!followers.length" class="create-post-sidebar-empty">
-            You do not have any followers to select yet.
-          </div>
+                <div v-else-if="!followers.length" class="create-post-sidebar-empty">
+                  You do not have any followers to select yet.
+                </div>
 
-          <div v-else class="create-post-user-list">
-            <button
-              v-for="user in followers"
-              :key="user.id"
-              type="button"
-              class="create-post-user-option"
-              :class="{ 'is-selected': isUserSelected(user.id) }"
-              @click="toggleAllowedUser(user.id)"
-            >
-              <span class="create-post-user-option__name">
-                {{ displayFollowerName(user) }}
-              </span>
-            </button>
-          </div>
-        </div>
+                <div v-else class="create-post-user-list">
+                  <button
+                    v-for="user in followers"
+                    :key="user.id"
+                    type="button"
+                    class="create-post-user-option"
+                    :class="{ 'is-selected': isUserSelected(user.id) }"
+                    @click="toggleAllowedUser(user.id)"
+                  >
+                    <span class="create-post-user-option__name">
+                      {{ displayFollowerName(user) }}
+                    </span>
+                  </button>
+                </div>
+              </div>
 
-        <div class="create-post-sidebar-section">
-          <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
-            No followers selected yet.
-          </div>
-          <div v-else class="create-post-sidebar-empty">
-            {{ selectedAllowedUserIds.length }} follower(s) selected.
-          </div>
-        </div>
-      </div>
+              <div class="create-post-sidebar-section">
+                <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
+                  No followers selected yet.
+                </div>
+                <div v-else class="create-post-sidebar-empty">
+                  {{ selectedAllowedUserIds.length }} follower(s) selected.
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="create-post-form">
@@ -420,6 +456,7 @@ window.CreatePost = {
 
           <div class="create-post-footer">
             <button
+              v-if="!inline"
               type="button"
               class="create-post-action-btn create-post-cancel-btn"
               @click="close"
@@ -440,34 +477,6 @@ window.CreatePost = {
         </template>
 
         <div v-else class="create-event-layout">
-          <div class="create-event-invite-row">
-            <button
-              type="button"
-              class="create-event-invite-btn"
-              :class="{ 'is-active': showEventInviteSidebar }"
-              @click="toggleEventInviteSidebar"
-              :disabled="submitting"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 00-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 010 7.75"></path>
-              </svg>
-              {{ selectedGroupId ? selectedGroupName : "Select Group" }}
-            </button>
-
-            <div v-if="showEventInviteSidebar" class="create-event-invite-list">
-              <div class="create-event-invite-list-title">Users</div>
-              <div class="create-event-invite-list-empty">No users available yet.</div>
-            </div>
-
-            <div v-if="showEventInviteSidebar" class="create-event-invite-list">
-              <div class="create-event-invite-list-title">Groups</div>
-              <div class="create-event-invite-list-empty">No groups available yet.</div>
-            </div>
-          </div>
-
           <div class="create-post-form">
             <textarea
               v-model="eventTitle"
@@ -505,6 +514,17 @@ window.CreatePost = {
                 @change="handleImageSelect"
               />
             </div>
+            <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
+
+            <input
+              v-model="eventAt"
+              type="datetime-local"
+              class="create-post-input create-post-datetime"
+              :class="{ 'create-post-input--error': eventAtError }"
+              :disabled="submitting"
+              @input="eventAtError = false"
+            />
+            <span v-if="eventAtError" class="create-post-field-error">* required</span>
 
             <div v-if="imagePreview" class="post-image-preview">
               <img :src="imagePreview" alt="preview" />
@@ -515,11 +535,11 @@ window.CreatePost = {
                 :disabled="submitting"
               >&times;</button>
             </div>
-            <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
           </div>
 
           <div class="create-post-footer">
             <button
+              v-if="!inline"
               type="button"
               class="create-post-action-btn create-post-cancel-btn"
               @click="close"
@@ -535,14 +555,10 @@ window.CreatePost = {
               :disabled="submitting"
             >
               {{ submitting ? "Creating..." : "Create" }}
-              {{ submitting ? "Creating..." : "Create" }}
             </button>
           </div>
         </div>
       </div>
-
-      
-
     </div>
   </div>
   `

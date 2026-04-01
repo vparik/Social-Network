@@ -19,12 +19,8 @@ window.GroupPage = {
       error: "",
 
       // forms
-      newPost: { title: "", content: "" },
-      newEvent: { title: "", content: "", eventAt: "" },
       newMessage: "",
       inviteUserId: null,
-
-      submitting: false,
       chatUnsub: null,
       unsubs: []
     };
@@ -172,24 +168,6 @@ window.GroupPage = {
     },
 
     // ── Posts ──────────────────────────────────────────
-    async createPost() {
-      if (!this.newPost.content.trim()) return;
-      this.submitting = true;
-      try {
-        const csrf = this.csrf();
-        const res = await fetch(`/api/groups/${this.groupId}/posts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-          body: JSON.stringify(this.newPost)
-        });
-        if (res.ok) {
-          this.newPost = { title: "", content: "" };
-        }
-      } finally {
-        this.submitting = false;
-      }
-    },
-
     async deletePost(post) {
       const ok = await window.AppConfirm.open({ title: "Delete post?", message: "This cannot be undone.", danger: true, confirmText: "Delete" });
       if (!ok) return;
@@ -208,23 +186,6 @@ window.GroupPage = {
     },
 
     // ── Events ─────────────────────────────────────────
-    async createEvent() {
-      if (!this.newEvent.title.trim() || !this.newEvent.eventAt) return;
-      this.submitting = true;
-      try {
-        const csrf = this.csrf();
-        const eventAt = Math.floor(new Date(this.newEvent.eventAt).getTime() / 1000);
-        const res = await fetch(`/api/groups/${this.groupId}/events`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },
-          body: JSON.stringify({ title: this.newEvent.title, content: this.newEvent.content, eventAt })
-        });
-        if (res.ok) this.newEvent = { title: "", content: "", eventAt: "" };
-      } finally {
-        this.submitting = false;
-      }
-    },
-
     async vote(event, option) {
       const csrf = this.csrf();
       const res = await fetch(`/api/groups/${this.groupId}/events/${event.id}/vote`, {
@@ -391,15 +352,7 @@ window.GroupPage = {
 
           <!-- POSTS TAB -->
           <div v-if="activeTab === 'posts'">
-            <!-- Create post form -->
-            <div class="group-form">
-              <p class="group-form__title">New Post</p>
-              <input v-model="newPost.title" class="input" placeholder="Title (optional)" />
-              <textarea v-model="newPost.content" class="input" placeholder="What's on your mind?" rows="3" style="resize:vertical"></textarea>
-              <button class="btn btn-primary" :disabled="submitting || !newPost.content.trim()" @click="createPost">
-                {{ submitting ? "Posting…" : "Post" }}
-              </button>
-            </div>
+            <CreatePost :group-id="groupId" :inline="true" />
 
             <div v-if="posts.length === 0" class="feed-empty">No posts yet. Be the first!</div>
 
@@ -415,16 +368,7 @@ window.GroupPage = {
 
           <!-- EVENTS TAB -->
           <div v-if="activeTab === 'events'">
-            <!-- Create event form -->
-            <div class="group-form">
-              <p class="group-form__title">New Event</p>
-              <input v-model="newEvent.title" class="input" placeholder="Event title *" />
-              <textarea v-model="newEvent.content" class="input" placeholder="Description (optional)" rows="2" style="resize:vertical"></textarea>
-              <input v-model="newEvent.eventAt" class="input" type="datetime-local" />
-              <button class="btn btn-primary" :disabled="submitting || !newEvent.title.trim() || !newEvent.eventAt" @click="createEvent">
-                {{ submitting ? "Creating…" : "Create Event" }}
-              </button>
-            </div>
+            <CreatePost :group-id="groupId" :inline="true" initial-mode="event" />
 
             <div v-if="events.length === 0" class="group-empty">No events yet.</div>
 
