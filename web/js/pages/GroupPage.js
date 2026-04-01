@@ -245,6 +245,16 @@ window.GroupPage = {
       this.joinRequests = this.joinRequests.filter(r => r.id !== req.id);
     },
 
+    async removeMember(member) {
+      const name = this.memberName(member);
+      const ok = await window.AppConfirm.open({ title: `Remove ${name}?`, message: "They will need to request to join again.", danger: true, confirmText: "Remove" });
+      if (!ok) return;
+      const res = await fetch(`/api/groups/${this.groupId}/members/${member.userId}`, {
+        method: "DELETE", headers: { "X-CSRF-Token": this.csrf() }
+      });
+      if (res.ok) this.members = this.members.filter(m => m.userId !== member.userId);
+    },
+
     async leaveGroup() {
       const ok = await window.AppConfirm.open({ title: "Leave group?", message: "You will need to request to join again.", danger: true, confirmText: "Leave" });
       if (!ok) return;
@@ -405,6 +415,12 @@ window.GroupPage = {
               </div>
               <span class="group-member__name">{{ memberName(member) }}</span>
               <span v-if="group.ownerId === member.userId" class="group-member__badge">Owner</span>
+              <button
+                v-if="isOwner && group.ownerId !== member.userId"
+                class="btn btn-danger"
+                style="font-size:0.8rem;padding:4px 10px;margin-left:auto"
+                @click="removeMember(member)"
+              >Remove</button>
             </div>
 
             <!-- Invite section (all members can invite) -->

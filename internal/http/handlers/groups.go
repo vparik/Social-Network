@@ -181,6 +181,43 @@ func LeaveGroup(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"ok":true}`))
 }
 
+// DELETE /api/groups/{id}/members/{userID}
+func RemoveMember(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	payload := goauth.FromContext(r.Context())
+
+	groupID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || groupID == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error":"invalid_group_id"}`))
+		return
+	}
+
+	targetID, err := strconv.Atoi(r.PathValue("userID"))
+	if err != nil || targetID == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error":"invalid_user_id"}`))
+		return
+	}
+
+	if err := store.RemoveGroupMember(groupID, targetID, payload.UserID); err != nil {
+		switch err.Error() {
+		case "forbidden":
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(`{"error":"forbidden"}`))
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error":"internal_error"}`))
+		}
+		return
+	}
+
+	ws.NotifyGroupMemberChanged(groupID, targetID, "removed")
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"ok":true}`))
+}
+
 // POST /api/groups/{id}/invite
 func InviteToGroup(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")

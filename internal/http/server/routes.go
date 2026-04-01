@@ -54,6 +54,7 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/groups/{id}/members", goauth.Protected(handlers.GetGroupMembers))
 	s.mux.HandleFunc("POST /api/groups/{id}/join", goauth.ProtectedCsrfActive(handlers.JoinGroup))
 	s.mux.HandleFunc("DELETE /api/groups/{id}/members", goauth.ProtectedCsrfActive(handlers.LeaveGroup))
+	s.mux.HandleFunc("DELETE /api/groups/{id}/members/{userID}", goauth.ProtectedCsrfActive(handlers.RemoveMember))
 	s.mux.HandleFunc("POST /api/groups/{id}/invite", goauth.ProtectedCsrfActive(handlers.InviteToGroup))
 	s.mux.HandleFunc("GET /api/groups/{id}/requests", goauth.Protected(handlers.GetGroupJoinRequests))
 	s.mux.HandleFunc("POST /api/groups/{id}/requests/{userID}/accept", goauth.ProtectedCsrfActive(handlers.AcceptGroupJoinRequest))
