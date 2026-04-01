@@ -11,7 +11,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  box-shadow: 0 14px 28px rgba(7, 24, 38, 0.10);
   backdrop-filter: blur(10px);
 }
 

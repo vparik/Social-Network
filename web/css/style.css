@@ -73,16 +73,7 @@ body {
 
 
 
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(circle at 75% 20%, rgba(212, 175, 55, 0.10), transparent 18%),
-    radial-gradient(circle at 18% 78%, rgba(255, 255, 255, 0.05), transparent 20%);
-  pointer-events: none;
-  z-index: -1;
-}
+
 
 @keyframes ambientMove {
   0% { transform: translate(0, 0) rotate(0deg); }

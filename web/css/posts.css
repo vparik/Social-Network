@@ -11,12 +11,11 @@
 .feed-empty {
   padding: 24px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.94);
+  background: transparent;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(214, 224, 234, 0.85);
   text-align: center;
   color: var(--text-soft);
-  box-shadow: 0 16px 40px rgba(6, 24, 38, 0.18);
 }
 
 /* ============================= */
