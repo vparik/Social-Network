@@ -71,10 +71,6 @@ body {
   overflow-x: hidden;
 }
 
-
-
-
-
 @keyframes ambientMove {
   0% { transform: translate(0, 0) rotate(0deg); }
   50% { transform: translate(10%, 8%) rotate(180deg); }
@@ -198,14 +194,14 @@ form {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 82% 18%, rgba(212, 175, 55, 0.10), transparent 18%),
+    radial-gradient(circle at 82% 18%, rgba(212, 92, 55, 0.1), transparent 15%),
     radial-gradient(circle at 15% 78%, rgba(255, 255, 255, 0.05), transparent 20%);
   pointer-events: none;
 }
 
 .auth-shell {
   width: min(1180px, 100%);
-  min-height: 720px;
+  min-height: 790px;
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   background: 
@@ -291,6 +287,19 @@ form {
   z-index: 1;
 }
 
+@keyframes auth-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
 .auth-card {
   width: min(100%, 520px);
   padding: 42px;
@@ -299,6 +308,7 @@ form {
   background: transparent;
   box-shadow: var(--shadow-md);
   backdrop-filter: blur(8px);
+  animation: auth-card-enter 1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .auth-title {
@@ -370,6 +380,19 @@ form {
 
 .auth-field input::placeholder {
   color: #90a1b2;
+}
+
+.auth-field input:-webkit-autofill,
+.auth-field input:-webkit-autofill:focus {
+
+  -webkit-text-fill-color: var(--bg);
+  transition: background-color 9999s ease;
+}
+
+.auth-field input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.9;
+  cursor: pointer;
 }
 
 .auth-field input:focus {
