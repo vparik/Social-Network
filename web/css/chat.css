@@ -100,7 +100,7 @@
   bottom: 0;
   width: 10px;
   height: 10px;
-  background: var(--bg-alt);
+  background: var(--surface-muted);
   border: 2px solid var(--surface);
   border-radius: 50%;
 }

@@ -7,39 +7,39 @@
 
   --gold-500: #d4af37;
   --gold-600: #be9824;
-  --gold-soft: #f4e2a3;
+  --gold-soft: rgba(212, 175, 55, 0.15);
 
   --teal-500: #2ec4b6;
   --teal-600: #22a89c;
-  --teal-soft: #d8f7f3;
+  --teal-soft: rgba(46, 196, 182, 0.14);
 
   --coral-500: #ff6b6bd0;
   --coral-600: #e25555;
   --coral-dark: #bd4f47d7;
-  --coral-tonal: #e05e5e33;
+  --coral-tonal: rgba(226, 85, 85, 0.18);
 
-  --bg: #f4f7fb;
-  --bg-alt: #c4c8ccb7;
-  --bg-dark:  #979a9eb7;
-  --bg-tonal: #d8f7f3f5;
-  --surface: #ffffff;
-  --surface-soft: #f8fbff;
-  --surface-muted: #eef3f9;
+  --bg: #181b21;
+  --bg-alt: rgba(38, 43, 54, 0.75);
+  --bg-dark: #020504;
+  --bg-tonal: rgba(46, 196, 182, 0.10);
+  --surface: #1f2330;
+  --surface-soft: #242838;
+  --surface-muted: #2a2f3e;
 
-  --text: #1b2a38;
-  --text-soft: #5f7080;
-  --text-inverse: #f8fbff;
-  --text-inverse-2: #acbfd1;
+  --text: #dde3ed;
+  --text-soft: #7a8b9e;
+  --text-inverse: #1b2a38;
+  --text-inverse-2: #3a4f63;
 
-  --border: rgba(6, 24, 38, 0.28);
-  --border-soft: rgba(191, 208, 223, 0.92);
-  --border-alt: rgba(191, 208, 223, 0.15);
-  --border-strong: #bfd0df;
-  --border-tonal: #2ec4b661;
+  --border: rgba(220, 232, 255, 0.10);
+  --border-soft: rgba(220, 232, 255, 0.07);
+  --border-alt: rgba(220, 232, 255, 0.05);
+  --border-strong: rgba(220, 232, 255, 0.18);
+  --border-tonal: rgba(46, 196, 182, 0.38);
 
-  --shadow-sm: 0 8px 20px rgba(9, 30, 52, 0.06);
-  --shadow-md: 0 16px 40px rgba(9, 30, 52, 0.10);
-  --shadow-lg: 0 24px 60px rgba(9, 30, 52, 0.14);
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 16px 40px rgba(0, 0, 0, 0.36);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.46);
 
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -58,13 +58,13 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
   font-family: "Rubik", sans-serif;
-  background: var(--bg);
+  /* background: var(--bg); */
   color: var(--text);
   background-attachment: fixed;
   position: relative;
@@ -85,7 +85,7 @@ body {
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(31, 35, 48, 0.96);
   padding: 24px;
   border-radius: var(--radius-md);
   width: 320px;
@@ -138,7 +138,7 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(24, 27, 33, 0.92);
   color: var(--text);
 }
 
@@ -230,7 +230,7 @@ form {
   padding: 24px;
   border: 1px solid rgba(191, 208, 223, 0.52);
   border-radius: 12px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 
 }
 
@@ -316,13 +316,13 @@ form {
   font-size: 48px;
   font-weight: 500;
   line-height: 1;
-  color: var(--surface-muted);
+  color: var(--text);
 }
 
 .auth-switch-text {
   margin: 0 0 28px;
   font-size: 16px;
-  color: var(--border-soft);
+  color: var(--text-soft);
 }
 
 .auth-switch-link {
@@ -359,7 +359,7 @@ form {
 .auth-field label {
   font-size: 14px;
   font-weight: 500;
-  color: var(--border-soft);
+  color: var(--text);
 }
 
 .auth-field input {
@@ -367,9 +367,9 @@ form {
   box-sizing: border-box;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--border-strong);
   background: transparent;
-  color: var(--bg);
+  color: var(--text);
   font-size: 15px;
   outline: none;
   transition:
@@ -384,8 +384,7 @@ form {
 
 .auth-field input:-webkit-autofill,
 .auth-field input:-webkit-autofill:focus {
-
-  -webkit-text-fill-color: var(--bg);
+  -webkit-text-fill-color: var(--text);
   transition: background-color 9999s ease;
 }
 
@@ -403,13 +402,40 @@ form {
   border-color: coral;
 }
 
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-wrapper input {
+  padding-right: 46px;
+}
+
+.auth-show-password {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #90a1b2;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.auth-show-password:hover {
+  color: var(--text);
+}
+
 .auth-submit-btn {
   margin-top: 10px;
   padding: 15px 18px;
   border-radius: 40px;
   border: 1px solid var(--border-tonal);
   background: #020504;
-  color: var(--bg);
+  color: var(--text);
   font-size: 20px;
   font-weight: 400;
   cursor: pointer;
@@ -515,9 +541,10 @@ form {
 .confirm-modal {
   width: 100%;
   max-width: 420px;
-  background: #fff;
+  background: #1f2330;
+  border: 1px solid rgba(220, 232, 255, 0.10);
   border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
   padding: 22px;
   animation: confirmModalFadeIn 0.18s ease;
 }
@@ -525,14 +552,14 @@ form {
 .confirm-modal-title {
   font-size: 20px;
   font-weight: 700;
-  color: #1f2937;
+  color: var(--text);
   margin-bottom: 10px;
 }
 
 .confirm-modal-message {
   font-size: 15px;
   line-height: 1.5;
-  color: #4b5563;
+  color: var(--text-soft);
   margin-bottom: 20px;
   word-break: break-word;
 }
@@ -562,8 +589,8 @@ form {
 }
 
 .confirm-modal-btn-cancel {
-  background: #e5e7eb;
-  color: #111827;
+  background: #2a2f3e;
+  color: var(--text);
 }
 
 .confirm-modal-btn-primary {
