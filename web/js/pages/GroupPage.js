@@ -21,6 +21,7 @@ window.GroupPage = {
       // forms
       newMessage: "",
       inviteUserId: null,
+      dropdownOpen: false,
       chatUnsub: null,
       unsubs: []
     };
@@ -43,6 +44,9 @@ window.GroupPage = {
     membersNotInGroup() {
       const memberIds = new Set(this.members.map(m => m.userId));
       return this.myFollowers.filter(f => !memberIds.has(f.id));
+    },
+    selectedInviteUser() {
+      return this.membersNotInGroup.find(u => u.id === this.inviteUserId) || null;
     }
   },
 
@@ -226,6 +230,7 @@ window.GroupPage = {
       const data = await res.json();
       if (res.ok) {
         this.inviteUserId = null;
+        this.dropdownOpen = false;
         alert("Invitation sent!");
       } else {
         alert(data.error || "Could not invite user");
@@ -317,6 +322,20 @@ window.GroupPage = {
     formatTime(ts) {
       if (!ts) return "";
       return new Date(ts * 1000).toLocaleDateString();
+    },
+
+    toggleInviteDropdown() {
+      if (this.membersNotInGroup.length === 0) return;
+      this.dropdownOpen = !this.dropdownOpen;
+    },
+
+    selectInviteUser(user) {
+      this.inviteUserId = user.id;
+      this.dropdownOpen = false;
+    },
+
+    inviteLabel(user) {
+      return user.nickname ? "@" + user.nickname : `${user.firstName} ${user.lastName}`;
     }
   },
 
@@ -430,16 +449,46 @@ window.GroupPage = {
             <!-- Invite section (all members can invite) -->
             <div class="group-invite-section">
               <p class="group-invite-section__title">Invite a follower</p>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <select v-model="inviteUserId" class="input" style="flex:1;min-width:180px">
-                  <option :value="null" disabled>Select a follower…</option>
-                  <option v-for="user in membersNotInGroup" :key="user.id" :value="user.id">
-                    {{ user.nickname ? '@' + user.nickname : user.firstName + ' ' + user.lastName }}
-                  </option>
-                </select>
-                <button class="btn btn-primary" :disabled="!inviteUserId" @click="inviteUser">Invite</button>
+
+              <div class="group-invite-row">
+                <div class="group-select" :class="{ 'group-select--open': dropdownOpen }">
+                  <button
+                    type="button"
+                    class="group-select__trigger"
+                    @click="toggleInviteDropdown"
+                  >
+                    <span class="group-select__text">
+                      {{ selectedInviteUser ? inviteLabel(selectedInviteUser) : 'Select a follower…' }}
+                    </span>
+                    <span class="group-select__caret">⌄</span>
+                  </button>
+
+                  <div v-if="dropdownOpen" class="group-select__menu">
+                    <button
+                      v-for="user in membersNotInGroup"
+                      :key="user.id"
+                      type="button"
+                      class="group-select__option"
+                      @click="selectInviteUser(user)"
+                    >
+                      {{ inviteLabel(user) }}
+                    </button>
+
+                    <div v-if="membersNotInGroup.length === 0" class="group-select__empty">
+                      No followers available
+                    </div>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" :disabled="!inviteUserId" @click="inviteUser">
+                  Invite
+                </button>
               </div>
-              <div v-if="membersNotInGroup.length === 0" style="color:var(--text-secondary,#b0b3b8);font-size:0.82rem;margin-top:8px">
+
+              <div
+                v-if="membersNotInGroup.length === 0"
+                style="color:var(--text-secondary,#b0b3b8);font-size:0.82rem;margin-top:8px"
+              >
                 All your followers are already members.
               </div>
             </div>
