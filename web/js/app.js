@@ -270,25 +270,7 @@ const App = {
       }
     },
 
-    handleDocumentClick(event) {
-      if (!this.chatState.sidebarOpen) return;
-
-      const navbarComponent = this.$refs.navbar;
-      const chatSidebarComponent = this.$refs.chatSidebar;
-
-      const clickedChatButton =
-        navbarComponent &&
-        typeof navbarComponent.isChatButtonTarget === "function" &&
-        navbarComponent.isChatButtonTarget(event.target);
-
-      const clickedInsideSidebar =
-        chatSidebarComponent &&
-        chatSidebarComponent.$el &&
-        chatSidebarComponent.$el.contains(event.target);
-
-      if (!clickedChatButton && !clickedInsideSidebar) {
-        window.Events.chat.closeSidebar();
-      }
+    handleDocumentClick() {
     }
   },
 

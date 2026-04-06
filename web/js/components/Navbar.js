@@ -468,10 +468,11 @@ window.Navbar = {
     async toggleNotifications() {
       const willOpen = !this.isNotificationsOpen;
 
-      this.closeNavbarPanels();
-      window.Events.chat.closeSidebar();
-
       this.isNotificationsOpen = willOpen;
+      this.isSettingsOpen = false;
+      this.isSearchOpen = false;
+      this.isCreatePostOpen = false;
+      this.closeFollowRequestPanel();
 
       if (!this.isNotificationsOpen) {
         this.closeFollowRequestPanel();
@@ -488,14 +489,14 @@ window.Navbar = {
     toggleSettings() {
       const willOpen = !this.isSettingsOpen;
 
-      this.closeNavbarPanels();
-      window.Events.chat.closeSidebar();
-
       this.isSettingsOpen = willOpen;
+      this.isNotificationsOpen = false;
+      this.isSearchOpen = false;
+      this.isCreatePostOpen = false;
+      this.closeFollowRequestPanel();
     },
 
     openChat() {
-      this.closeNavbarPanels();
       window.Events.chat.toggleSidebar();
     },
 
@@ -530,23 +531,14 @@ window.Navbar = {
     },
 
     handleClickOutside(event) {
-      const navbar = this.$refs.navbar;
       const searchWrapper = this.$refs.searchWrapper;
-
-      if (!navbar) return;
-
-      if (!navbar.contains(event.target)) {
-        this.isNotificationsOpen = false;
-        this.isSettingsOpen = false;
-        this.closeFollowRequestPanel();
-      }
 
       if (
         this.isSearchOpen &&
         searchWrapper &&
         !searchWrapper.contains(event.target)
       ) {
-        this.closeSearch();
+        this.isSearchOpen = false;
       }
     },
 
@@ -748,7 +740,7 @@ window.Navbar = {
             </span>
           </button>
 
-          <div v-if="isNotificationsOpen" class="nav-dropdown">
+          <div v-if="isNotificationsOpen" class="nav-dropdown nav-dropdown-notifications">
             <div class="nav-dropdown-title">Notifications</div>
 
             <div v-if="notificationsLoading" class="nav-dropdown-empty">
@@ -855,7 +847,7 @@ window.Navbar = {
             </svg>
           </button>
 
-          <div v-if="isSettingsOpen" class="nav-dropdown settings-dropdown">
+          <div v-if="isSettingsOpen" class="nav-dropdown nav-dropdown-settings settings-dropdown">
             <button class="nav-dropdown-item-logout" @click="logout">
               Logout
             </button>

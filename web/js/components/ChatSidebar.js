@@ -19,7 +19,6 @@ window.ChatSidebar = {
   methods: {
     openConversation(user) {
       window.Events.chat.openUser(user);
-      window.Events.chat.closeSidebar();
     },
 
     async refreshUsers() {

@@ -3,7 +3,7 @@
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 1300;
   height: 64px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 247, 251, 0.96));
   border-bottom: 1px solid rgba(191, 208, 223, 0.95);
@@ -130,6 +130,7 @@
   top: 48px;
   right: 0;
   min-width: 240px;
+  z-index: 1310;
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -854,4 +855,12 @@
   border: none;
   padding: 8px 12px;
   cursor: pointer;
+}
+
+.nav-dropdown-notifications {
+  z-index: 1310;
+}
+
+.nav-dropdown-settings {
+  z-index: 1320;
 }

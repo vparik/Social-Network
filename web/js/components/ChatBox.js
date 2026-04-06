@@ -8,6 +8,12 @@ window.ChatBox = {
     }
   },
 
+  computed: {
+    sidebarOpen() {
+      return window.Events.state.chat.sidebarOpen;
+    }
+  },
+  
   data() {
     return {
       messages: [],
@@ -143,7 +149,13 @@ window.ChatBox = {
   },
 
   template: `
-    <div class="chat-box" :class="{ minimized: minimized }">
+    <div class="chat-box" 
+        :class="{ 
+          minimized: minimized,
+          'chat-box-with-sidebar': sidebarOpen,
+          'chat-box-without-sidebar': !sidebarOpen
+        }"
+      >
       <div class="chat-box-header" @click.self="toggleMinimize">
         <div class="chat-box-user">
           <div class="chat-box-avatar">
