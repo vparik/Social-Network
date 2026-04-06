@@ -59,7 +59,9 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		req.AboutMe,
 	)
 	if err != nil {
-		http.Error(w, "user already exists", http.StatusConflict)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]string{"message": "User already exists"})
 		return
 	}
 

@@ -42,15 +42,9 @@ social-network/
 
 
 
-IMPORTANT
-when token expires we need to reload page and redirect user to login regardless where he is now
-
-
-
-new follow db table
-new profile ui
-new clickable on dashboard
-
-
 check privacy mock plan
 https://excalidraw.com/#json=y8obq_ZI8_RTYzx3zY2jX,BKJlKNtko3uh3WNOB_jP1Q
+
+
+
+avatar nick name and aboutme input texts in register form(nullable)

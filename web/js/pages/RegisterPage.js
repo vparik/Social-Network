@@ -37,17 +37,8 @@ window.RegisterPage = {
         });
 
         if (!response.ok) {
-          let message = "Something went wrong. Please try again.";
-
-          try {
-            const data = await response.json();
-            message = data.error || message;
-          } catch {
-            message = await response.text();
-          }
-
-          console.error("Registration error:", message);
-          throw new Error(message);
+          const data = await response.json();
+          throw new Error(data.message || "Registration failed");
         }
 
         Router.push("/login");
