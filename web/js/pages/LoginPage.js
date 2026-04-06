@@ -27,50 +27,65 @@ window.LoginPage = {
       return user;
     },
 
-    async submit() {
-      this.error = "";
-      this.loading = true;
+async submit() {
+  this.error = "";
+  this.loading = true;
 
-      try {
-        if (!this.email || !this.password) {
-          throw new Error("Email and password required");
-        }
+  try {
+    if (!this.email || !this.password) {
+      throw new Error("Email and password required");
+    }
 
-        const response = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: this.email,
-            password: this.password
-          })
-        });
+    const response = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: this.email,
+        password: this.password
+      })
+    });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error("No account found with these credentials");
-          }
-
-          let message = "Login failed";
-          try {
-            const data = await response.json();
-            message = data.error || message;
-          } catch {
-            const text = await response.text();
-            if (text) message = text;
-          }
-
-          throw new Error(message);
-        }
-
-        await this.loadCurrentUser();
-        Router.push("/");
-      } catch (err) {
-        this.error = err.message || "Login failed";
-        console.error(this.error);
-      } finally {
-        this.loading = false;
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("No account found with these credentials");
       }
-    },
+
+      let message = "Login failed";
+      try {
+        const data = await response.json();
+        message = data.error || message;
+      } catch {
+        const text = await response.text();
+        if (text) message = text;
+      }
+
+      throw new Error(message);
+    }
+
+    await this.loadCurrentUser();
+
+    // Confirm pending avatar from registration if present
+    const tempPath = sessionStorage.getItem("pendingAvatarTempPath");
+    if (tempPath) {
+      sessionStorage.removeItem("pendingAvatarTempPath");
+      await fetch("/api/upload/avatar/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": window.extractCsrfToken()
+        },
+        body: JSON.stringify({ tempPath })
+      });
+    }
+
+    Router.push("/");
+  } catch (err) {
+    this.error = err.message || "Login failed";
+    console.error(this.error);
+  } finally {
+    this.loading = false;
+  }
+},
 
     registerNavigate() {
       Router.push("/register");

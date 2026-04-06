@@ -78,13 +78,15 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc("GET /api/messages", goauth.Protected(chat.GetConversation))
 
 	// ---------------- IMAGES --------------------
+	s.mux.HandleFunc("POST /api/upload/avatar/temp", handlers.UploadAvatarTemp) // public
+	s.mux.HandleFunc("POST /api/upload/avatar/confirm", goauth.ProtectedCsrfActive(handlers.UploadAvatarConfirm))
 	s.mux.HandleFunc("POST /api/upload/avatar", goauth.ProtectedCsrfActive(handlers.UploadAvatar))
 	s.mux.HandleFunc("DELETE /api/upload/avatar", goauth.ProtectedCsrfActive(handlers.RemoveAvatar))
 	s.mux.HandleFunc("POST /api/upload/image", goauth.ProtectedCsrfActive(handlers.UploadImage))
 
 	// ---------------- WS --------------------
 	s.mux.HandleFunc("GET /ws", goauth.Protected(ws.WS))
-	
+
 	// ---------------- STATIC ----------------
 
 	uploadsFS := http.FileServer(http.Dir("./uploads"))

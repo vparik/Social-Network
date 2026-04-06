@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"socialnet/internal/database/store"
+	"strings"
 	"time"
 
 	"github.com/Des1red/goauthlib/goauth"
@@ -184,4 +185,88 @@ func decodeAndReencode(r io.Reader) ([]byte, string, error) {
 	default:
 		return nil, "", fmt.Errorf("unsupported image type: only JPEG, PNG, GIF and WebP are allowed")
 	}
+}
+
+// temp
+// POST /api/upload/avatar/temp — no auth required
+// Saves to ./uploads/avatars/temp/{uuid}.{ext}, returns the temp path.
+func UploadAvatarTemp(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
+		http.Error(w, "file too large (max 5 MB)", http.StatusBadRequest)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "missing file field", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	encoded, ext, err := decodeAndReencode(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := os.MkdirAll("./uploads/avatars/temp", 0755); err != nil {
+		http.Error(w, "failed to create temp directory", http.StatusInternalServerError)
+		return
+	}
+
+	tempName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	tempPath := "./uploads/avatars/temp/" + tempName
+	if err := os.WriteFile(tempPath, encoded, 0644); err != nil {
+		http.Error(w, "failed to save temp file", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"tempPath": "/uploads/avatars/temp/" + tempName})
+}
+
+// POST /api/upload/avatar/confirm — protected
+// Moves the temp file to its permanent location and updates the DB.
+func UploadAvatarConfirm(w http.ResponseWriter, r *http.Request) {
+	payload := goauth.FromContext(r.Context())
+	userID := payload.UserID
+
+	var body struct {
+		TempPath string `json:"tempPath"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.TempPath == "" {
+		http.Error(w, "missing tempPath", http.StatusBadRequest)
+		return
+	}
+
+	// Sanitize: only allow files inside the temp dir
+	cleanTemp := filepath.Clean("." + body.TempPath)
+	if !strings.HasPrefix(cleanTemp, "uploads/avatars/temp/") {
+		http.Error(w, "invalid temp path", http.StatusBadRequest)
+		return
+	}
+
+	ext := filepath.Ext(cleanTemp)
+	finalName := fmt.Sprintf("%d%s", userID, ext)
+	finalPath := "./uploads/avatars/" + finalName
+
+	// Remove any existing avatar for this user first
+	existing, _ := filepath.Glob(fmt.Sprintf("./uploads/avatars/%d.*", userID))
+	for _, f := range existing {
+		os.Remove(f)
+	}
+
+	if err := os.Rename(cleanTemp, finalPath); err != nil {
+		http.Error(w, "failed to move file", http.StatusInternalServerError)
+		return
+	}
+
+	avatarPath := "/uploads/avatars/" + finalName
+	if err := store.UpdateAvatarPath(userID, avatarPath); err != nil {
+		http.Error(w, "failed to update avatar", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"avatarPath": avatarPath})
 }
