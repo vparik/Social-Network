@@ -31,7 +31,7 @@
 .profile-avatar-placeholder {
   width: 110px;
   height: 110px;
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  /* border: 1px solid rgba(255, 255, 255, 0); */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -106,7 +106,7 @@
 .profile-info h1 {
   margin: 0 0 5px 0;
   font-size: 32px;
-  color: var(--navy-900);
+  color: var(--text);
 }
 
 .profile-nickname {
@@ -150,14 +150,14 @@
 }
 
 .follow-btn.following {
-  background: rgba(11, 34, 57, 0.06);
-  border-color: rgba(11, 34, 57, 0.08);
-  color: var(--navy-900);
+  background: rgba(220, 232, 255, 0.08);
+  border-color: rgba(220, 232, 255, 0.12);
+  color: var(--text);
 }
 
 .follow-btn.following:hover:not(:disabled) {
-  background: rgba(11, 34, 57, 0.10);
-  color: var(--navy-900);
+  background: rgba(220, 232, 255, 0.13);
+  color: var(--text);
   box-shadow: none;
 }
 
@@ -206,7 +206,7 @@
 .privacy-toggle__fill {
   position: absolute;
   inset: 0;
-  background: #f7e1d8ce;
+  background: rgba(226, 85, 85, 0.18);
   transform: translateX(-100%);
   transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: inherit;
@@ -224,7 +224,7 @@
   font-size: 0.85rem;
   font-weight: 400;
   letter-spacing: 0.01em;
-  color: rgba(30, 90, 80, 0.85);
+  color: var(--teal-500);
   transition: color 0.25s 0.15s;
   pointer-events: none;
 }
@@ -246,7 +246,7 @@
   font-weight: 500;
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
   background: transparent;
-  color: var(--navy-900);
+  color: var(--text);
   box-shadow: none;
   backdrop-filter: blur(8px);
 }
@@ -271,7 +271,7 @@
 }
 
 .profile-stat-btn strong {
-  color: var(--navy-900);
+  color: var(--text);
 }
 
 .profile-stat-btn:hover {
@@ -282,7 +282,7 @@
 .social-list-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 24, 38, 0.45);
+  background: rgba(0, 0, 0, 0.60);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -296,9 +296,9 @@
   max-height: 78vh;
   overflow: hidden;
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 250, 255, 0.97) 100%);
-  border: 1px solid rgba(214, 224, 234, 0.92);
-  box-shadow: 0 24px 60px rgba(6, 24, 38, 0.28);
+  background: #1f2330;
+  border: 1px solid rgba(220, 232, 255, 0.10);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.48);
   display: flex;
   flex-direction: column;
 }
@@ -309,19 +309,19 @@
   justify-content: space-between;
   gap: 12px;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(214, 224, 234, 0.85);
+  border-bottom: 1px solid rgba(220, 232, 255, 0.09);
 }
 
 .social-list-header h2 {
   margin: 0;
   font-size: 22px;
-  color: var(--navy-900);
+  color: var(--text);
 }
 
 .social-list-close-btn {
   appearance: none;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--navy-900);
+  background: rgba(42, 47, 62, 0.80);
+  color: var(--text);
   width: 38px;
   height: 38px;
   border-radius: 10px;
@@ -332,7 +332,7 @@
 }
 
 .social-list-close-btn:hover {
-  background: rgba(216, 247, 243, 0.96);
+  background: rgba(46, 196, 182, 0.14);
   border-color: rgba(46, 196, 182, 0.35);
   transform: translateY(-1px);
 }
@@ -348,7 +348,7 @@
 .social-list-user {
   appearance: none;
   width: 100%;
-  border: 1px solid rgba(214, 224, 234, 0.88);
+  border: 1px solid rgba(220, 232, 255, 0.09);
   background: transparent;
   border-radius: 14px;
   display: flex;
@@ -360,9 +360,9 @@
 
 .social-list-user:hover {
   transform: translateY(-1px);
-  border-color: rgba(46, 196, 182, 0.35);
-  background: rgba(216, 247, 243, 0.94);
-  box-shadow: 0 12px 24px rgba(6, 24, 38, 0.10);
+  border-color: rgba(46, 196, 182, 0.30);
+  background: rgba(46, 196, 182, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
 }
 
 .social-list-user-avatar,

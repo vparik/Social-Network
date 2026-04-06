@@ -93,6 +93,7 @@ func (s *Server) registerRoutes() {
 	fs := http.FileServer(http.Dir("./web"))
 	s.mux.Handle("GET /css/", fs)
 	s.mux.Handle("GET /js/", fs)
+	s.mux.Handle("GET /images/", fs)
 
 	// ---------------- PUBLIC PAGES ----------------
 

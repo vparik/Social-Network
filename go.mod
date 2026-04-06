@@ -9,6 +9,8 @@ require (
 
 require golang.org/x/crypto v0.48.0
 
+require golang.org/x/image v0.38.0 // indirect
+
 require github.com/gorilla/websocket v1.5.3 // direct
 
 require github.com/Des1red/gosqlitekit v1.1.0 // direct

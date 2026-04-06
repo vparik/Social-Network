@@ -20,6 +20,9 @@ window.CreatePost = {
       imageUrl: null,
       imagePreview: null,
       imageUploading: false,
+      imageUrl: null,
+      imagePreview: null,
+      imageUploading: false,
       followersLoading: false,
       followersError: "",
       followers: [],
@@ -361,47 +364,50 @@ window.CreatePost = {
               {{ visibilityHelpText }}
             </span>
 
-            <div v-if="showSidebar" class="create-post-sidebar">
-              <div class="create-post-sidebar-section">
-                <div class="create-post-sidebar-title">Who can see this</div>
+            <div
+        v-if="showSidebar"
+        class="create-post-sidebar"
+      >
+        <div class="create-post-sidebar-section">
+          <div class="create-post-sidebar-title">Who can see this</div>
 
-                <div v-if="followersLoading" class="create-post-sidebar-empty">
-                  Loading followers...
-                </div>
+          <div v-if="followersLoading" class="create-post-sidebar-empty">
+            Loading followers...
+          </div>
 
-                <div v-else-if="followersError" class="create-post-sidebar-empty">
-                  {{ followersError }}
-                </div>
+          <div v-else-if="followersError" class="create-post-sidebar-empty">
+            {{ followersError }}
+          </div>
 
-                <div v-else-if="!followers.length" class="create-post-sidebar-empty">
-                  You do not have any followers to select yet.
-                </div>
+          <div v-else-if="!followers.length" class="create-post-sidebar-empty">
+            You do not have any followers to select yet.
+          </div>
 
-                <div v-else class="create-post-user-list">
-                  <button
-                    v-for="user in followers"
-                    :key="user.id"
-                    type="button"
-                    class="create-post-user-option"
-                    :class="{ 'is-selected': isUserSelected(user.id) }"
-                    @click="toggleAllowedUser(user.id)"
-                  >
-                    <span class="create-post-user-option__name">
-                      {{ displayFollowerName(user) }}
-                    </span>
-                  </button>
-                </div>
-              </div>
+          <div v-else class="create-post-user-list">
+            <button
+              v-for="user in followers"
+              :key="user.id"
+              type="button"
+              class="create-post-user-option"
+              :class="{ 'is-selected': isUserSelected(user.id) }"
+              @click="toggleAllowedUser(user.id)"
+            >
+              <span class="create-post-user-option__name">
+                {{ displayFollowerName(user) }}
+              </span>
+            </button>
+          </div>
+        </div>
 
-              <div class="create-post-sidebar-section">
-                <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
-                  No followers selected yet.
-                </div>
-                <div v-else class="create-post-sidebar-empty">
-                  {{ selectedAllowedUserIds.length }} follower(s) selected.
-                </div>
-              </div>
-            </div>
+        <div class="create-post-sidebar-section">
+          <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
+            No followers selected yet.
+          </div>
+          <div v-else class="create-post-sidebar-empty">
+            {{ selectedAllowedUserIds.length }} follower(s) selected.
+          </div>
+        </div>
+      </div>
           </div>
 
           <div class="create-post-form">
@@ -477,6 +483,28 @@ window.CreatePost = {
         </template>
 
         <div v-else class="create-event-layout">
+          <div class="create-event-invite-row">
+            <button
+              type="button"
+              class="create-event-invite-btn"
+              :class="{ 'is-active': showEventInviteSidebar }"
+              @click="toggleEventInviteSidebar"
+              :disabled="submitting"
+            >
+              Invite
+            </button>
+
+            <div v-if="showEventInviteSidebar" class="create-event-invite-list">
+              <div class="create-event-invite-list-title">Users</div>
+              <div class="create-event-invite-list-empty">No users available yet.</div>
+            </div>
+
+            <div v-if="showEventInviteSidebar" class="create-event-invite-list">
+              <div class="create-event-invite-list-title">Groups</div>
+              <div class="create-event-invite-list-empty">No groups available yet.</div>
+            </div>
+          </div>
+
           <div class="create-post-form">
             <textarea
               v-model="eventTitle"
@@ -514,6 +542,23 @@ window.CreatePost = {
                 @change="handleImageSelect"
               />
             </div>
+
+            <div v-if="imagePreview" class="post-image-preview">
+              <img :src="imagePreview" alt="preview" />
+              <button
+                type="button"
+                class="remove-image-btn"
+                @click="removeImage"
+                :disabled="submitting"
+              >&times;</button>
+              <input
+                type="file"
+                ref="imageInput"
+                accept="image/*"
+                style="display:none"
+                @change="handleImageSelect"
+              />
+            </div>
             <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
 
             <input
@@ -535,6 +580,7 @@ window.CreatePost = {
                 :disabled="submitting"
               >&times;</button>
             </div>
+            <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
           </div>
 
           <div class="create-post-footer">
@@ -559,6 +605,9 @@ window.CreatePost = {
           </div>
         </div>
       </div>
+
+      
+
     </div>
   </div>
   `
