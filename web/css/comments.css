@@ -20,13 +20,13 @@
   margin-top: 10px;
   border-radius: 14px;
   background: transparent;
-  border: 1px solid rgba(214, 224, 234, 0.9);
+  border: 1px solid rgba(220, 232, 255, 0.09);
 }
 
 .feed-comment-author {
   border: none;
   background: transparent;
-  color: var(--navy-900);
+  color: var(--text);
   padding: 0;
   margin: 0;
   font: inherit;
@@ -43,7 +43,7 @@
   font-weight: 400;
 
   line-height: 1.5;
-  color: var(--text-main);
+  color: var(--text-soft);
   word-break: break-word;
 }
 

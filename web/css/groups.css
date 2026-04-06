@@ -13,9 +13,9 @@
 }
 
 .groups-page__title {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  color: var(--navy-700);
+  color: whitesmoke;
 }
 
 .groups-grid {
@@ -36,13 +36,13 @@
 }
 
 .group-card:hover {
-  border-color: var(--accent, #2374e1);
+  border-color: var(--border-tonal);
 }
 
 .group-card__title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--navy-700);
+  color: var(--text);
   margin: 0;
 }
 
@@ -62,8 +62,17 @@
 
 .group-card__actions {
   display: flex;
+  flex-direction: row-reverse;
   gap: 8px;
   margin-top: 4px;
+}
+
+.btn-primary {
+  border: 1px solid #b0b3b8;
+}
+
+.btn-primary:hover {
+  border: 1px solid var(--teal-600);
 }
 
 /* ── Create Group Form ─────────────────────────────── */
@@ -103,7 +112,7 @@
 .group-page__name {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--navy-700);
+  color: var(--text);
   margin: 0 0 6px;
 }
 
@@ -154,8 +163,8 @@
 }
 
 .group-tab--active {
-  color: var(--accent, #2374e1);
-  border-bottom: 2px solid var(--accent, #2374e1);
+  color: var(--teal-500);
+  border-bottom: 2px solid var(--teal-500);
   margin-bottom: -2px;
 }
 
@@ -361,7 +370,6 @@
 .group-member__name {
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--navy-900);
   flex: 1;
 }
 
@@ -369,8 +377,8 @@
   font-size: 0.75rem;
   padding: 2px 8px;
   border-radius: 4px;
-  background: var(--accent, #2374e1);
-  color: #fff;
+  background: rgba(46, 196, 182, 0.10);
+  color: var(--teal-600);
 }
 
 /* ── Group Chat ─────────────────────────────── */
@@ -505,9 +513,11 @@
 }
 
 .group-form__title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--navy-700);
+  display: flex;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text);
   margin: 0;
 }
 
