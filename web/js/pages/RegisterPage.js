@@ -19,61 +19,61 @@ window.RegisterPage = {
   },
 
   methods: {
-async submit() {
-  this.error = "";
-  this.loading = true;
+    async submit() {
+      this.error = "";
+      this.loading = true;
 
-  try {
-    if (!this.email || !this.password) {
-      throw new Error("Email and password required");
-    }
+      try {
+        if (!this.email || !this.password) {
+          throw new Error("Email and password required");
+        }
 
-    // 1. Upload to temp (no auth needed)
-    if (this.avatarFile) {
-      const formData = new FormData();
-      formData.append("file", this.avatarFile);
+        // 1. Upload to temp (no auth needed)
+        if (this.avatarFile) {
+          const formData = new FormData();
+          formData.append("file", this.avatarFile);
 
-      const uploadRes = await fetch("/api/upload/avatar/temp", {
-        method: "POST",
-        body: formData
-      });
+          const uploadRes = await fetch("/api/upload/avatar/temp", {
+            method: "POST",
+            body: formData
+          });
 
-      if (!uploadRes.ok) throw new Error("Avatar upload failed");
-      const uploadData = await uploadRes.json();
+          if (!uploadRes.ok) throw new Error("Avatar upload failed");
+          const uploadData = await uploadRes.json();
 
-      // Stash it for after login
-      if (uploadData.tempPath) {
-        sessionStorage.setItem("pendingAvatarTempPath", uploadData.tempPath);
+          // Stash it for after login
+          if (uploadData.tempPath) {
+            sessionStorage.setItem("pendingAvatarTempPath", uploadData.tempPath);
+          }
+        }
+
+        // 2. Register
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password,
+            first_name: this.firstName,
+            last_name: this.lastName,
+            date_of_birth: this.dateOfBirth,
+            nickname: this.nickname,
+            about_me: this.aboutMe
+          })
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || "Registration failed");
+        }
+
+        Router.push("/login");
+      } catch (err) {
+        this.error = err.message || "Registration failed";
+      } finally {
+        this.loading = false;
       }
-    }
-
-    // 2. Register
-    const response = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: this.email,
-        password: this.password,
-        first_name: this.firstName,
-        last_name: this.lastName,
-        date_of_birth: this.dateOfBirth,
-        nickname: this.nickname,
-        about_me: this.aboutMe
-      })
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Registration failed");
-    }
-
-    Router.push("/login");
-  } catch (err) {
-    this.error = err.message || "Registration failed";
-  } finally {
-    this.loading = false;
-  }
-},
+    },
 
     loginNavigate() {
       Router.push("/login");
