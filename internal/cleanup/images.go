@@ -36,7 +36,7 @@ func run() {
 }
 
 // sweepPostImages deletes every file in ./uploads/posts/ whose name is not
-// referenced by any post's image_url in the database.
+// referenced in the database.
 func sweepPostImages() (int, error) {
 	// Collect every filename currently in use by a post.
 	rows, err := database.DB.Query(
