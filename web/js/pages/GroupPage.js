@@ -503,20 +503,21 @@ window.GroupPage = {
             </div>
 
             <!-- Join requests (owner only) -->
-            <div v-if="isOwner && joinRequests.length > 0" class="group-requests-section">
+            <div v-if="isOwner" class="group-requests-section">
               <p class="group-requests-section__title">Join Requests ({{ joinRequests.length }})</p>
-              <div v-for="req in joinRequests" :key="req.id" class="group-request-item">
-                <span>{{ req.nickname ? '@' + req.nickname : req.firstName + ' ' + req.lastName }}</span>
-                <div class="group-request-item__actions">
-                  <button class="btn btn-primary" style="font-size:0.8rem;padding:4px 10px" @click="acceptRequest(req)">Accept</button>
-                  <button class="btn btn-danger" style="font-size:0.8rem;padding:4px 10px" @click="declineRequest(req)">Decline</button>
+              <div v-if="joinRequests.length > 0">
+                <div v-for="req in joinRequests" :key="req.id" class="group-request-item">
+                  <span>{{ req.nickname ? '@' + req.nickname : req.firstName + ' ' + req.lastName }}</span>
+                  <div class="group-request-item__actions">
+                    <button class="btn btn-primary" style="font-size:0.8rem;padding:4px 10px" @click="acceptRequest(req)">Accept</button>
+                    <button class="btn btn-danger" style="font-size:0.8rem;padding:4px 10px" @click="declineRequest(req)">Decline</button>
+                  </div>
                 </div>
               </div>
+              <div v-else style="color:var(--text-secondary,#b0b3b8);font-size:0.85rem">
+                No pending join requests.
+              </div>
             </div>
-            <div v-else-if="isOwner" style="margin-top:16px;color:var(--text-secondary,#b0b3b8);font-size:0.85rem">
-              No pending join requests.
-            </div>
-          </div>
 
           <!-- CHAT TAB -->
           <div v-if="activeTab === 'chat'" class="group-chat">
