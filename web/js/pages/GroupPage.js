@@ -409,7 +409,10 @@ window.GroupPage = {
             <div v-for="event in events" :key="event.id" class="group-event">
               <div class="group-event__title">{{ event.title }}</div>
               <div v-if="event.content" class="group-event__desc">{{ event.content }}</div>
-              <div class="group-event__time">📅 {{ formatEventDate(event.eventAt) }}</div>
+              <div class="group-event__time">
+                            <span class="material-symbols-outlined group-event__time-icon">calendar_today</span>
+                            {{ formatEventDate(event.eventAt) }}
+                          </div>
               <div class="group-event__votes">
                 <button
                   class="group-event__vote-btn"

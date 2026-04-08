@@ -290,9 +290,15 @@
 }
 
 .group-event__time {
-  font-size: 0.82rem;
+  font-size: 1rem;
   color: var(--accent, #2374e1);
   margin-bottom: 12px;
+  line-height: 2px;
+}
+
+.group-event__time-icon {
+  font-size: 20px;
+  color: var(--text);
 }
 
 .group-event__votes {
