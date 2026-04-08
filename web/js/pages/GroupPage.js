@@ -494,11 +494,13 @@ window.GroupPage = {
                       {{ myFollowers.length === 0 ? 'You have no followers.' : 'All your followers are already members.' }}
                     </div>
                   </div>
-
+                </div>
+                
                 <button class="btn btn-primary" :disabled="!inviteUserId" @click="inviteUser">
                   Invite
                 </button>
               </div>
+            </div>
 
             <!-- Join requests (owner only) -->
             <div v-if="isOwner && joinRequests.length > 0" class="group-requests-section">
