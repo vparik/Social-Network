@@ -219,6 +219,10 @@ window.GroupPage = {
     },
 
     // ── Members & Invites ──────────────────────────────
+    goToProfile(userId) {
+      window.Router.push("/profile?id=" + userId);
+    },
+
     async inviteUser() {
       if (!this.inviteUserId) return;
       const csrf = this.csrf();
@@ -444,8 +448,7 @@ window.GroupPage = {
           <!-- MEMBERS TAB -->
           <div v-if="activeTab === 'members'">
             <!-- Member list -->
-            <div v-for="member in members" :key="member.userId" class="group-member">
-              <div class="group-member__avatar">
+            <div v-for="member in members" :key="member.userId" class="group-member" style="cursor:pointer" @click="goToProfile(member.userId)">              <div class="group-member__avatar">
                 <img v-if="member.avatarPath" :src="member.avatarPath" :alt="member.firstName" />
                 <span v-else>{{ memberInitial(member) }}</span>
               </div>
@@ -455,7 +458,7 @@ window.GroupPage = {
                 v-if="isOwner && group.ownerId !== member.userId"
                 class="btn btn-danger"
                 style="font-size:0.8rem;padding:4px 10px;margin-left:auto"
-                @click="removeMember(member)"
+                @click.stop="removeMember(member)"
               >Remove</button>
             </div>
 
