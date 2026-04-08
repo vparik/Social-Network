@@ -15,7 +15,8 @@ window.HomePage = {
       posts: [],
       unsubscribePostCreated: null,
       unsubscribePostDeleted: null,
-      unsubscribePrivacyChanged: null
+      unsubscribePrivacyChanged: null,
+      unsubscribeFollowChanged: null
     };
   },
 
@@ -65,8 +66,14 @@ window.HomePage = {
       async () => {
         await this.loadPosts();
       }
+    
     );
-
+    this.unsubscribeFollowChanged = window.Events.on(
+      window.Events.EVENT.PROFILE_FOLLOW_CHANGED,
+      async () => {
+        await this.loadPosts();
+      }
+    );
     try {
       const res = await fetch("/api/home", { method: "GET" });
 
@@ -109,6 +116,11 @@ window.HomePage = {
     if (this.unsubscribePrivacyChanged) {
       this.unsubscribePrivacyChanged();
       this.unsubscribePrivacyChanged = null;
+    }
+
+    if (this.unsubscribeFollowChanged) {
+      this.unsubscribeFollowChanged();
+      this.unsubscribeFollowChanged = null;
     }
   },
 
