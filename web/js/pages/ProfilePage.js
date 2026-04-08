@@ -7,7 +7,7 @@ window.ProfilePage = {
       posts: [],
       loading: true,
       error: null,
-      showPosts: true,
+      showPosts: false,
       showGroups: true,
       profileGroups: [],
       isOwnProfile: false,
@@ -22,6 +22,11 @@ window.ProfilePage = {
       unsubscribeRelationshipChanged: null,
       unsubscribePrivacyChanged: null,
       avatarUploading: false,
+      editing: false,
+      editNickname: "",
+      editAboutMe: "",
+      editError: "",
+      editLoading: false,
       showSocialList: false,
       socialListType: "",
       socialListTitle: "",
@@ -550,6 +555,54 @@ window.ProfilePage = {
       }
     },
 
+    startEdit() {
+      this.editNickname = this.profile.nickname || "";
+      this.editAboutMe = this.profile.aboutMe || "";
+      this.editError = "";
+      this.editing = true;
+    },
+
+    cancelEdit() {
+      this.editing = false;
+    },
+
+    async saveProfile() {
+      if (this.editLoading) return;
+      this.editLoading = true;
+      this.editError = "";
+      try {
+        const res = await fetch("/api/profile", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": window.extractCsrfToken()
+          },
+          body: JSON.stringify({
+            nickname: this.editNickname,
+            aboutMe: this.editAboutMe
+          })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          this.editError = data.error || "Failed to save changes.";
+          return;
+        }
+
+        const updated = await res.json();
+        this.profile = updated;
+        this.editing = false;
+
+        if (window.Events?.state?.auth?.currentUser?.id === updated.id) {
+          window.Events.auth.setCurrentUser(updated);
+        }
+      } catch (err) {
+        this.editError = "Network error.";
+      } finally {
+        this.editLoading = false;
+      }
+    },
+
     async removeAvatar() {
       if (!this.profile.avatarPath || this.avatarUploading) return;
       this.avatarUploading = true;
@@ -623,12 +676,53 @@ template: `
         </div>
 
         <div class="profile-info">
-          <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
-          <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
+          <div class="profile-name-row">
+            <h1>{{ profile.firstName }} {{ profile.lastName }}</h1>
+            <button
+              v-if="isOwnProfile && !editing"
+              type="button"
+              class="profile-edit-btn"
+              @click="startEdit"
+              title="Edit profile"
+            >
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </div>
 
-          <p v-if="canViewContent && profile.aboutMe" class="profile-about">
-            {{ profile.aboutMe }}
-          </p>
+          <template v-if="!editing">
+            <p v-if="profile.nickname" class="profile-nickname">@{{ profile.nickname }}</p>
+            <p v-if="canViewContent && profile.aboutMe" class="profile-about">{{ profile.aboutMe }}</p>
+          </template>
+
+          <template v-else>
+            <input
+              v-model="editNickname"
+              class="profile-edit-input"
+              type="text"
+              placeholder="Nickname (optional)"
+            />
+            <textarea
+              v-model="editAboutMe"
+              class="profile-edit-textarea"
+              rows="3"
+              placeholder="About me (optional)"
+            ></textarea>
+            <p v-if="editError" class="profile-edit-error">{{ editError }}</p>
+            <div class="profile-edit-actions">
+              <button
+                type="button"
+                class="profile-edit-save"
+                :disabled="editLoading"
+                @click="saveProfile"
+              >{{ editLoading ? "Saving..." : "Save" }}</button>
+              <button
+                type="button"
+                class="profile-edit-cancel"
+                :disabled="editLoading"
+                @click="cancelEdit"
+              >Cancel</button>
+            </div>
+          </template>
 
           <div class="profile-stats">
             <button
@@ -701,7 +795,33 @@ template: `
         This account is private. Follow to see posts and profile details.
       </div>
 
-      <section v-else class="profile-posts-section">
+      <section v-else class="profile-groups-section">
+        <h2 class="profile-groups-heading">Groups</h2>
+
+        <div v-if="profileGroups.length === 0" class="feed-empty">
+          This user is not a member of any group.
+        </div>
+
+        <div v-else class="groups-grid">
+          <div
+            v-for="group in profileGroups"
+            :key="group.id"
+            class="group-card"
+          >
+            <h3 class="group-card__title">{{ group.title }}</h3>
+            <p class="group-card__desc">{{ group.description || "No description" }}</p>
+            <span class="group-card__meta">{{ memberLabel(group) }}</span>
+            <div class="group-card__actions">
+              <button
+                class="btn btn-primary"
+                @click="openGroup(group.id)"
+              >View</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-posts-section">
         <h2
           class="profile-posts-heading"
           @click="posts.length > 0 && togglePosts()"
@@ -751,37 +871,6 @@ template: `
             <div class="feed-post-footer">
               <div class="feed-post-meta">{{ privacyLabel(post.privacy) }}</div>
               <CommentSection :post-id="post.id" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="profile-posts-section">
-        <h2
-          class="profile-posts-heading"
-          @click="profileGroups.length > 0 && toggleGroups()"
-        >
-          Groups
-        </h2>
-
-        <div v-if="profileGroups.length === 0" class="feed-empty">
-          This user is not a member of any group.
-        </div>
-
-        <div v-else-if="showGroups" class="groups-grid">
-          <div
-            v-for="group in profileGroups"
-            :key="group.id"
-            class="group-card"
-          >
-            <h3 class="group-card__title">{{ group.title }}</h3>
-            <p class="group-card__desc">{{ group.description || "No description" }}</p>
-            <span class="group-card__meta">{{ memberLabel(group) }}</span>
-            <div class="group-card__actions">
-              <button
-                class="btn btn-primary"
-                @click="openGroup(group.id)"
-              >View</button>
             </div>
           </div>
         </div>

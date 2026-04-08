@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"socialnet/internal/database/store"
 	"socialnet/internal/http/ws"
+	"socialnet/internal/memory"
 	"socialnet/internal/models"
 	"strconv"
 
@@ -139,6 +140,47 @@ func SetProfilePrivacy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ws.NotifyProfilePrivacyChanged(user.ID, user.IsPublic)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+func UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	payload := goauth.FromContext(r.Context())
+
+	var body struct {
+		Nickname string `json:"nickname"`
+		AboutMe  string `json:"aboutMe"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if len(body.Nickname) > 10 {
+		http.Error(w, "nickname too long (max 50 characters)", http.StatusBadRequest)
+		return
+	}
+	if len(body.AboutMe) > 300 {
+		http.Error(w, "about me too long (max 500 characters)", http.StatusBadRequest)
+		return
+	}
+
+	if err := store.UpdateProfile(payload.UserID, body.Nickname, body.AboutMe); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
+	user, err := store.GetUserByID(payload.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal_error"}`))
+		return
+	}
+
+	memory.UpdateUserMemory(user.ID, user.FirstName, user.LastName, user.Nickname)
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }

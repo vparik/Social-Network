@@ -112,6 +112,16 @@ func GetUserByID(id int) (*models.User, error) {
 	return &u, nil
 }
 
+func UpdateProfile(userID int, nickname, aboutMe string) error {
+	_, err := database.DB.Exec(
+		`UPDATE users SET nickname = ?, about_me = ? WHERE id = ?`,
+		nickname,
+		aboutMe,
+		userID,
+	)
+	return err
+}
+
 func UpdateAvatarPath(userID int, path string) error {
 	_, err := database.DB.Exec(
 		`UPDATE users SET avatar_path = ? WHERE id = ?`,

@@ -6,7 +6,6 @@
   right: -320px;
   width: 300px;
   height: calc(100vh - 64px);
-  background: var(--surface);
   border-left: 1px solid var(--border);
   transition: right 0.25s ease;
   z-index: 1100;

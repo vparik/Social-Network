@@ -192,11 +192,6 @@
 /* Profile Posts Section         */
 /* ============================= */
 
-.profile-posts-section {
-  max-width: 760px;
-  margin: 32px auto;
-  padding: 0 16px 40px;
-}
 
 .profile-posts-heading {
   width: auto;

@@ -62,6 +62,24 @@ func AddToUserMemory(id int, firstName, lastName, nickname string) {
 	usersCache.ByID[entry.ID] = &usersCache.List[len(usersCache.List)-1]
 }
 
+func UpdateUserMemory(id int, firstName, lastName, nickname string) {
+	usersMu.Lock()
+	defer usersMu.Unlock()
+
+	entry, exists := usersCache.ByID[id]
+	if !exists {
+		return
+	}
+
+	entry.Nickname = nickname
+	entry.SearchBlob = strings.ToLower(
+		firstName + " " +
+			lastName + " " +
+			nickname + " " +
+			strings.TrimSpace(firstName+" "+lastName),
+	)
+}
+
 func GetUserCache() models.UserCache {
 	usersMu.RLock()
 	defer usersMu.RUnlock()
