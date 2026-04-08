@@ -524,7 +524,7 @@ window.GroupPage = {
                 No pending join requests.
               </div>
             </div>
-
+          </div>
           <!-- CHAT TAB -->
           <div v-if="activeTab === 'chat'" class="group-chat">
             <div class="group-chat__messages" ref="chatMessages">
