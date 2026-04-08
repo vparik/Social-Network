@@ -325,7 +325,6 @@ window.GroupPage = {
     },
 
     toggleInviteDropdown() {
-      if (this.membersNotInGroup.length === 0) return;
       this.dropdownOpen = !this.dropdownOpen;
     },
 
@@ -489,23 +488,14 @@ window.GroupPage = {
                     </button>
 
                     <div v-if="membersNotInGroup.length === 0" class="group-select__empty">
-                      No followers available
+                      {{ myFollowers.length === 0 ? 'You have no followers.' : 'All your followers are already members.' }}
                     </div>
                   </div>
-                </div>
 
                 <button class="btn btn-primary" :disabled="!inviteUserId" @click="inviteUser">
                   Invite
                 </button>
               </div>
-
-              <div
-                v-if="membersNotInGroup.length === 0"
-                style="color:var(--text-secondary,#b0b3b8);font-size:0.82rem;margin-top:8px"
-              >
-                All your followers are already members.
-              </div>
-            </div>
 
             <!-- Join requests (owner only) -->
             <div v-if="isOwner && joinRequests.length > 0" class="group-requests-section">
