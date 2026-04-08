@@ -167,7 +167,7 @@
 
 .nav-dropdown-item:hover {
   background: var(--teal-soft);
-  color: var(--navy-900);
+  color: var(--text);
   transform: none;
   filter: none;
 }
@@ -298,9 +298,9 @@
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 30px;
   padding: 28px;
-  box-shadow: var(--shadow-lg);
 }
 
 .create-post-modal--with-sidebar {

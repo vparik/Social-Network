@@ -506,6 +506,16 @@ window.CreatePost = {
           </div>
 
           <div class="create-post-form">
+          <input
+              v-model="eventAt"
+              type="datetime-local"
+              class="create-post-input create-post-datetime"
+              :class="{ 'create-post-input--error': eventAtError }"
+              :disabled="submitting"
+              @input="eventAtError = false"
+            />
+            <span v-if="eventAtError" class="create-post-field-error">* required</span>
+            
             <textarea
               v-model="eventTitle"
               class="create-post-input"
@@ -561,15 +571,7 @@ window.CreatePost = {
             </div>
             <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
 
-            <input
-              v-model="eventAt"
-              type="datetime-local"
-              class="create-post-input create-post-datetime"
-              :class="{ 'create-post-input--error': eventAtError }"
-              :disabled="submitting"
-              @input="eventAtError = false"
-            />
-            <span v-if="eventAtError" class="create-post-field-error">* required</span>
+            
 
             <div v-if="imagePreview" class="post-image-preview">
               <img :src="imagePreview" alt="preview" />

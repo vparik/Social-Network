@@ -1,6 +1,7 @@
 /* ===== Chat Sidebar ===== */
 
 .chat-sidebar {
+  background: var(--bg);
   position: fixed;
   top: 64px;
   right: -320px;

@@ -14,7 +14,7 @@ window.GroupPage = {
       messages: [],
       joinRequests: [],
       myFollowers: [],
-      activeTab: "posts",
+      activeTab: "feed",
       loading: true,
       error: "",
 
@@ -373,22 +373,26 @@ window.GroupPage = {
           <!-- Tabs -->
           <div class="group-tabs">
             <button
-              v-for="tab in ['posts','events','members','chat']"
-              :key="tab"
+              v-for="tab in [
+                { key: 'feed',       label: 'Feed' },
+                { key: 'live-events',label: 'Live Events' },
+                { key: 'new-post',   label: 'New Post' },
+                { key: 'new-event',  label: 'New Event' },
+                { key: 'members',    label: 'Members' },
+                { key: 'chat',       label: 'Chat' }
+              ]"
+              :key="tab.key"
               class="group-tab"
-              :class="{ 'group-tab--active': activeTab === tab }"
-              @click="activeTab = tab; if(tab==='chat') $nextTick(scrollChat)"
+              :class="{ 'group-tab--active': activeTab === tab.key }"
+              @click="activeTab = tab.key; if(tab.key==='chat') $nextTick(scrollChat)"
             >
-              {{ tab.charAt(0).toUpperCase() + tab.slice(1) }}
+              {{ tab.label }}
             </button>
           </div>
 
-          <!-- POSTS TAB -->
-          <div v-if="activeTab === 'posts'">
-            <CreatePost :group-id="groupId" :inline="true" />
-
+          <!-- FEED TAB – posts list only -->
+          <div v-if="activeTab === 'feed'">
             <div v-if="posts.length === 0" class="feed-empty">No posts yet. Be the first!</div>
-
             <GroupPostCard
               v-for="post in posts"
               :key="post.id"
@@ -399,12 +403,9 @@ window.GroupPage = {
             />
           </div>
 
-          <!-- EVENTS TAB -->
-          <div v-if="activeTab === 'events'">
-            <CreatePost :group-id="groupId" :inline="true" initial-mode="event" />
-
+          <!-- LIVE EVENTS TAB – events list only -->
+          <div v-if="activeTab === 'live-events'">
             <div v-if="events.length === 0" class="group-empty">No events yet.</div>
-
             <div v-for="event in events" :key="event.id" class="group-event">
               <div class="group-event__title">{{ event.title }}</div>
               <div v-if="event.content" class="group-event__desc">{{ event.content }}</div>
@@ -415,17 +416,27 @@ window.GroupPage = {
                   :class="voteClass(event, 'GOING')"
                   @click="vote(event, 'GOING')"
                 >
-                  ✅ Going ({{ event.goingCount }})
+                  Going ({{ event.goingCount }})
                 </button>
                 <button
                   class="group-event__vote-btn"
                   :class="voteClass(event, 'NOT-GOING')"
                   @click="vote(event, 'NOT-GOING')"
                 >
-                  ❌ Not Going ({{ event.notGoingCount }})
+                  Not Going ({{ event.notGoingCount }})
                 </button>
               </div>
             </div>
+          </div>
+
+          <!-- NEW POST TAB – create form only -->
+          <div v-if="activeTab === 'new-post'">
+            <CreatePost :group-id="groupId" :inline="true" />
+          </div>
+
+          <!-- NEW EVENT TAB – create form only -->
+          <div v-if="activeTab === 'new-event'">
+            <CreatePost :group-id="groupId" :inline="true" initial-mode="event" />
           </div>
 
           <!-- MEMBERS TAB -->

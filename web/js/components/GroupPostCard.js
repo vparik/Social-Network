@@ -114,7 +114,9 @@ window.GroupPostCard = {
               class="feed-post-delete-btn"
               @click="$emit('delete', post)"
               title="Delete post"
-            >🗑️</button>
+            >
+              <span class="material-symbols-outlined">delete_forever</span>
+            </button>
           </div>
         </div>
 
