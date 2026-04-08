@@ -1,13 +1,6 @@
 window.ProfilePage = {
   name: "ProfilePage",
 
-  props: {
-    routeQuery: {
-      type: String,
-      default: ""
-    }
-  },
-
   data() {
     return {
       profile: null,
@@ -39,16 +32,8 @@ window.ProfilePage = {
       socialListTitle: "",
       socialUsers: [],
       socialLoading: false,
-      socialError: null
+      socialError: null,
     };
-  },
-
-  computed: {
-    viewedProfileId() {
-      const params = new URLSearchParams(this.routeQuery || "");
-      const value = parseInt(params.get("id"), 10);
-      return Number.isInteger(value) && value > 0 ? value : null;
-    }
   },
 
   async mounted() {
@@ -90,14 +75,10 @@ window.ProfilePage = {
       async (data) => {
         if (!this.profile || !this.profile.id || !data) return;
 
-        const me = window.Events.state.auth.currentUser;
         const touchesCurrentProfile =
           data.actorId === this.profile.id || data.targetId === this.profile.id;
 
-        const touchesViewer =
-          !!me && (data.actorId === me.id || data.targetId === me.id);
-
-        if (!touchesCurrentProfile && !touchesViewer) return;
+        if (!touchesCurrentProfile) return;
 
         await this.refreshProfile();
 
@@ -110,23 +91,50 @@ window.ProfilePage = {
     );
 
     try {
-      await this.loadCurrentProfileView();
+      let me = window.Events.state.auth.currentUser;
+
+      if (!me) {
+        me = await new Promise((resolve, reject) => {
+          const unsubscribe = window.Events.on(
+            window.Events.EVENT.AUTH_USER_READY,
+            ({ user }) => {
+              unsubscribe();
+
+              if (!user) {
+                reject(new Error("failed_to_load_current_user"));
+                return;
+              }
+
+              resolve(user);
+            }
+          );
+        });
+      }
+
+      const id = new URLSearchParams(window.location.search).get("id");
+
+      if (id && parseInt(id, 10) !== me.id) {
+        await this.fetchProfile(id);
+        await this.loadFollowStatus();
+      } else {
+        await this.fetchProfile(me.id);
+        this.isOwnProfile = true;
+        this.canViewContent = true;
+        this.isFollowing = false;
+        this.isRequested = false;
+        this.hasIncomingRequest = false;
+        // keep auth state fresh
+        if (this.profile && window.Events?.state?.auth?.currentUser?.id === this.profile.id) {
+          window.Events.auth.setCurrentUser(this.profile);
+        }
+      }
+
+      await this.loadProfilePosts();
+      await this.loadProfileGroups();
       this.loading = false;
     } catch (err) {
       this.error = "Network error.";
       this.loading = false;
-    }
-  },
-
-  watch: {
-    routeQuery: {
-      immediate: false,
-      async handler() {
-        if (this.loading) return;
-
-        this.error = null;
-        await this.loadCurrentProfileView();
-      }
     }
   },
 
@@ -153,65 +161,6 @@ window.ProfilePage = {
   },
 
   methods: {
-    async waitForCurrentUser() {
-      let me = window.Events.state.auth.currentUser;
-      if (me) return me;
-
-      return await new Promise((resolve, reject) => {
-        const unsubscribe = window.Events.on(
-          window.Events.EVENT.AUTH_USER_READY,
-          ({ user }) => {
-            unsubscribe();
-
-            if (!user) {
-              reject(new Error("failed_to_load_current_user"));
-              return;
-            }
-
-            resolve(user);
-          }
-        );
-      });
-    },
-
-    async loadCurrentProfileView() {
-      let me = await this.waitForCurrentUser();
-          
-      if (!this.viewedProfileId || this.viewedProfileId === me.id) {
-        const freshMe = await this.refreshCurrentUser();
-        if (freshMe) {
-          me = freshMe;
-        }
-      }
-      const id = this.viewedProfileId;
-
-      this.profile = null;
-      this.posts = [];
-      this.profileGroups = [];
-      this.isOwnProfile = false;
-      this.isFollowing = false;
-      this.isRequested = false;
-      this.hasIncomingRequest = false;
-      this.canViewContent = false;
-
-      if (id && id !== me.id) {
-        const ok = await this.fetchProfile(id);
-        if (!ok) return;
-
-        await this.loadFollowStatus();
-      } else {
-        this.profile = me;
-        this.isOwnProfile = true;
-        this.canViewContent = true;
-        this.isFollowing = false;
-        this.isRequested = false;
-        this.hasIncomingRequest = false;
-      }
-
-      await this.loadProfilePosts();
-      await this.loadProfileGroups();
-    },
-
     async fetchProfile(id) {
       const res = await fetch(`/api/profile?id=${id}`, { method: "GET" });
 
@@ -232,23 +181,6 @@ window.ProfilePage = {
       return true;
     },
 
-    async refreshCurrentUser() {
-      try {
-        const res = await fetch("/api/profile", { method: "GET" });
-        if (!res.ok) return null;
-      
-        const data = await res.json();
-        const user = data.user;
-        if (!user) return null;
-      
-        window.currentUser = user;
-        window.Events.auth.setCurrentUser(user);
-        return user;
-      } catch (err) {
-        console.error("failed to refresh current user:", err);
-        return null;
-      }
-    },
     async togglePrivacy() {
       if (!this.isOwnProfile || !this.profile || this.privacyLoading) return;
 
@@ -320,15 +252,6 @@ window.ProfilePage = {
       if (!this.profile || !this.profile.id) return;
 
       try {
-        if (this.isOwnProfile) {
-          const me = window.Events.state.auth.currentUser;
-          if (me && me.id === this.profile.id) {
-            this.profile = me;
-            this.canViewContent = true;
-            return;
-          }
-        }
-
         const ok = await this.fetchProfile(this.profile.id);
         if (!ok) return;
       } catch (err) {
@@ -387,9 +310,9 @@ window.ProfilePage = {
 
     async acceptIncomingRequest() {
       if (this.followLoading || !this.profile || !this.profile.id) return;
-
+    
       this.followLoading = true;
-
+    
       try {
         const res = await fetch(`/api/follow/accept?id=${this.profile.id}`, {
           method: "POST",
@@ -397,20 +320,20 @@ window.ProfilePage = {
             "X-CSRF-Token": window.extractCsrfToken()
           }
         });
-
+      
         if (!res.ok) {
           return;
         }
-
+      
         window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, {
           removeFollowRequestActorId: this.profile.id
         });
-
+      
         await Promise.all([
           this.refreshProfile(),
           this.loadFollowStatus()
         ]);
-
+      
         await this.loadProfilePosts();
       } catch (err) {
         console.error("failed to accept follow request:", err);
@@ -418,12 +341,12 @@ window.ProfilePage = {
         this.followLoading = false;
       }
     },
-
+    
     async rejectIncomingRequest() {
       if (this.followLoading || !this.profile || !this.profile.id) return;
-
+    
       this.followLoading = true;
-
+    
       try {
         const res = await fetch(`/api/follow/request?id=${this.profile.id}`, {
           method: "DELETE",
@@ -431,20 +354,20 @@ window.ProfilePage = {
             "X-CSRF-Token": window.extractCsrfToken()
           }
         });
-
+      
         if (!res.ok) {
           return;
         }
-
+      
         window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, {
           removeFollowRequestActorId: this.profile.id
         });
-
+      
         await Promise.all([
           this.refreshProfile(),
           this.loadFollowStatus()
         ]);
-
+      
         await this.loadProfilePosts();
       } catch (err) {
         console.error("failed to reject follow request:", err);
@@ -452,22 +375,21 @@ window.ProfilePage = {
         this.followLoading = false;
       }
     },
-
     async openSocialList(type) {
       if (!this.profile || !this.profile.id) return;
-
+        
       this.showSocialList = true;
       this.socialListType = type;
       this.socialListTitle = type === "followers" ? "Followers" : "Following";
       this.socialUsers = [];
       this.socialError = null;
       this.socialLoading = true;
-
+        
       try {
         const res = await fetch(`/api/${type}?id=${this.profile.id}`, {
           method: "GET"
         });
-
+      
         if (!res.ok) {
           if (res.status === 403) {
             this.socialError = "You are not allowed to view this list.";
@@ -476,7 +398,7 @@ window.ProfilePage = {
           }
           return;
         }
-
+      
         const data = await res.json();
         this.socialUsers = Array.isArray(data) ? data : [];
       } catch (err) {
@@ -498,9 +420,9 @@ window.ProfilePage = {
 
     goToUserProfile(userId) {
       this.closeSocialList();
-      window.Router.push("/profile?id=" + userId);
+      window.history.pushState({}, "", `/profile?id=${userId}`);
+      window.dispatchEvent(new PopStateEvent("popstate"));
     },
-
     togglePosts() {
       this.showPosts = !this.showPosts;
     },
@@ -514,14 +436,12 @@ window.ProfilePage = {
         this.profileGroups = [];
         return;
       }
-
       try {
         const res = await fetch(`/api/profile/groups?id=${this.profile.id}`);
         if (!res.ok) {
           this.profileGroups = [];
           return;
         }
-
         const data = await res.json();
         this.profileGroups = Array.isArray(data) ? data : [];
       } catch {
@@ -593,23 +513,18 @@ window.ProfilePage = {
       return new Promise((resolve) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
-
         img.onload = () => {
           URL.revokeObjectURL(url);
-
           const canvas = document.createElement("canvas");
           canvas.width = size;
           canvas.height = size;
-
           const ctx = canvas.getContext("2d");
           const scale = Math.max(size / img.width, size / img.height);
           const w = img.width * scale;
           const h = img.height * scale;
-
           ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
           canvas.toBlob(resolve, "image/jpeg", 0.88);
         };
-
         img.src = url;
       });
     },
@@ -617,27 +532,23 @@ window.ProfilePage = {
     async uploadAvatar(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       this.avatarUploading = true;
-
       try {
         const blob = await this.resizeAvatar(file);
         const fd = new FormData();
         fd.append("file", blob, "avatar.jpg");
-
         const res = await fetch("/api/upload/avatar", {
           method: "POST",
           headers: { "X-CSRF-Token": window.extractCsrfToken() },
           body: fd
         });
-
         if (!res.ok) {
           const msg = await res.text();
           alert("Avatar upload failed: " + msg);
           return;
         }
-
         const data = await res.json();
+        // Cache-bust so the browser fetches the new file even if the URL is the same.
         this.profile.avatarPath = data.avatarPath + "?t=" + Date.now();
       } catch (err) {
         alert("Avatar upload failed. Please try again.");
@@ -661,10 +572,8 @@ window.ProfilePage = {
 
     async saveProfile() {
       if (this.editLoading) return;
-
       this.editLoading = true;
       this.editError = "";
-
       try {
         const res = await fetch("/api/profile", {
           method: "PATCH",
@@ -700,21 +609,17 @@ window.ProfilePage = {
 
     async removeAvatar() {
       if (!this.profile.avatarPath || this.avatarUploading) return;
-
       this.avatarUploading = true;
-
       try {
         const res = await fetch("/api/upload/avatar", {
           method: "DELETE",
           headers: { "X-CSRF-Token": window.extractCsrfToken() }
         });
-
         if (!res.ok) {
           const msg = await res.text();
           alert("Failed to remove avatar: " + msg);
           return;
         }
-
         this.profile.avatarPath = "";
       } catch (err) {
         alert("Failed to remove avatar. Please try again.");
