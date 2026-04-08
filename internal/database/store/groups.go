@@ -47,16 +47,17 @@ func GetGroupByID(groupID, viewerID int) (*models.Group, error) {
 	g := &models.Group{}
 	err := database.DB.QueryRow(
 		`SELECT
-			g.id, g.owner_id, g.title, g.description, g.created_at,
-			(SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS member_count,
-			EXISTS(SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
-			(g.owner_id = ?) AS is_owner
-		 FROM groups g
-		 WHERE g.id = ?`,
-		viewerID, viewerID, groupID,
+        g.id, g.owner_id, g.title, g.description, g.created_at,
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS member_count,
+        EXISTS(SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
+        (g.owner_id = ?) AS is_owner,
+        EXISTS(SELECT 1 FROM group_requests WHERE group_id = g.id AND user_id = ? AND type = 'join_request') AS is_pending
+     FROM groups g
+     WHERE g.id = ?`,
+		viewerID, viewerID, viewerID, groupID,
 	).Scan(
 		&g.ID, &g.OwnerID, &g.Title, &g.Description, &g.CreatedAt,
-		&g.MemberCount, &g.IsMember, &g.IsOwner,
+		&g.MemberCount, &g.IsMember, &g.IsOwner, &g.IsPending,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("group_not_found")
@@ -67,13 +68,14 @@ func GetGroupByID(groupID, viewerID int) (*models.Group, error) {
 func GetAllGroups(viewerID int) ([]*models.Group, error) {
 	rows, err := database.DB.Query(
 		`SELECT
-			g.id, g.owner_id, g.title, g.description, g.created_at,
-			(SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS member_count,
-			EXISTS(SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
-			(g.owner_id = ?) AS is_owner
-		 FROM groups g
-		 ORDER BY g.created_at DESC`,
-		viewerID, viewerID,
+        g.id, g.owner_id, g.title, g.description, g.created_at,
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS member_count,
+        EXISTS(SELECT 1 FROM group_members WHERE group_id = g.id AND user_id = ?) AS is_member,
+        (g.owner_id = ?) AS is_owner,
+        EXISTS(SELECT 1 FROM group_requests WHERE group_id = g.id AND user_id = ? AND type = 'join_request') AS is_pending
+     FROM groups g
+     ORDER BY g.created_at DESC`,
+		viewerID, viewerID, viewerID,
 	)
 	if err != nil {
 		return nil, err
@@ -85,7 +87,7 @@ func GetAllGroups(viewerID int) ([]*models.Group, error) {
 		g := &models.Group{}
 		if err := rows.Scan(
 			&g.ID, &g.OwnerID, &g.Title, &g.Description, &g.CreatedAt,
-			&g.MemberCount, &g.IsMember, &g.IsOwner,
+			&g.MemberCount, &g.IsMember, &g.IsOwner, &g.IsPending,
 		); err != nil {
 			return nil, err
 		}

@@ -88,6 +88,7 @@ type Group struct {
 	MemberCount int    `json:"memberCount"`
 	IsMember    bool   `json:"isMember"`
 	IsOwner     bool   `json:"isOwner"`
+	IsPending   bool   `json:"isPending"`
 }
 
 type GroupMember struct {
@@ -101,41 +102,41 @@ type GroupMember struct {
 }
 
 type GroupRequest struct {
-	ID        int    `json:"id"`
-	GroupID   int    `json:"groupId"`
-	UserID    int    `json:"userId"`
-	Type      string `json:"type"` // "join_request" | "invite"
-	CreatedAt int64  `json:"createdAt"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Nickname  string `json:"nickname"`
+	ID         int    `json:"id"`
+	GroupID    int    `json:"groupId"`
+	UserID     int    `json:"userId"`
+	Type       string `json:"type"` // "join_request" | "invite"
+	CreatedAt  int64  `json:"createdAt"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
 	AvatarPath string `json:"avatarPath"`
 }
 
 type GroupPost struct {
-	ID        int    `json:"id"`
-	GroupID   int    `json:"groupId"`
-	UserID    int    `json:"userId"`
-	Title     string `json:"title"`
-	Content   string `json:"content"`
-	ImageURL  string `json:"imageUrl"`
-	CreatedAt int64  `json:"createdAt"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Nickname  string `json:"nickname"`
+	ID         int    `json:"id"`
+	GroupID    int    `json:"groupId"`
+	UserID     int    `json:"userId"`
+	Title      string `json:"title"`
+	Content    string `json:"content"`
+	ImageURL   string `json:"imageUrl"`
+	CreatedAt  int64  `json:"createdAt"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
 	AvatarPath string `json:"avatarPath"`
 }
 
 type GroupComment struct {
-	ID        int    `json:"id"`
-	PostID    int    `json:"postId"`
-	UserID    int    `json:"userId"`
-	Content   string `json:"content"`
-	ImageURL  string `json:"imageUrl"`
-	CreatedAt int64  `json:"createdAt"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Nickname  string `json:"nickname"`
+	ID         int    `json:"id"`
+	PostID     int    `json:"postId"`
+	UserID     int    `json:"userId"`
+	Content    string `json:"content"`
+	ImageURL   string `json:"imageUrl"`
+	CreatedAt  int64  `json:"createdAt"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
 	AvatarPath string `json:"avatarPath"`
 }
 
@@ -153,14 +154,14 @@ type GroupEvent struct {
 }
 
 type GroupMessage struct {
-	ID        int    `json:"id"`
-	GroupID   int    `json:"groupId"`
-	UserID    int    `json:"userId"`
-	Content   string `json:"content"`
-	SentAt    int64  `json:"sentAt"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Nickname  string `json:"nickname"`
+	ID         int    `json:"id"`
+	GroupID    int    `json:"groupId"`
+	UserID     int    `json:"userId"`
+	Content    string `json:"content"`
+	SentAt     int64  `json:"sentAt"`
+	FirstName  string `json:"firstName"`
+	LastName   string `json:"lastName"`
+	Nickname   string `json:"nickname"`
 	AvatarPath string `json:"avatarPath"`
 }
 

@@ -68,9 +68,7 @@ window.GroupsPage = {
       });
       const data = await res.json();
       if (res.ok) {
-        group.isMember = false;
-        group.memberCount++;
-        await this.loadGroups();
+       group.isPending = true;
       } else {
         alert(data.error || "Could not send join request");
       }
@@ -132,6 +130,11 @@ window.GroupsPage = {
               class="btn btn-primary"
               @click="openGroup(group.id)"
             >View</button>
+            <button
+  v-else-if="group.isPending"
+  class="btn btn-secondary"
+  disabled
+>Requested</button>
             <button
               v-else
               class="btn btn-secondary"
