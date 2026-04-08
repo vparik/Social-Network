@@ -592,8 +592,13 @@ window.Navbar = {
           return;
         }
 
-        if (data.removeFollowRequestActorId) {
-          this.removeFollowRequestNotificationByActorId(data.removeFollowRequestActorId);
+        if (data.removeGroupJoinRequestActorId) {
+          this.notifications = this.notifications.filter(item => {
+            return !(item.type === "group_join_request" && item.actorId === data.removeGroupJoinRequestActorId);
+          });
+          if (this.selectedGroupJoinRequest?.actorId === data.removeGroupJoinRequestActorId) {
+            this.closeGroupJoinRequestPanel();
+          }
           return;
         }
         

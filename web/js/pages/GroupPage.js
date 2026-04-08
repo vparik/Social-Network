@@ -247,15 +247,21 @@ window.GroupPage = {
         method: "POST", headers: { "X-CSRF-Token": csrf }
       });
       this.joinRequests = this.joinRequests.filter(r => r.id !== req.id);
+      window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, {
+        removeGroupJoinRequestActorId: req.userId
+      });
       await this.loadMembers();
     },
-
+    
     async declineRequest(req) {
       const csrf = this.csrf();
       await fetch(`/api/groups/${this.groupId}/requests/${req.userId}`, {
         method: "DELETE", headers: { "X-CSRF-Token": csrf }
       });
       this.joinRequests = this.joinRequests.filter(r => r.id !== req.id);
+      window.Events.emit(window.Events.EVENT.NOTIFICATIONS_UPDATED, {
+        removeGroupJoinRequestActorId: req.userId
+      });
     },
 
     async removeMember(member) {

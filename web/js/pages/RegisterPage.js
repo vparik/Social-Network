@@ -18,6 +18,11 @@ window.RegisterPage = {
     };
   },
 
+  computed: {
+    maxDate() {
+      return new Date().toISOString().split("T")[0];
+    }
+  },
   methods: {
     async submit() {
       this.error = "";
@@ -144,8 +149,7 @@ window.RegisterPage = {
                 </div>
                 <div class="auth-field">
                   <label>Date of birth</label>
-                  <input v-model="dateOfBirth" type="date" required />
-                </div>
+                  <input v-model="dateOfBirth" type="date" :max="maxDate" required />                </div>
               </div>
 
               <!-- Row 3: about me -->

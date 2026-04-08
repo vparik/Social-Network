@@ -8,4 +8,5 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (actor_id) REFERENCES users(id)
+    UNIQUE(user_id, actor_id, type, entity_id)
 );
