@@ -70,7 +70,17 @@ window.HomePage = {
     );
     this.unsubscribeFollowChanged = window.Events.on(
       window.Events.EVENT.PROFILE_FOLLOW_CHANGED,
-      async () => {
+      async (data) => {
+        if (!data) return;
+      
+        const me = window.Events.state.auth.currentUser;
+        if (!me) return;
+      
+        const affectsMe =
+          data.actorId === me.id || data.targetId === me.id;
+      
+        if (!affectsMe) return;
+      
         await this.loadPosts();
       }
     );
