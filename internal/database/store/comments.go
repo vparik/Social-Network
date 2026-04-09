@@ -8,10 +8,11 @@ import (
 
 // CreateComment inserts a new comment and returns the full comment row joined with user info.
 // Called by the CreateComment handler (POST /api/posts/{id}/comments).
-func CreateComment(postID, userID int, content string) (*models.Comment, error) {
+func CreateComment(postID, userID int, content, imageURL string) (*models.Comment, error) {
 	res, err := database.DB.Exec(
-		`INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)`,
-		postID, userID, content,
+		`INSERT INTO comments (post_id, user_id, content, image_url)
+		 VALUES (?, ?, ?, NULLIF(?, ''))`,
+		postID, userID, content, imageURL,
 	)
 	if err != nil {
 		return nil, err
@@ -24,12 +25,16 @@ func CreateComment(postID, userID int, content string) (*models.Comment, error) 
 
 	c := &models.Comment{}
 	err = database.DB.QueryRow(
-		`SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.first_name, u.last_name, COALESCE(u.nickname, '')
+		`SELECT c.id, c.post_id, c.user_id, c.content, COALESCE(c.image_url, ''), c.created_at,
+		        u.first_name, u.last_name, COALESCE(u.nickname, '')
 		 FROM comments c
 		 JOIN users u ON c.user_id = u.id
 		 WHERE c.id = ?`,
 		newID,
-	).Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt, &c.FirstName, &c.LastName, &c.Nickname)
+	).Scan(
+		&c.ID, &c.PostID, &c.UserID, &c.Content, &c.ImageURL, &c.CreatedAt,
+		&c.FirstName, &c.LastName, &c.Nickname,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +46,8 @@ func CreateComment(postID, userID int, content string) (*models.Comment, error) 
 // Called by the GetComments handler (GET /api/posts/{id}/comments).
 func GetComments(postID int) ([]*models.Comment, error) {
 	rows, err := database.DB.Query(
-		`SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.first_name, u.last_name, COALESCE(u.nickname, '')
+		`SELECT c.id, c.post_id, c.user_id, c.content, COALESCE(c.image_url, ''), c.created_at,
+		        u.first_name, u.last_name, COALESCE(u.nickname, '')
 		 FROM comments c
 		 JOIN users u ON c.user_id = u.id
 		 WHERE c.post_id = ?
@@ -56,7 +62,10 @@ func GetComments(postID int) ([]*models.Comment, error) {
 	var comments []*models.Comment
 	for rows.Next() {
 		c := &models.Comment{}
-		if err := rows.Scan(&c.ID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt, &c.FirstName, &c.LastName, &c.Nickname); err != nil {
+		if err := rows.Scan(
+			&c.ID, &c.PostID, &c.UserID, &c.Content, &c.ImageURL, &c.CreatedAt,
+			&c.FirstName, &c.LastName, &c.Nickname,
+		); err != nil {
 			return nil, err
 		}
 		comments = append(comments, c)

@@ -49,6 +49,7 @@ type Comment struct {
 	PostID    int    `json:"postId"`
 	UserID    int    `json:"userId"`
 	Content   string `json:"content"`
+	ImageURL  string `json:"imageUrl"`
 	CreatedAt int64  `json:"createdAt"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`

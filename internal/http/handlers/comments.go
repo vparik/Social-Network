@@ -7,6 +7,7 @@ import (
 	"socialnet/internal/http/ws"
 	"socialnet/internal/models"
 	"strconv"
+	"strings"
 
 	"github.com/Des1red/goauthlib/goauth"
 )
@@ -30,18 +31,22 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Content string `json:"content"`
+		Content  string `json:"content"`
+		ImageURL string `json:"imageUrl"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
-	if body.Content == "" {
-		http.Error(w, "content is required", http.StatusBadRequest)
+	content := strings.TrimSpace(body.Content)
+	imageURL := strings.TrimSpace(body.ImageURL)
+
+	if content == "" && imageURL == "" {
+		http.Error(w, "comment must have content or image", http.StatusBadRequest)
 		return
 	}
 
-	comment, err := store.CreateComment(postID, userID, body.Content)
+	comment, err := store.CreateComment(postID, userID, content, imageURL)
 	if err != nil {
 		http.Error(w, "failed to create comment", http.StatusInternalServerError)
 		return

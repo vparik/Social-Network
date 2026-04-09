@@ -12,6 +12,9 @@ window.CommentSection = {
     return {
       comments: [],
       commentInput: "",
+      commentImageUrl: null,
+      commentImagePreview: null,
+      commentImageUploading: false,
       isOpen: false,
       loaded: false,
       loadingComments: false,
@@ -130,9 +133,71 @@ window.CommentSection = {
       }
     },
 
+    async handleCommentImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        this.commentImagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      this.commentImageUploading = true;
+
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+
+        const res = await fetch("/api/upload/image", {
+          method: "POST",
+          headers: {
+            "X-CSRF-Token": window.extractCsrfToken()
+          },
+          body: fd
+        });
+
+        if (!res.ok) {
+          const msg = await res.text();
+          alert("Image upload failed: " + msg);
+          this.commentImageUrl = null;
+          this.commentImagePreview = null;
+          if (this.$refs.commentImageInput) {
+            this.$refs.commentImageInput.value = "";
+          }
+          return;
+        }
+
+        const data = await res.json();
+        this.commentImageUrl = data.url;
+      } catch (err) {
+        console.error("Failed to upload comment image:", err);
+        alert("Image upload failed. Please try again.");
+        this.commentImageUrl = null;
+        this.commentImagePreview = null;
+        if (this.$refs.commentImageInput) {
+          this.$refs.commentImageInput.value = "";
+        }
+      } finally {
+        this.commentImageUploading = false;
+      }
+    },
+
+    removeCommentImage() {
+      this.commentImageUrl = null;
+      this.commentImagePreview = null;
+
+      if (this.$refs.commentImageInput) {
+        this.$refs.commentImageInput.value = "";
+      }
+    },
+
     async submitComment() {
       const content = this.commentInput.trim();
-      if (!content || this.submittingComment) return;
+
+      if ((!content && !this.commentImageUrl) || this.submittingComment || this.commentImageUploading) {
+        return;
+      }
 
       this.submittingComment = true;
 
@@ -143,16 +208,27 @@ window.CommentSection = {
             "Content-Type": "application/json",
             "X-CSRF-Token": window.extractCsrfToken()
           },
-          body: JSON.stringify({ content })
+          body: JSON.stringify({
+            content,
+            imageUrl: this.commentImageUrl || ""
+          })
         });
 
         if (!res.ok) {
+          const err = await res.text();
+          alert("Failed to submit comment: " + err);
           return;
         }
 
         const comment = await res.json();
 
         this.commentInput = "";
+        this.commentImageUrl = null;
+        this.commentImagePreview = null;
+        if (this.$refs.commentImageInput) {
+          this.$refs.commentImageInput.value = "";
+        }
+
         this.loaded = true;
 
         if (window.Events) {
@@ -245,7 +321,13 @@ window.CommentSection = {
             </button>
           </div>
 
-          <span class="feed-comment-content">{{ comment.content }}</span>
+          <span v-if="comment.content" class="feed-comment-content">
+            {{ comment.content }}
+          </span>
+
+          <div v-if="comment.imageUrl" class="feed-comment-image-wrap">
+            <img :src="comment.imageUrl" alt="Comment image" class="feed-comment-image" />
+          </div>
         </div>
 
         <div class="feed-comment-input-row">
@@ -254,15 +336,42 @@ window.CommentSection = {
             type="text"
             placeholder="Reply..."
             v-model="commentInput"
-            :disabled="submittingComment"
+            :disabled="submittingComment || commentImageUploading"
             @keyup.enter="submitComment"
           />
+
+          <input
+            ref="commentImageInput"
+            type="file"
+            accept="image/*"
+            @change="handleCommentImageSelect"
+            :disabled="submittingComment || commentImageUploading"
+            class="comment-image-hidden-input"
+          />
+
+          <button
+            type="button"
+            class="comment-image-btn"
+            @click="$refs.commentImageInput.click()"
+            :disabled="submittingComment || commentImageUploading"
+            title="Add image"
+          >
+            <span class="material-symbols-outlined">image</span>
+          </button>
+          
           <button
             class="feed-comment-submit"
-            :disabled="submittingComment"
+            :disabled="submittingComment || commentImageUploading"
             @click="submitComment"
           >
-            {{ submittingComment ? "Posting..." : "Post" }}
+            {{ submittingComment ? "Posting..." : (commentImageUploading ? "Uploading..." : "Post") }}
+          </button>
+        </div>
+
+        <div v-if="commentImagePreview" class="feed-comment-image-preview">
+          <img :src="commentImagePreview" alt="Preview" />
+          <button type="button" @click="removeCommentImage">
+            Remove
           </button>
         </div>
       </div>
