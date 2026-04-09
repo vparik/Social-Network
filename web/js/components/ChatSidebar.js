@@ -80,9 +80,6 @@ window.ChatSidebar = {
     <aside class="chat-sidebar" :class="{ open: isOpen }" @click.stop>
       <div class="chat-sidebar-header">
         <span class="chat-sidebar-title">Chats</span>
-        <button class="chat-close-btn" @click="window.Events.chat.closeSidebar()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
       </div>
 
       <div class="chat-user-list">
