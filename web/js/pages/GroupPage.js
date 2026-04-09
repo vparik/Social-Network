@@ -23,7 +23,9 @@ window.GroupPage = {
       inviteUserId: null,
       dropdownOpen: false,
       chatUnsub: null,
-      unsubs: []
+      unsubs: [],
+      showGroupEmojiPicker: false,
+      groupEmojis: ["😀", "😂", "😍", "🥳", "😎", "😊", "😉", "😭", "🔥", "❤️", "👍", "👏", "🙏", "🎉", "🤝", "💯"]
     };
   },
 
@@ -293,6 +295,21 @@ window.GroupPage = {
     },
 
     // ── Chat ──────────────────────────────────────────
+    toggleGroupEmojiPicker() {
+      this.showGroupEmojiPicker = !this.showGroupEmojiPicker;
+    },
+
+    addGroupEmoji(emoji) {
+      this.newMessage += emoji;
+      this.showGroupEmojiPicker = false;
+
+      this.$nextTick(() => {
+        if (this.$refs.groupMessageInput) {
+          this.$refs.groupMessageInput.focus();
+        }
+      });
+    },
+
     sendMessage() {
       const content = this.newMessage.trim();
       if (!content) return;
@@ -540,12 +557,37 @@ window.GroupPage = {
               </div>
             </div>
             <div class="group-chat__input">
-              <input
-                v-model="newMessage"
-                class="input"
-                placeholder="Message…"
-                @keydown="handleChatKeydown"
-              />
+              <div class="group-chat__input-wrap">
+                <input
+                  ref="groupMessageInput"
+                  v-model="newMessage"
+                  class="input"
+                  placeholder="Message…"
+                  @keydown="handleChatKeydown"
+                />
+
+                <button
+                  type="button"
+                  class="group-chat__emoji-btn"
+                  @click="toggleGroupEmojiPicker"
+                  title="Add emoji"
+                >
+                  <span class="material-symbols-outlined">mood</span>
+                </button>
+
+                <div v-if="showGroupEmojiPicker" class="group-chat__emoji-picker">
+                  <button
+                    v-for="emoji in groupEmojis"
+                    :key="emoji"
+                    type="button"
+                    class="group-chat__emoji-item"
+                    @click="addGroupEmoji(emoji)"
+                  >
+                    {{ emoji }}
+                  </button>
+                </div>
+              </div>
+
               <button class="btn btn-primary" @click="sendMessage">Send</button>
             </div>
           </div>

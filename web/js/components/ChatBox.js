@@ -19,7 +19,9 @@ window.ChatBox = {
       messages: [],
       newMessage: "",
       minimized: false,
-      unsubscribe: null
+      unsubscribe: null,
+      showEmojiPicker: false,
+      emojis: ["😀","😂","😍","🥳","😎","😊","😉","😭","🔥","❤️","👍","👏","🙏","🎉","🤝","💯"]
     };
   },
 
@@ -104,6 +106,21 @@ window.ChatBox = {
       if (!box) return;
 
       box.scrollTop = box.scrollHeight;
+    },
+    
+    toggleEmojiPicker() {
+      this.showEmojiPicker = !this.showEmojiPicker;
+    },
+
+    addEmoji(emoji) {
+      this.newMessage += emoji;
+      this.showEmojiPicker = false;
+
+      this.$nextTick(() => {
+        if (this.$refs.messageInput) {
+          this.$refs.messageInput.focus();
+        }
+      });
     },
 
     sendMessage() {
@@ -206,13 +223,38 @@ window.ChatBox = {
       </div>
 
       <div v-if="!minimized" class="chat-box-input-area">
-        <input
-          v-model="newMessage"
-          type="text"
-          placeholder="Type a message..."
-          class="chat-box-input"
-          @keyup.enter="sendMessage"
-        />
+        <div class="chat-input-wrap">
+          <input
+            ref="messageInput"
+            v-model="newMessage"
+            type="text"
+            placeholder="Type a message..."
+            class="chat-box-input"
+            @keyup.enter="sendMessage"
+          />
+
+          <button
+            type="button"
+            class="chat-emoji-btn"
+            @click="toggleEmojiPicker"
+            title="Add emoji"
+          >
+            <span class="material-symbols-outlined">mood</span>
+          </button>
+
+          <div v-if="showEmojiPicker" class="chat-emoji-picker">
+            <button
+              v-for="emoji in emojis"
+              :key="emoji"
+              type="button"
+              class="chat-emoji-item"
+              @click="addEmoji(emoji)"
+            >
+              {{ emoji }}
+            </button>
+          </div>
+        </div>
+
         <button class="chat-send-btn" @click="sendMessage">
           <span class="material-symbols-outlined">send</span>
         </button>

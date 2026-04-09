@@ -358,3 +358,60 @@
 .chat-box-without-sidebar {
   right: 10px;
 }
+
+.chat-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.chat-box-input {
+  width: 100%;
+  padding-right: 42px;
+}
+
+.chat-emoji-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-emoji-btn:hover {
+  color: var(--text);
+}
+
+.chat-emoji-picker {
+  position: absolute;
+  bottom: 46px;
+  right: 0;
+  width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  box-shadow: var(--shadow-md);
+  z-index: 20;
+}
+
+.chat-emoji-item {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.chat-emoji-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
