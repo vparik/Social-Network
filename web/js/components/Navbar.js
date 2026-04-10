@@ -863,6 +863,7 @@ window.Navbar = {
 
     <CreatePost
       v-if="isCreatePostOpen"
+      :allow-event="false"
       @close="isCreatePostOpen = false"
       @post-created="handlePostCreated"
     />
