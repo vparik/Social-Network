@@ -25,6 +25,8 @@ window.Navbar = {
       followRequestActionLoading: false,
       selectedGroupJoinRequest: null,
       groupJoinRequestActionLoading: false,
+      selectedGroupInvite: null,
+      groupInviteActionLoading: false,
       unsubscribeChat: null,
       unsubscribeNotifications: null
     };
@@ -173,6 +175,10 @@ window.Navbar = {
       return !!item && item.type === "group_join_request";
     },
 
+    isGroupInviteNotification(item) {
+      return !!item && item.type === "group_invite";
+    },
+
     canOpenNotificationProfile(item) {
       if (!item || !item.actorId) return false;
     
@@ -194,19 +200,29 @@ window.Navbar = {
 
       if (this.isFollowRequestNotification(item)) {
         this.closeGroupJoinRequestPanel();
+        this.closeGroupInvitePanel();
         this.openFollowRequestPanel(item);
         return;
       }
 
       if (this.isGroupJoinRequestNotification(item)) {
         this.closeFollowRequestPanel();
+        this.closeGroupInvitePanel();
         this.openGroupJoinRequestPanel(item);
+        return;
+      }
+
+      if (this.isGroupInviteNotification(item)) {
+        this.closeFollowRequestPanel();
+        this.closeGroupJoinRequestPanel();
+        this.openGroupInvitePanel(item);
         return;
       }
 
       this.isNotificationsOpen = false;
       this.closeFollowRequestPanel();
       this.closeGroupJoinRequestPanel();
+      this.closeGroupInvitePanel();
 
       if (this.canOpenNotificationComment(item)) {
         Router.push(`/?postId=${item.postId}#comment-${item.commentId}`);
@@ -218,7 +234,7 @@ window.Navbar = {
         return;
       }
 
-      if (item.entityId && ["group_join_accepted", "group_event", "group_invite", "group_comment"].includes(item.type)) {
+      if (item.entityId && ["group_join_accepted", "group_event", "group_comment"].includes(item.type)) {
         Router.push(`/group?id=${item.entityId}`);
       }
     },
@@ -241,6 +257,16 @@ window.Navbar = {
     closeGroupJoinRequestPanel() {
       this.selectedGroupJoinRequest = null;
       this.groupJoinRequestActionLoading = false;
+    },
+
+    openGroupInvitePanel(item) {
+      if (!this.isGroupInviteNotification(item)) return;
+      this.selectedGroupInvite = item;
+    },
+
+    closeGroupInvitePanel() {
+      this.selectedGroupInvite = null;
+      this.groupInviteActionLoading = false;
     },
 
     removeFollowRequestNotificationByActorId(actorId) {
@@ -358,6 +384,60 @@ window.Navbar = {
         console.error("failed to decline group join request", err);
       } finally {
         this.groupJoinRequestActionLoading = false;
+      }
+    },
+
+    async acceptGroupInvite() {
+      const item = this.selectedGroupInvite;
+      if (!item || !item.entityId || this.groupInviteActionLoading) return;
+
+      this.groupInviteActionLoading = true;
+
+      try {
+        const res = await fetch(`/api/groups/${item.entityId}/invites/accept`, {
+          method: "POST",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() }
+        });
+
+        if (!res.ok) {
+          console.error("failed to accept group invite");
+          return;
+        }
+
+        this.removeNotificationById(item.id);
+        this.closeGroupInvitePanel();
+
+        Router.push(`/group?id=${item.entityId}`);
+      } catch (err) {
+        console.error("failed to accept group invite", err);
+      } finally {
+        this.groupInviteActionLoading = false;
+      }
+    },
+    
+    async declineGroupInvite() {
+      const item = this.selectedGroupInvite;
+      if (!item || !item.entityId || this.groupInviteActionLoading) return;
+
+      this.groupInviteActionLoading = true;
+
+      try {
+        const res = await fetch(`/api/groups/${item.entityId}/invites`, {
+          method: "DELETE",
+          headers: { "X-CSRF-Token": window.extractCsrfToken() }
+        });
+
+        if (!res.ok) {
+          console.error("failed to decline group invite");
+          return;
+        }
+
+        this.removeNotificationById(item.id);
+        this.closeGroupInvitePanel();
+      } catch (err) {
+        console.error("failed to decline group invite", err);
+      } finally {
+        this.groupInviteActionLoading = false;
       }
     },
 
@@ -813,6 +893,31 @@ window.Navbar = {
                   class="nav-follow-request-decline"
                   :disabled="groupJoinRequestActionLoading"
                   @click="declineGroupJoinRequest"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+            <div v-if="selectedGroupInvite" class="nav-follow-request-panel">
+              <div class="nav-dropdown-title">Group Invitation</div>
+
+              <div class="nav-follow-request-text">
+                {{ displayUserName(selectedGroupInvite) }} invited you to join a group.
+              </div>
+
+              <div class="nav-follow-request-actions">
+                <button
+                  class="nav-follow-request-accept"
+                  :disabled="groupInviteActionLoading"
+                  @click="acceptGroupInvite"
+                >
+                  Accept
+                </button>
+
+                <button
+                  class="nav-follow-request-decline"
+                  :disabled="groupInviteActionLoading"
+                  @click="declineGroupInvite"
                 >
                   Decline
                 </button>
