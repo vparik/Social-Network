@@ -13,23 +13,24 @@ window.CreatePost = {
   data() {
     return {
       mode: "post",
-      showEventInviteSidebar: false,
+
       postVisibility: "public",
       postTitle: "",
       postDescription: "",
       submitting: false,
+
       imageUrl: null,
       imagePreview: null,
       imageUploading: false,
-      imageUrl: null,
-      imagePreview: null,
-      imageUploading: false,
+
       followersLoading: false,
       followersError: "",
       followers: [],
       selectedAllowedUserIds: [],
+
       titleError: false,
       descriptionError: false,
+
       eventTitle: "",
       eventDescription: "",
       eventAt: "",
@@ -39,7 +40,7 @@ window.CreatePost = {
     };
   },
 
- mounted() {
+  mounted() {
     if (!this.allowEvent) {
       this.mode = "post";
     } else {
@@ -89,7 +90,6 @@ window.CreatePost = {
       if (!this.allowEvent && newMode === "event") return;
 
       this.mode = newMode;
-      this.showEventInviteSidebar = false;
     },
 
     handleOverlayClick() {
@@ -99,21 +99,32 @@ window.CreatePost = {
     close() {
       if (this.submitting) return;
 
-      this.mode = this.initialMode;
-      this.showEventInviteSidebar = false;
+      this.mode = this.allowEvent ? this.initialMode : "post";
+
       this.postTitle = "";
       this.postDescription = "";
       this.postVisibility = "public";
+
       this.imageUrl = null;
       this.imagePreview = null;
+      this.imageUploading = false;
+
       this.followersError = "";
       this.selectedAllowedUserIds = [];
+
+      this.titleError = false;
+      this.descriptionError = false;
+
       this.eventTitle = "";
       this.eventDescription = "";
       this.eventAt = "";
       this.eventTitleError = false;
       this.eventDescriptionError = false;
       this.eventAtError = false;
+
+      if (this.$refs.imageInput) {
+        this.$refs.imageInput.value = "";
+      }
 
       if (!this.inline) this.$emit("close");
     },
@@ -168,38 +179,52 @@ window.CreatePost = {
 
       if (nickname) return nickname;
       if (fullName) return fullName;
-      return `User #${user.id}`;
+      return `User #${user.id || user.userId}`;
     },
 
     async handleImageSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
+
       const reader = new FileReader();
-      reader.onload = e => { this.imagePreview = e.target.result; };
+      reader.onload = e => {
+        this.imagePreview = e.target.result;
+      };
       reader.readAsDataURL(file);
+
       this.imageUploading = true;
+
       try {
         const fd = new FormData();
         fd.append("file", file);
+
         const res = await fetch("/api/upload/image", {
           method: "POST",
           headers: { "X-CSRF-Token": window.extractCsrfToken() },
           body: fd
         });
+
         if (!res.ok) {
           const msg = await res.text();
           alert("Image upload failed: " + msg);
+          this.imageUrl = null;
           this.imagePreview = null;
-          this.$refs.imageInput.value = "";
+          if (this.$refs.imageInput) {
+            this.$refs.imageInput.value = "";
+          }
           return;
         }
+
         const data = await res.json();
         this.imageUrl = data.url;
       } catch (err) {
         alert("Image upload failed. Please try again.");
         console.error(err);
+        this.imageUrl = null;
         this.imagePreview = null;
-        this.$refs.imageInput.value = "";
+        if (this.$refs.imageInput) {
+          this.$refs.imageInput.value = "";
+        }
       } finally {
         this.imageUploading = false;
       }
@@ -208,11 +233,9 @@ window.CreatePost = {
     removeImage() {
       this.imageUrl = null;
       this.imagePreview = null;
-      this.$refs.imageInput.value = "";
-    },
-
-    toggleEventInviteSidebar() {
-      this.showEventInviteSidebar = !this.showEventInviteSidebar;
+      if (this.$refs.imageInput) {
+        this.$refs.imageInput.value = "";
+      }
     },
 
     async handleCreatePost() {
@@ -299,6 +322,7 @@ window.CreatePost = {
 
       try {
         const eventAt = Math.floor(new Date(this.eventAt).getTime() / 1000);
+
         const res = await fetch(`/api/groups/${this.groupId}/events`, {
           method: "POST",
           headers: {
@@ -335,8 +359,7 @@ window.CreatePost = {
       class="create-post-modal"
       :class="inline ? 'create-post-modal--inline' : {
         'create-post-modal--with-sidebar': showSidebar,
-        'create-post-modal--event': isEventMode,
-        'create-post-modal--event-invite': isEventMode && showEventInviteSidebar
+        'create-post-modal--event': isEventMode
       }"
     >
       <div class="create-post-main">
@@ -356,7 +379,10 @@ window.CreatePost = {
             @click="switchMode('event')"
           >Event</button>
         </div>
-        <p v-else class="group-form__title">{{ isEventMode ? "Create Event" : "Create Post" }}</p>
+
+        <p v-else class="group-form__title">
+          {{ isEventMode ? "Create Event" : "Create Post" }}
+        </p>
 
         <template v-if="!isEventMode">
           <div v-if="!groupId" class="create-post-visibility">
@@ -375,50 +401,47 @@ window.CreatePost = {
               {{ visibilityHelpText }}
             </span>
 
-            <div
-        v-if="showSidebar"
-        class="create-post-sidebar"
-      >
-        <div class="create-post-sidebar-section">
-          <div class="create-post-sidebar-title">Who can see this</div>
+            <div v-if="showSidebar" class="create-post-sidebar">
+              <div class="create-post-sidebar-section">
+                <div class="create-post-sidebar-title">Who can see this</div>
 
-          <div v-if="followersLoading" class="create-post-sidebar-empty">
-            Loading followers...
-          </div>
+                <div v-if="followersLoading" class="create-post-sidebar-empty">
+                  Loading followers...
+                </div>
 
-          <div v-else-if="followersError" class="create-post-sidebar-empty">
-            {{ followersError }}
-          </div>
+                <div v-else-if="followersError" class="create-post-sidebar-empty">
+                  {{ followersError }}
+                </div>
 
-          <div v-else-if="!followers.length" class="create-post-sidebar-empty">
-            You do not have any followers to select yet.
-          </div>
+                <div v-else-if="!followers.length" class="create-post-sidebar-empty">
+                  You do not have any followers to select yet.
+                </div>
 
-          <div v-else class="create-post-user-list">
-            <button
-              v-for="user in followers"
-              :key="user.id"
-              type="button"
-              class="create-post-user-option"
-              :class="{ 'is-selected': isUserSelected(user.id) }"
-              @click="toggleAllowedUser(user.id)"
-            >
-              <span class="create-post-user-option__name">
-                {{ displayFollowerName(user) }}
-              </span>
-            </button>
-          </div>
-        </div>
+                <div v-else class="create-post-user-list">
+                  <button
+                    v-for="user in followers"
+                    :key="user.id"
+                    type="button"
+                    class="create-post-user-option"
+                    :class="{ 'is-selected': isUserSelected(user.id) }"
+                    @click="toggleAllowedUser(user.id)"
+                  >
+                    <span class="create-post-user-option__name">
+                      {{ displayFollowerName(user) }}
+                    </span>
+                  </button>
+                </div>
+              </div>
 
-        <div class="create-post-sidebar-section">
-          <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
-            No followers selected yet.
-          </div>
-          <div v-else class="create-post-sidebar-empty">
-            {{ selectedAllowedUserIds.length }} follower(s) selected.
-          </div>
-        </div>
-      </div>
+              <div class="create-post-sidebar-section">
+                <div class="create-post-sidebar-empty" v-if="!selectedAllowedUserIds.length">
+                  No followers selected yet.
+                </div>
+                <div v-else class="create-post-sidebar-empty">
+                  {{ selectedAllowedUserIds.length }} follower(s) selected.
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="create-post-form">
@@ -450,6 +473,7 @@ window.CreatePost = {
               >
                 <span class="material-symbols-outlined">photo</span>
               </button>
+
               <input
                 type="file"
                 ref="imageInput"
@@ -458,6 +482,7 @@ window.CreatePost = {
                 @change="handleImageSelect"
               />
             </div>
+
             <span v-if="descriptionError" class="create-post-field-error">* required</span>
 
             <div v-if="imagePreview" class="post-image-preview">
@@ -494,30 +519,8 @@ window.CreatePost = {
         </template>
 
         <div v-else class="create-event-layout">
-          <div class="create-event-invite-row">
-            <button
-              type="button"
-              class="create-event-invite-btn"
-              :class="{ 'is-active': showEventInviteSidebar }"
-              @click="toggleEventInviteSidebar"
-              :disabled="submitting"
-            >
-              Invite
-            </button>
-
-            <div v-if="showEventInviteSidebar" class="create-event-invite-list">
-              <div class="create-event-invite-list-title">Users</div>
-              <div class="create-event-invite-list-empty">No users available yet.</div>
-            </div>
-
-            <div v-if="showEventInviteSidebar" class="create-event-invite-list">
-              <div class="create-event-invite-list-title">Groups</div>
-              <div class="create-event-invite-list-empty">No groups available yet.</div>
-            </div>
-          </div>
-
           <div class="create-post-form">
-          <input
+            <input
               v-model="eventAt"
               type="datetime-local"
               class="create-post-input create-post-datetime"
@@ -526,7 +529,7 @@ window.CreatePost = {
               @input="eventAtError = false"
             />
             <span v-if="eventAtError" class="create-post-field-error">* required</span>
-            
+
             <textarea
               v-model="eventTitle"
               class="create-post-input"
@@ -555,6 +558,7 @@ window.CreatePost = {
               >
                 <span class="material-symbols-outlined">photo</span>
               </button>
+
               <input
                 type="file"
                 ref="imageInput"
@@ -564,25 +568,7 @@ window.CreatePost = {
               />
             </div>
 
-            <div v-if="imagePreview" class="post-image-preview">
-              <img :src="imagePreview" alt="preview" />
-              <button
-                type="button"
-                class="remove-image-btn"
-                @click="removeImage"
-                :disabled="submitting"
-              >&times;</button>
-              <input
-                type="file"
-                ref="imageInput"
-                accept="image/*"
-                style="display:none"
-                @change="handleImageSelect"
-              />
-            </div>
             <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
-
-            
 
             <div v-if="imagePreview" class="post-image-preview">
               <img :src="imagePreview" alt="preview" />
@@ -593,7 +579,6 @@ window.CreatePost = {
                 :disabled="submitting"
               >&times;</button>
             </div>
-            <span v-if="eventDescriptionError" class="create-post-field-error">* required</span>
           </div>
 
           <div class="create-post-footer">
