@@ -57,7 +57,7 @@ func CreateGroupEvent(w http.ResponseWriter, r *http.Request) {
 	// Notify all members (except creator) about the new event
 	memberIDs, err := store.GetGroupMemberIDs(groupID)
 	if err == nil {
-		entityID := event.ID
+		entityID := groupID
 		for _, memberID := range memberIDs {
 			if memberID == payload.UserID {
 				continue

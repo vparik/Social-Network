@@ -35,6 +35,10 @@ window.GroupPage = {
       const params = new URLSearchParams(this.routeQuery);
       return parseInt(params.get("id")) || 0;
     },
+    initialTab() {
+      const params = new URLSearchParams(this.routeQuery);
+      return params.get("tab") || "feed";
+    },
     currentUser() {
       return window.Events.state.auth.currentUser;
     },
@@ -56,6 +60,10 @@ window.GroupPage = {
   async mounted() {
     if (!this.groupId) { this.error = "Invalid group"; this.loading = false; return; }
     await this.loadGroup();
+    const validTabs = ["feed", "live-events", "new-post", "new-event", "members", "chat"];
+    if (this.initialTab && validTabs.includes(this.initialTab)) {
+      this.activeTab = this.initialTab;
+    }
     this.bindWsEvents();
     document.addEventListener("click", this.onDocumentClick);
   },

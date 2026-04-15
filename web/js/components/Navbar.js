@@ -161,7 +161,9 @@ window.Navbar = {
         case "group_join_accepted":
           return `${actorName} accepted your group join request`;
         case "group_event":
-          return `${actorName} created a new event in your group`;
+          return item.groupName
+            ? `${actorName} created a new event in "${item.groupName}"`
+            : `${actorName} created a new event in your group`;
         case "group_comment":
           return `${actorName} commented on your group post`;
         default:
@@ -236,7 +238,12 @@ window.Navbar = {
         return;
       }
 
-      if (item.entityId && ["group_join_accepted", "group_event", "group_comment"].includes(item.type)) {
+      if (item.entityId && item.type === "group_event") {
+        Router.push(`/group?id=${item.entityId}&tab=live-events`);
+        return;
+      }
+
+      if (item.entityId && ["group_join_accepted", "group_comment"].includes(item.type)) {
         Router.push(`/group?id=${item.entityId}`);
       }
     },
