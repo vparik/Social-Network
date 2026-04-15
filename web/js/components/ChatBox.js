@@ -1,6 +1,8 @@
 window.ChatBox = {
   name: "ChatBox",
 
+  components: { EmojiPicker: window.EmojiPicker },
+
   props: {
     user: {
       type: Object,
@@ -20,8 +22,7 @@ window.ChatBox = {
       newMessage: "",
       minimized: false,
       unsubscribe: null,
-      showEmojiPicker: false,
-      emojis: ["😀","😂","😍","🥳","😎","😊","😉","😭","🔥","❤️","👍","👏","🙏","🎉","🤝","💯"]
+      showEmojiPicker: false
     };
   },
 
@@ -41,6 +42,8 @@ window.ChatBox = {
     if (this.user) {
       this.minimized = window.Events.state.chat.boxMinimized;
     }
+
+    document.addEventListener("click", this.onDocumentClick);
 
     this.unsubscribe = window.MockChat.subscribe((event) => {
       if (!this.user) return;
@@ -79,6 +82,7 @@ window.ChatBox = {
   },
 
   beforeUnmount() {
+    document.removeEventListener("click", this.onDocumentClick);
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
@@ -113,14 +117,23 @@ window.ChatBox = {
     },
 
     addEmoji(emoji) {
-      this.newMessage += emoji;
-      this.showEmojiPicker = false;
+      const input = this.$refs.messageInput;
+      if (input) {
+        const start = input.selectionStart ?? this.newMessage.length;
+        const end = input.selectionEnd ?? this.newMessage.length;
+        this.newMessage = this.newMessage.slice(0, start) + emoji + this.newMessage.slice(end);
+        this.$nextTick(() => {
+          const pos = start + emoji.length;
+          input.setSelectionRange(pos, pos);
+          input.focus();
+        });
+      } else {
+        this.newMessage += emoji;
+      }
+    },
 
-      this.$nextTick(() => {
-        if (this.$refs.messageInput) {
-          this.$refs.messageInput.focus();
-        }
-      });
+    onDocumentClick() {
+      this.showEmojiPicker = false;
     },
 
     sendMessage() {
@@ -236,23 +249,13 @@ window.ChatBox = {
           <button
             type="button"
             class="chat-emoji-btn"
-            @click="toggleEmojiPicker"
+            @click.stop="toggleEmojiPicker"
             title="Add emoji"
           >
             <span class="material-symbols-outlined">mood</span>
           </button>
 
-          <div v-if="showEmojiPicker" class="chat-emoji-picker">
-            <button
-              v-for="emoji in emojis"
-              :key="emoji"
-              type="button"
-              class="chat-emoji-item"
-              @click="addEmoji(emoji)"
-            >
-              {{ emoji }}
-            </button>
-          </div>
+          <EmojiPicker v-if="showEmojiPicker" class="chat-emoji-picker" @select="addEmoji" />
         </div>
 
         <button class="chat-send-btn" @click="sendMessage">

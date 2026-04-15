@@ -493,30 +493,7 @@
   position: absolute;
   bottom: 50px;
   right: 0;
-  width: 220px;
-  background: var(--surface, #242526);
-  border: 1px solid var(--border, #3a3b3c);
-  border-radius: 12px;
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
   z-index: 20;
-}
-
-.group-chat__emoji-item {
-  background: transparent;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-  line-height: 1;
-}
-
-.group-chat__emoji-item:hover {
-  background: rgba(255, 255, 255, 0.08);
 }
 
 /* ── Invite form ─────────────────────────────── */

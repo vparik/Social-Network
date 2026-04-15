@@ -1,6 +1,8 @@
 window.GroupPage = {
   name: "GroupPage",
 
+  components: { EmojiPicker: window.EmojiPicker },
+
   props: {
     routeQuery: { type: String, default: "" }
   },
@@ -24,8 +26,7 @@ window.GroupPage = {
       dropdownOpen: false,
       chatUnsub: null,
       unsubs: [],
-      showGroupEmojiPicker: false,
-      groupEmojis: ["😀", "😂", "😍", "🥳", "😎", "😊", "😉", "😭", "🔥", "❤️", "👍", "👏", "🙏", "🎉", "🤝", "💯"]
+      showGroupEmojiPicker: false
     };
   },
 
@@ -56,9 +57,11 @@ window.GroupPage = {
     if (!this.groupId) { this.error = "Invalid group"; this.loading = false; return; }
     await this.loadGroup();
     this.bindWsEvents();
+    document.addEventListener("click", this.onDocumentClick);
   },
 
   beforeUnmount() {
+    document.removeEventListener("click", this.onDocumentClick);
     this.unsubs.forEach(fn => fn());
   },
 
@@ -295,19 +298,28 @@ window.GroupPage = {
     },
 
     // ── Chat ──────────────────────────────────────────
+    onDocumentClick() {
+      this.showGroupEmojiPicker = false;
+    },
+
     toggleGroupEmojiPicker() {
       this.showGroupEmojiPicker = !this.showGroupEmojiPicker;
     },
 
     addGroupEmoji(emoji) {
-      this.newMessage += emoji;
-      this.showGroupEmojiPicker = false;
-
-      this.$nextTick(() => {
-        if (this.$refs.groupMessageInput) {
-          this.$refs.groupMessageInput.focus();
-        }
-      });
+      const input = this.$refs.groupMessageInput;
+      if (input) {
+        const start = input.selectionStart ?? this.newMessage.length;
+        const end = input.selectionEnd ?? this.newMessage.length;
+        this.newMessage = this.newMessage.slice(0, start) + emoji + this.newMessage.slice(end);
+        this.$nextTick(() => {
+          const pos = start + emoji.length;
+          input.setSelectionRange(pos, pos);
+          input.focus();
+        });
+      } else {
+        this.newMessage += emoji;
+      }
     },
 
     sendMessage() {
@@ -569,23 +581,13 @@ window.GroupPage = {
                 <button
                   type="button"
                   class="group-chat__emoji-btn"
-                  @click="toggleGroupEmojiPicker"
+                  @click.stop="toggleGroupEmojiPicker"
                   title="Add emoji"
                 >
                   <span class="material-symbols-outlined">mood</span>
                 </button>
 
-                <div v-if="showGroupEmojiPicker" class="group-chat__emoji-picker">
-                  <button
-                    v-for="emoji in groupEmojis"
-                    :key="emoji"
-                    type="button"
-                    class="group-chat__emoji-item"
-                    @click="addGroupEmoji(emoji)"
-                  >
-                    {{ emoji }}
-                  </button>
-                </div>
+                <EmojiPicker v-if="showGroupEmojiPicker" class="group-chat__emoji-picker" @select="addGroupEmoji" />
               </div>
 
               <button class="btn btn-primary" @click="sendMessage">Send</button>
