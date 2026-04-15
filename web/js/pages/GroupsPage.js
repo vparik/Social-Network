@@ -70,7 +70,7 @@ window.GroupsPage = {
       if (res.ok) {
        group.isPending = true;
       } else {
-        alert(data.error || "Could not send join request");
+        window.toast(data.error || "Could not send join request", "error");
       }
     },
 

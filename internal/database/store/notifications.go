@@ -21,11 +21,14 @@ func GetLatestNotification(userID int) (*models.Notification, error) {
 		`SELECT
 			n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
 			u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, ''),
-			c.post_id
+			c.post_id, COALESCE(g.title, '')
 		 FROM notifications n
 		 JOIN users u ON u.id = n.actor_id
 		 LEFT JOIN comments c
 		   ON n.type = 'comment' AND c.id = n.entity_id
+		 LEFT JOIN groups g
+		   ON n.type IN ('group_invite', 'group_join_request', 'group_join_accepted', 'group_event', 'group_comment')
+		   AND g.id = n.entity_id
 		 WHERE n.user_id = ?
 		 ORDER BY n.created_at DESC, n.id DESC
 		 LIMIT 1`,
@@ -50,6 +53,7 @@ func GetLatestNotification(userID int) (*models.Notification, error) {
 		&n.Nickname,
 		&n.AvatarPath,
 		&postID,
+		&n.GroupName,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("notification_not_found")
@@ -91,11 +95,14 @@ func GetNotifications(userID int) ([]*models.Notification, int, error) {
 		`SELECT
 			n.id, n.user_id, n.actor_id, n.type, n.entity_id, n.is_read, n.created_at,
 			u.first_name, u.last_name, COALESCE(u.nickname, ''), COALESCE(u.avatar_path, ''),
-			c.post_id
+			c.post_id, COALESCE(g.title, '')
 		 FROM notifications n
 		 JOIN users u ON u.id = n.actor_id
 		 LEFT JOIN comments c
 		   ON n.type = 'comment' AND c.id = n.entity_id
+		 LEFT JOIN groups g
+		   ON n.type IN ('group_invite', 'group_join_request', 'group_join_accepted', 'group_event', 'group_comment')
+		   AND g.id = n.entity_id
 		 WHERE n.user_id = ?
 		 ORDER BY n.created_at DESC, n.id DESC
 		 LIMIT 50`,
@@ -126,6 +133,7 @@ func GetNotifications(userID int) ([]*models.Notification, int, error) {
 			&n.Nickname,
 			&n.AvatarPath,
 			&postID,
+			&n.GroupName,
 		); err != nil {
 			return nil, 0, err
 		}

@@ -188,4 +188,5 @@ type Notification struct {
 	LastName   string `json:"lastName"`
 	Nickname   string `json:"nickname"`
 	AvatarPath string `json:"avatarPath"`
+	GroupName  string `json:"groupName,omitempty"`
 }

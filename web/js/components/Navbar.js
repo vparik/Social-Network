@@ -153,7 +153,9 @@ window.Navbar = {
         case "comment":
           return `${actorName} commented on your post`;
         case "group_invite":
-          return `${actorName} invited you to a group`;
+          return item.groupName
+            ? `${actorName} invited you to join group "${item.groupName}"`
+            : `${actorName} invited you to join a group`;
         case "group_join_request":
           return `${actorName} requested to join your group`;
         case "group_join_accepted":
@@ -902,7 +904,9 @@ window.Navbar = {
               <div class="nav-dropdown-title">Group Invitation</div>
 
               <div class="nav-follow-request-text">
-                {{ displayUserName(selectedGroupInvite) }} invited you to join a group.
+                {{ displayUserName(selectedGroupInvite) }} invited you to join
+                <template v-if="selectedGroupInvite.groupName"><strong>{{ selectedGroupInvite.groupName }}</strong>.</template>
+                <template v-else>a group.</template>
               </div>
 
               <div class="nav-follow-request-actions">

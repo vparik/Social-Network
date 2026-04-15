@@ -202,7 +202,7 @@ window.HomePage = {
 
         if (!res.ok) {
           const err = await res.text();
-          alert("Failed to delete post: " + err);
+          window.toast("Failed to delete post: " + err, "error");
           return;
         }
 
@@ -211,7 +211,7 @@ window.HomePage = {
         });
       } catch (err) {
         console.error("Failed to delete post:", err);
-        alert("Network error.");
+        window.toast("Network error.", "error");
       }
     },
 

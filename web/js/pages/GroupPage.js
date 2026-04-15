@@ -237,9 +237,9 @@ window.GroupPage = {
       if (res.ok) {
         this.inviteUserId = null;
         this.dropdownOpen = false;
-        alert("Invitation sent!");
+        window.toast("Invitation sent!", "success");
       } else {
-        alert(data.error || "Could not invite user");
+        window.toast(data.error || "Could not invite user", "error");
       }
     },
 

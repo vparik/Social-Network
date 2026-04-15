@@ -206,7 +206,7 @@ window.CreatePost = {
 
         if (!res.ok) {
           const msg = await res.text();
-          alert("Image upload failed: " + msg);
+          window.toast("Image upload failed: " + msg, "error");
           this.imageUrl = null;
           this.imagePreview = null;
           if (this.$refs.imageInput) {
@@ -218,7 +218,7 @@ window.CreatePost = {
         const data = await res.json();
         this.imageUrl = data.url;
       } catch (err) {
-        alert("Image upload failed. Please try again.");
+        window.toast("Image upload failed. Please try again.", "error");
         console.error(err);
         this.imageUrl = null;
         this.imagePreview = null;
@@ -248,7 +248,7 @@ window.CreatePost = {
       if (!title || !content) return;
 
       if (this.postVisibility === "private" && this.selectedAllowedUserIds.length === 0) {
-        alert("Select at least one follower for a private post.");
+        window.toast("Select at least one follower for a private post.", "info");
         return;
       }
 
@@ -282,7 +282,7 @@ window.CreatePost = {
 
         if (!res.ok) {
           const err = await res.text();
-          alert("Failed to create post: " + err);
+          window.toast("Failed to create post: " + err, "error");
           return;
         }
 
@@ -293,10 +293,12 @@ window.CreatePost = {
         }
 
         this.$emit("post-created", createdPost);
+        this.submitting = false;
         this.close();
+        window.toast("Post created successfully.", "success");
       } catch (err) {
         console.error(err);
-        alert("Network error.");
+        window.toast("Network error.", "error");
       } finally {
         this.submitting = false;
       }
@@ -313,7 +315,7 @@ window.CreatePost = {
       if (!title || !content || !this.eventAt) return;
 
       if (!this.groupId) {
-        alert("No group selected for this event.");
+        window.toast("No group selected for this event.", "info");
         return;
       }
 
@@ -334,16 +336,18 @@ window.CreatePost = {
 
         if (!res.ok) {
           const err = await res.text();
-          alert("Failed to create event: " + err);
+          window.toast("Failed to create event: " + err, "error");
           return;
         }
 
         const createdEvent = await res.json();
         this.$emit("event-created", createdEvent);
+        this.submitting = false;
         this.close();
+        window.toast("Event created successfully.", "success");
       } catch (err) {
         console.error(err);
-        alert("Network error.");
+        window.toast("Network error.", "error");
       } finally {
         this.submitting = false;
       }

@@ -159,7 +159,7 @@ window.CommentSection = {
 
         if (!res.ok) {
           const msg = await res.text();
-          alert("Image upload failed: " + msg);
+          window.toast("Image upload failed: " + msg, "error");
           this.commentImageUrl = null;
           this.commentImagePreview = null;
           if (this.$refs.commentImageInput) {
@@ -172,7 +172,7 @@ window.CommentSection = {
         this.commentImageUrl = data.url;
       } catch (err) {
         console.error("Failed to upload comment image:", err);
-        alert("Image upload failed. Please try again.");
+        window.toast("Image upload failed. Please try again.", "error");
         this.commentImageUrl = null;
         this.commentImagePreview = null;
         if (this.$refs.commentImageInput) {
@@ -216,7 +216,7 @@ window.CommentSection = {
 
         if (!res.ok) {
           const err = await res.text();
-          alert("Failed to submit comment: " + err);
+          window.toast("Failed to submit comment: " + err, "error");
           return;
         }
 
@@ -271,7 +271,7 @@ window.CommentSection = {
 
         if (!res.ok) {
           const err = await res.text();
-          alert("Failed to delete comment: " + err);
+          window.toast("Failed to delete comment: " + err, "error");
           return;
         }
 
@@ -283,7 +283,7 @@ window.CommentSection = {
         }
       } catch (err) {
         console.error("Failed to delete comment:", err);
-        alert("Network error.");
+        window.toast("Network error.", "error");
       }
     }
   },

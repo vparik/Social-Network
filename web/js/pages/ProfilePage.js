@@ -496,7 +496,7 @@ window.ProfilePage = {
 
         if (!res.ok) {
           const err = await res.text();
-          alert("Failed to delete post: " + err);
+          window.toast("Failed to delete post: " + err, "error");
           return;
         }
 
@@ -505,7 +505,7 @@ window.ProfilePage = {
         });
       } catch (err) {
         console.error("Failed to delete post:", err);
-        alert("Network error.");
+        window.toast("Network error.", "error");
       }
     },
 
@@ -544,14 +544,14 @@ window.ProfilePage = {
         });
         if (!res.ok) {
           const msg = await res.text();
-          alert("Avatar upload failed: " + msg);
+          window.toast("Avatar upload failed: " + msg, "error");
           return;
         }
         const data = await res.json();
         // Cache-bust so the browser fetches the new file even if the URL is the same.
         this.profile.avatarPath = data.avatarPath + "?t=" + Date.now();
       } catch (err) {
-        alert("Avatar upload failed. Please try again.");
+        window.toast("Avatar upload failed. Please try again.", "error");
         console.error(err);
       } finally {
         this.avatarUploading = false;
@@ -617,12 +617,12 @@ window.ProfilePage = {
         });
         if (!res.ok) {
           const msg = await res.text();
-          alert("Failed to remove avatar: " + msg);
+          window.toast("Failed to remove avatar: " + msg, "error");
           return;
         }
         this.profile.avatarPath = "";
       } catch (err) {
-        alert("Failed to remove avatar. Please try again.");
+        window.toast("Failed to remove avatar. Please try again.", "error");
         console.error(err);
       } finally {
         this.avatarUploading = false;
