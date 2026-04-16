@@ -1,0 +1,12 @@
+# Don't bake secrets or local data into the image
+.env
+socialnet.db
+uploads/
+
+# Dev artifacts
+*.test
+*.out
+
+# Git history
+.git
+.gitignore

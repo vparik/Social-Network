@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: social-network-backend
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+    volumes:
+      # Persist the SQLite database and uploaded files between restarts
+      - ./socialnet.db:/app/socialnet.db
+      - ./uploads:/app/uploads
+    expose:
+      - "8080"      # internal only — nginx talks to it, not the host
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: social-network-frontend
+    ports:
+      - "8080:80"   # host port 8080 → nginx port 80
+    depends_on:
+      - backend
+    restart: unless-stopped
