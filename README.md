@@ -511,9 +511,9 @@ docker compose build && docker compose up -d
 
 ## Authors
 
-Athanasios Ziagakis
+Thanos Ziagakis
 
-Athanasios Diridis
+Thanos Diridis
 
 Andreas-Rafail Andrikopoulos
 
