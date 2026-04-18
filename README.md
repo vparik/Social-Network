@@ -511,4 +511,7 @@ docker compose build && docker compose up -d
 
 ## Authors
 
-Built as part of the Zone01 curriculum.
+Athanasios Ziagakis
+Athanasios Diridis
+Andreas-Rafail Andrikopoulos
+Vasileios Parikoglou
